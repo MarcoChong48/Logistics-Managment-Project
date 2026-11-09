@@ -1,0 +1,11 @@
+.tools
+.cache
+data
+backups
+logs
+backend/target
+frontend/node_modules
+frontend/dist
+delivery-app.jar
+.git
+

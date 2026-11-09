@@ -1,0 +1,37 @@
+name: Delivery checks
+on:
+  push:
+    paths:
+      - 'features/delivery/**'
+      - '.github/workflows/delivery-checks.yml'
+  pull_request:
+    paths:
+      - 'features/delivery/**'
+      - '.github/workflows/delivery-checks.yml'
+permissions:
+  contents: read
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: features/delivery/frontend/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Build browser app and check frontend boundaries
+        working-directory: features/delivery/frontend
+        run: npm ci --no-audit --no-fund && npm run build
+      - name: Test and package Delivery
+        run: mvn -B -f features/delivery/backend/pom.xml clean package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: delivery-app
+          path: features/delivery/backend/target/delivery-app.jar
+          if-no-files-found: error

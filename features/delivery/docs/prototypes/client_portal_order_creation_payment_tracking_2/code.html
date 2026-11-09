@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"on-error":"#ffffff","on-tertiary":"#ffffff","surface-variant":"#d3e4fe","secondary":"#0051d5","on-primary":"#ffffff","on-primary-container":"#7c839b","tertiary":"#000000","on-secondary":"#ffffff","surface-container-highest":"#d3e4fe","on-background":"#0b1c30","on-tertiary-fixed-variant":"#3c475a","surface-container-high":"#dce9ff","primary-fixed-dim":"#bec6e0","secondary-fixed":"#dbe1ff","tertiary-container":"#111c2d","on-surface-variant":"#45464d","secondary-container":"#316bf3","outline":"#76777d","outline-variant":"#c6c6cd","surface-container-low":"#eff4ff","primary":"#000000","tertiary-fixed":"#d8e3fb","inverse-surface":"#213145","on-tertiary-container":"#79849a","error-container":"#ffdad6","primary-container":"#131b2e","surface-container":"#e5eeff","inverse-primary":"#bec6e0","primary-fixed":"#dae2fd","surface-container-lowest":"#ffffff","tertiary-fixed-dim":"#bcc7de","secondary-fixed-dim":"#b4c5ff","on-primary-fixed":"#131b2e","on-secondary-container":"#fefcff","inverse-on-surface":"#eaf1ff","error":"#ba1a1a","on-tertiary-fixed":"#111c2d","on-primary-fixed-variant":"#3f465c","on-error-container":"#93000a","on-surface":"#0b1c30","on-secondary-fixed-variant":"#003ea8","surface":"#f8f9ff","surface-dim":"#cbdbf5","surface-bright":"#f8f9ff","surface-tint":"#565e74","background":"#f8f9ff","on-secondary-fixed":"#00174b"},borderRadius:{DEFAULT:"0.125rem",lg:"0.25rem",xl:"0.5rem",full:"0.75rem"},spacing:{gutter:"1rem","space-2xl":"3rem","gutter-desktop":"1.5rem","space-xl":"2rem","space-md":"1rem",margin:"1rem","space-sm":"0.5rem","space-lg":"1.5rem","space-xs":"0.25rem","margin-desktop":"2rem"},fontFamily:{"headline-xl":["Inter"],"label-table-head":["Inter"],"headline-md":["Inter"],"body-sm":["Inter"],"headline-lg":["Inter"],"label-status":["Inter"],"body-lg":["Inter"],"headline-sm":["Inter"],"body-md":["Inter"],"body-xs":["Inter"],"label-code":["JetBrains Mono"]},fontSize:{"headline-xl":["30px",{lineHeight:"38px",letterSpacing:"-0.02em",fontWeight:"700"}],"label-table-head":["11px",{lineHeight:"14px",letterSpacing:"0.05em",fontWeight:"600"}],"headline-md":["20px",{lineHeight:"28px",letterSpacing:"-0.01em",fontWeight:"600"}],"body-sm":["13px",{lineHeight:"18px",fontWeight:"400"}],"headline-lg":["24px",{lineHeight:"32px",letterSpacing:"-0.015em",fontWeight:"600"}],"label-status":["11px",{lineHeight:"14px",letterSpacing:"0.04em",fontWeight:"700"}],"body-lg":["16px",{lineHeight:"24px",fontWeight:"400"}],"headline-sm":["16px",{lineHeight:"24px",fontWeight:"600"}],"body-md":["14px",{lineHeight:"20px",fontWeight:"400"}],"body-xs":["12px",{lineHeight:"16px",fontWeight:"400"}],"label-code":["12px",{lineHeight:"16px",letterSpacing:"0.02em",fontWeight:"500"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><header class="fixed top-0 left-0 right-0 h-14 bg-primary-container text-on-primary z-50 shadow-[0_1px_8px_rgba(0,0,0,0.08)] flex items-center justify-between px-margin-desktop"><div class="flex items-center gap-space-lg"><div class="flex items-center gap-space-sm"><img alt="LMS Brand Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1XID8S36_nPbJl9JTZSeHXZlVu9bO52ehFG5vN1RadDJSJbb1-cUi7w5uBzF6HouEPHm214qtAZUDmg3UFcXx30kIw5K0rJcLlo-qrWNaMX3ohptDGI0o1_zRhYhv7gcqou8X3rDahnQ20ey4P9T0jLnT1H8dubaSiVXBYJcZwvQGQscARyTczTXpHcGr4MOI3LVmQ2NY7kZ7qqQ7IX7VVfzGkdh7egqzjC-tj6eCfJQq63mkDzcH0fS8XS"/><span class="font-headline-sm text-headline-sm font-semibold tracking-tight text-on-primary hidden sm:inline">NEXUS LMS</span></div><span class="inline-flex items-center px-space-sm py-0.5 rounded text-label-status font-label-status uppercase bg-tertiary-container text-on-tertiary-container border border-outline-variant/30 tracking-wider">PROTOTYPE / DEMO ENVIRONMENT</span></div><nav class="hidden xl:flex items-center gap-space-xs bg-tertiary-container/80 p-1 rounded-xl" data-active-classes="bg-secondary-container text-on-secondary-container rounded-lg font-headline-sm"><a aria-current="page" class="px-space-md py-1.5 transition-colors bg-secondary-container text-on-secondary-container rounded-lg font-headline-sm" data-path="client-portal" href="#">Client Portal</a><a class="px-space-md py-1.5 text-on-primary-container text-body-sm font-body-sm transition-colors hover:text-on-primary" data-path="warehouse-operations" href="#">Warehouse Operations (Mei)</a><a class="px-space-md py-1.5 text-on-primary-container text-body-sm font-body-sm transition-colors hover:text-on-primary" data-path="delivery-field-app" href="#">Delivery Field App (Ken)</a><a class="px-space-md py-1.5 text-on-primary-container text-body-sm font-body-sm transition-colors hover:text-on-primary" data-path="system-administration" href="#">System Administration (Alex)</a></nav><div class="flex items-center gap-space-md"><button aria-label="Notifications" class="relative p-1.5 rounded-lg text-on-primary-container hover:text-on-primary hover:bg-tertiary-container transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-secondary"></span></button><div class="flex items-center gap-space-sm pl-space-sm border-l border-outline-variant/20"><div class="flex flex-col text-right hidden md:block"><span class="text-body-xs font-body-xs font-medium text-on-primary leading-none">Alex Vance</span><span class="text-[10px] font-label-status text-on-primary-container uppercase tracking-wider">Operations Lead</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><aside class="fixed left-0 top-14 bottom-0 w-64 bg-surface-container-low shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex flex-col py-space-md"><div class="px-space-md pb-space-sm mb-space-sm border-b border-outline-variant/30 flex items-center justify-between"><span class="text-label-table-head font-label-table-head uppercase tracking-wider text-on-surface-variant">Operational Console</span><span class="text-label-code font-label-code text-secondary font-medium">v4.2-rel</span></div><nav class="flex-1 px-space-sm flex flex-col gap-space-xs overflow-y-auto" data-active-classes="bg-secondary-container text-on-secondary-container font-headline-sm rounded-lg"><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors text-body-md font-body-md" data-path="overview-dashboard" href="#"><span class="material-symbols-outlined text-[20px]">grid_view</span><span>Overview Dashboard</span></a><a aria-current="page" class="flex items-center gap-space-sm px-space-md py-2.5 transition-colors bg-secondary-container text-on-secondary-container font-headline-sm rounded-lg" data-path="client-portal" href="#"><span class="material-symbols-outlined text-[20px]">domain</span><span>Client Portal</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors text-body-md font-body-md" data-path="warehouse-operations" href="#"><span class="material-symbols-outlined text-[20px]">warehouse</span><span>Warehouse (Mei)</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors text-body-md font-body-md" data-path="delivery-field-app" href="#"><span class="material-symbols-outlined text-[20px]">local_shipping</span><span>Delivery App (Ken)</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors text-body-md font-body-md" data-path="system-administration" href="#"><span class="material-symbols-outlined text-[20px]">tune</span><span>Administration (Alex)</span></a><div class="my-space-sm border-t border-outline-variant/30"></div><span class="px-space-md text-[10px] font-label-table-head uppercase tracking-wider text-on-surface-variant">Audit &amp; Logistics</span><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors text-body-md font-body-md" data-path="live-dispatch-tracking" href="#"><span class="material-symbols-outlined text-[20px]">radar</span><span>Live Dispatch</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors text-body-md font-body-md" data-path="inventory-catalog" href="#"><span class="material-symbols-outlined text-[20px]">inventory_2</span><span>Inventory Matrix</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors text-body-md font-body-md" data-path="audit-logs" href="#"><span class="material-symbols-outlined text-[20px]">history_edu</span><span>Audit Trails</span></a></nav><div class="p-space-md mt-auto border-t border-outline-variant/30 bg-surface-container"><div class="flex items-center justify-between text-body-xs font-body-xs text-on-surface-variant"><span>Sync Pipeline</span><span class="inline-flex items-center gap-1 text-secondary font-medium"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>Active</span></div><div class="mt-1 text-[11px] font-label-code text-on-surface-variant/80 truncate">node-east-us.lms-core.internal</div></div></aside><div class="pl-64"><main class="w-full pt-14 bg-surface min-h-screen px-gutter-desktop py-space-lg"><div class="flex flex-col w-full">
+<!-- Role Context Banner -->
+<section class="mb-space-lg rounded-xl bg-surface-container-high p-space-md shadow-sm">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center text-on-secondary shadow-sm">
+<span class="material-symbols-outlined text-[24px]">storefront</span>
+</div>
+<div>
+<div class="flex items-center gap-space-sm">
+<span class="font-headline-sm text-headline-sm text-on-surface">Client Self-Service Portal</span>
+<span class="px-space-xs py-0.5 rounded text-label-status font-label-status uppercase bg-secondary-fixed text-on-secondary-fixed">Live Sandbox</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Authenticated as Apex Retail Distributors (Account #APX-88029). Real-time order placement &amp; inventory reservation.</p>
+</div>
+</div>
+<!-- Role Switcher Shortcuts -->
+<div class="flex items-center flex-wrap gap-space-xs bg-surface-container-lowest p-1.5 rounded-lg shadow-sm">
+<span class="text-label-table-head font-label-table-head text-on-surface-variant px-space-xs uppercase">Role Views:</span>
+<button class="px-space-sm py-1 rounded bg-secondary text-on-secondary text-body-xs font-body-xs font-semibold shadow-xs">Client (Active)</button>
+<button class="px-space-sm py-1 rounded hover:bg-surface-container-high text-on-surface-variant text-body-xs font-body-xs transition-colors" onclick="switchRoleNotice('Warehouse Operations (Mei)')">Warehouse (Mei)</button>
+<button class="px-space-sm py-1 rounded hover:bg-surface-container-high text-on-surface-variant text-body-xs font-body-xs transition-colors" onclick="switchRoleNotice('Delivery Field App (Ken)')">Delivery (Ken)</button>
+<button class="px-space-sm py-1 rounded hover:bg-surface-container-high text-on-surface-variant text-body-xs font-body-xs transition-colors" onclick="switchRoleNotice('System Administration (Alex)')">Admin (Alex)</button>
+</div>
+</div>
+</section>
+<!-- Navigation View Toggle Tabs -->
+<div class="flex items-center justify-between mb-space-lg flex-wrap gap-space-md">
+<div class="flex bg-surface-container p-1 rounded-xl shadow-xs">
+<button class="flex items-center gap-space-sm px-space-lg py-2 rounded-lg bg-surface-container-lowest text-on-surface font-headline-sm text-headline-sm shadow-sm transition-all" id="tabCreateBtn" onclick="switchMainTab('create')">
+<span class="material-symbols-outlined text-[20px] text-secondary">add_shopping_cart</span>
+        New Order Creation &amp; Payment
+      </button>
+<button class="flex items-center gap-space-sm px-space-lg py-2 rounded-lg text-on-surface-variant hover:text-on-surface font-headline-sm text-headline-sm transition-all" id="tabTrackBtn" onclick="switchMainTab('track')">
+<span class="material-symbols-outlined text-[20px]">local_shipping</span>
+        My Orders &amp; Status Timeline
+        <span class="w-5 h-5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-code text-[11px] flex items-center justify-center font-bold">2</span>
+</button>
+</div>
+<!-- Quick Stats Metric Pills -->
+<div class="flex items-center gap-space-sm">
+<div class="flex items-center gap-space-sm px-space-md py-1.5 rounded-lg bg-surface-container-lowest shadow-sm">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="font-body-xs text-body-xs text-on-surface-variant">Live Stock SLA:</span>
+<span class="font-label-code text-label-code text-on-surface font-bold">Realtime Reserve</span>
+</div>
+<div class="flex items-center gap-space-sm px-space-md py-1.5 rounded-lg bg-surface-container-lowest shadow-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">verified_user</span>
+<span class="font-body-xs text-body-xs text-on-surface-variant">Client Ledger:</span>
+<span class="font-label-code text-label-code text-secondary font-bold">Verified Direct</span>
+</div>
+</div>
+</div>
+<!-- TAB 1: ORDER CREATION & CHECKOUT FLOW -->
+<div class="w-full" id="viewCreateOrder">
+<!-- Visual Informational Banner with Editorial Accents -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-space-lg mb-space-lg">
+<div class="xl:col-span-8 bg-surface-container-lowest p-space-xl rounded-xl shadow-sm relative overflow-hidden flex flex-col justify-between">
+<div class="relative z-10">
+<div class="flex items-center gap-space-sm text-secondary font-label-status text-label-status uppercase tracking-wider mb-space-xs">
+<span class="material-symbols-outlined text-[16px]">bolt</span>
+            Fulfillment Ingestion Engine
+          </div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight mb-space-sm">Create New Commercial Shipment Order</h2>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl">
+            Select items from the distribution warehouse inventory. Selected quantities are automatically soft-reserved for 15 minutes pending payment gateway confirmation.
+          </p>
+</div>
+<div class="mt-space-lg pt-space-md flex flex-wrap gap-space-lg text-body-xs text-on-surface-variant">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[18px]">lock_clock</span>
+<span>Atomic Stock Reservation Enabled</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[18px]">verified</span>
+<span>Zero Processing Surcharge</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[18px]">hub</span>
+<span>Instant Dispatch Handshake to Warehouse Floor</span>
+</div>
+</div>
+<div class="absolute -right-12 -bottom-12 w-64 h-64 bg-secondary/5 rounded-full blur-2xl pointer-events-none"></div>
+</div>
+<div class="xl:col-span-4 bg-surface-container-low p-space-lg rounded-xl shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-space-sm">
+<span class="font-label-status text-label-status uppercase text-on-surface-variant">Facility Capacity</span>
+<span class="font-label-code text-label-code text-secondary font-bold">DC-NORTH-01</span>
+</div>
+<div class="space-y-space-sm">
+<div>
+<div class="flex justify-between font-body-xs text-body-xs text-on-surface mb-1">
+<span>Product A (PA-100) Shelf Reserve</span>
+<span class="font-label-code text-label-code text-secondary font-bold" id="shelfProductA">12 available</span>
+</div>
+<div class="w-full bg-surface-container-high h-2 rounded-full overflow-hidden">
+<div class="bg-secondary h-full rounded-full transition-all" style="width: 75%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between font-body-xs text-body-xs text-on-surface mb-1">
+<span>Product B (PB-200) Shelf Reserve</span>
+<span class="font-label-code text-label-code text-secondary font-bold" id="shelfProductB">5 available</span>
+</div>
+<div class="w-full bg-surface-container-high h-2 rounded-full overflow-hidden">
+<div class="bg-secondary h-full rounded-full transition-all" style="width: 38%"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-space-md p-space-sm bg-surface-container-lowest rounded-lg flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-[20px]">info</span>
+<span class="font-body-xs text-body-xs text-on-surface-variant">Real-time stock quota automatically updates when you adjust cart lines.</span>
+</div>
+</div>
+</div>
+<!-- Main Creation Form Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg">
+<!-- Left Column: Line Items & Address inputs -->
+<div class="lg:col-span-7 flex flex-col gap-space-lg">
+<!-- Section 1: Line Items -->
+<div class="bg-surface-container-lowest p-space-xl rounded-xl shadow-sm">
+<div class="flex items-center justify-between pb-space-md mb-space-md">
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Order Line Items</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Add items to configure delivery manifest.</p>
+</div>
+<button class="flex items-center gap-space-xs px-space-md py-2 bg-secondary text-on-secondary rounded-lg font-headline-sm text-body-sm shadow-sm hover:opacity-95 transition-opacity" onclick="addLineItem()" type="button">
+<span class="material-symbols-outlined text-[18px]">add</span>
+              Add Line Item
+            </button>
+</div>
+<!-- Line items container -->
+<div class="flex flex-col gap-space-md" id="lineItemsContainer">
+<!-- Initial Row 1 -->
+<div class="line-item-row p-space-md bg-surface-container-low rounded-xl relative transition-all" data-row-id="1">
+<div class="grid grid-cols-1 sm:grid-cols-12 gap-space-md items-end">
+<div class="sm:col-span-6">
+<label class="block font-label-table-head text-label-table-head uppercase text-on-surface-variant mb-1">Select Product</label>
+<select class="product-select w-full h-10 px-space-md rounded-lg bg-surface-container-lowest text-on-surface font-body-md text-body-md focus:outline-none shadow-xs" onchange="updateLineRow(this)">
+<option data-name="Product A" data-price="80.00" data-stock="12" selected="" value="PA-100">Product A (SKU: PA-100, $80.00) - 12 in stock</option>
+<option data-name="Product B" data-price="45.00" data-stock="5" value="PB-200">Product B (SKU: PB-200, $45.00) - 5 in stock</option>
+</select>
+</div>
+<div class="sm:col-span-3">
+<label class="block font-label-table-head text-label-table-head uppercase text-on-surface-variant mb-1">Quantity</label>
+<div class="flex items-center bg-surface-container-lowest rounded-lg h-10 px-1 shadow-xs">
+<button class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high rounded text-body-lg font-bold" onclick="stepQty(this, -1)" type="button">-</button>
+<input class="qty-input w-full text-center bg-transparent text-on-surface font-label-code text-label-code font-bold focus:outline-none" max="12" min="1" oninput="validateQty(this)" type="number" value="2"/>
+<button class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high rounded text-body-lg font-bold" onclick="stepQty(this, 1)" type="button">+</button>
+</div>
+</div>
+<div class="sm:col-span-3 flex items-center justify-between sm:justify-end gap-space-md">
+<div class="text-right">
+<span class="block font-label-table-head text-label-table-head uppercase text-on-surface-variant">Line Total</span>
+<span class="line-subtotal font-label-code text-headline-sm text-secondary font-bold">$160.00</span>
+</div>
+<button class="text-error hover:bg-error-container/30 p-2 rounded-lg transition-colors" onclick="removeLineItem(this)" title="Remove line item" type="button">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</div>
+<div class="stock-warning hidden mt-space-sm px-space-sm py-1 bg-error-container text-on-error-container text-body-xs font-body-xs rounded flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[16px]">warning</span>
+<span class="warning-text">Insufficient stock! Exceeds shelf availability.</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Section 2: Delivery Address Form -->
+<div class="bg-surface-container-lowest p-space-xl rounded-xl shadow-sm">
+<div class="pb-space-md mb-space-md">
+<h3 class="font-headline-md text-headline-md text-on-surface">Consignee &amp; Shipping Destination</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Enter verified street location for dispatch routing.</p>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+<div class="sm:col-span-2">
+<label class="block font-label-table-head text-label-table-head uppercase text-on-surface-variant mb-1">Street Address</label>
+<input class="w-full h-10 px-space-md rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest shadow-xs" id="destStreet" placeholder="e.g. 100 Main St, Suite 400" type="text" value="482 Logistics Parkway, Bay 4"/>
+</div>
+<div>
+<label class="block font-label-table-head text-label-table-head uppercase text-on-surface-variant mb-1">Destination City</label>
+<input class="w-full h-10 px-space-md rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest shadow-xs" id="destCity" type="text" value="Seattle"/>
+</div>
+<div>
+<label class="block font-label-table-head text-label-table-head uppercase text-on-surface-variant mb-1">Postal Code</label>
+<input class="w-full h-10 px-space-md rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest shadow-xs" id="destZip" type="text" value="98101"/>
+</div>
+<div class="sm:col-span-2">
+<label class="block font-label-table-head text-label-table-head uppercase text-on-surface-variant mb-1">Recipient Contact Phone</label>
+<input class="w-full h-10 px-space-md rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest shadow-xs" id="destPhone" type="text" value="+1 (206) 555-0198"/>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Order Summary & Checkout Trigger -->
+<div class="lg:col-span-5 flex flex-col gap-space-lg">
+<div class="bg-surface-container-lowest p-space-xl rounded-xl shadow-sm flex flex-col justify-between sticky top-20">
+<div>
+<div class="flex items-center justify-between pb-space-md mb-space-md">
+<h3 class="font-headline-md text-headline-md text-on-surface">Order Calculation</h3>
+<span class="px-space-sm py-0.5 rounded text-label-status font-label-status bg-surface-container-high text-secondary">READY</span>
+</div>
+<!-- Summary Table breakdown -->
+<div class="space-y-space-md mb-space-lg">
+<div class="space-y-space-sm text-body-sm font-body-sm text-on-surface" id="summaryManifestItems">
+<!-- Injected via JavaScript -->
+<div class="flex items-center justify-between py-1 bg-surface-container-low px-space-sm rounded">
+<div>
+<span class="font-semibold">2x</span> Product A <span class="font-label-code text-body-xs text-on-surface-variant">(PA-100)</span>
+</div>
+<span class="font-label-code text-on-surface font-medium">$160.00</span>
+</div>
+</div>
+<div class="pt-space-md space-y-space-xs text-body-sm font-body-sm">
+<div class="flex justify-between text-on-surface-variant">
+<span>Line Item Subtotal</span>
+<span class="font-label-code text-on-surface font-semibold" id="summarySubtotal">$160.00</span>
+</div>
+<div class="flex justify-between text-on-surface-variant">
+<span>Fulfillment &amp; Handling</span>
+<span class="font-label-code text-on-surface font-semibold">$0.00 (Standard Promo)</span>
+</div>
+<div class="flex justify-between text-on-surface-variant">
+<span>Applicable Sales Tax (0%)</span>
+<span class="font-label-code text-on-surface font-semibold">$0.00</span>
+</div>
+</div>
+<div class="pt-space-md flex items-baseline justify-between bg-surface-container p-space-md rounded-xl">
+<div>
+<span class="block font-label-status text-label-status uppercase text-on-surface-variant">Payable Net Total</span>
+<span class="font-body-xs text-body-xs text-on-surface-variant">Immediate authorization</span>
+</div>
+<span class="font-headline-xl text-headline-xl text-secondary font-bold" id="summaryGrandTotal">$160.00</span>
+</div>
+</div>
+<!-- Disclaimer box -->
+<div class="p-space-md rounded-lg bg-surface-container-high mb-space-lg">
+<div class="flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-[20px] text-secondary">security</span>
+<p class="font-body-xs text-body-xs text-on-surface-variant leading-relaxed">
+<strong>Prototype Simulation Mode:</strong> Submitting will open the simulated merchant payment gateway. On confirmation, order LMS-1001 transitions immediately to <code class="font-label-code bg-surface-container-lowest px-1 rounded text-secondary font-bold">READY_FOR_PICKING</code>.
+                </p>
+</div>
+</div>
+</div>
+<button class="w-full py-3.5 px-space-lg bg-secondary text-on-secondary rounded-xl font-headline-sm text-headline-sm flex items-center justify-center gap-space-sm shadow-md hover:bg-secondary-container transition-all" id="btnProceedPayment" onclick="openPaymentModal()" type="button">
+<span class="material-symbols-outlined text-[22px]">credit_card</span>
+            Proceed to Payment &amp; Authorization
+          </button>
+</div>
+</div>
+</div>
+</div>
+<!-- TAB 2: MY ORDERS & TRACKING TIMELINE VIEW -->
+<div class="w-full hidden" id="viewTrackOrders">
+<!-- Split Layout: Order History Table on Left & Selected Order Timeline Inspector on Right -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-space-lg">
+<!-- Left List Column (5 Cols) -->
+<div class="xl:col-span-5 flex flex-col gap-space-lg">
+<div class="bg-surface-container-lowest p-space-xl rounded-xl shadow-sm">
+<div class="flex items-center justify-between pb-space-md mb-space-md">
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Registered Client Orders</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Active outbound fulfillment records</p>
+</div>
+<span class="px-space-sm py-1 rounded bg-surface-container font-label-code text-body-xs text-on-surface font-semibold">2 Total</span>
+</div>
+<!-- Orders List Container -->
+<div class="flex flex-col gap-space-md" id="ordersListWrap">
+<!-- Order LMS-1001 Card -->
+<div class="cursor-pointer p-space-md rounded-xl bg-surface-container-high transition-all shadow-sm" id="orderCard-LMS-1001" onclick="selectOrder('LMS-1001')">
+<div class="flex items-start justify-between mb-space-xs">
+<div>
+<div class="flex items-center gap-space-sm">
+<span class="font-label-code text-headline-sm font-bold text-on-surface">LMS-1001</span>
+<span class="px-space-xs py-0.5 rounded text-[10px] font-label-status uppercase bg-surface-container-lowest text-secondary">Active</span>
+</div>
+<span class="font-body-xs text-body-xs text-on-surface-variant">Placed today at 09:14 AM</span>
+</div>
+<!-- Status Chip -->
+<span class="inline-flex items-center gap-1.5 h-6 px-space-sm rounded text-label-status font-label-status uppercase bg-secondary-fixed text-on-secondary-fixed" id="chip-LMS-1001">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                  READY_FOR_PICKING
+                </span>
+</div>
+<div class="my-space-sm p-space-sm bg-surface-container-lowest rounded-lg flex items-center justify-between">
+<span class="font-body-sm text-body-sm text-on-surface">2x Product A (PA-100)</span>
+<span class="font-label-code text-label-code text-secondary font-bold">$160.00</span>
+</div>
+<div class="flex items-center justify-between pt-space-xs text-body-xs">
+<span class="text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">location_on</span> Seattle, WA
+                </span>
+<div class="flex items-center gap-space-sm">
+<button class="px-space-sm py-1 rounded bg-error-container text-on-error-container hover:bg-error hover:text-on-error font-body-xs font-semibold transition-all" id="cancelBtn-LMS-1001" onclick="event.stopPropagation(); requestCancelOrder('LMS-1001');" type="button">
+                    Cancel Order
+                  </button>
+<button class="text-secondary font-semibold hover:underline" type="button">View Timeline →</button>
+</div>
+</div>
+</div>
+<!-- Order LMS-1002 Card -->
+<div class="cursor-pointer p-space-md rounded-xl bg-surface-container-low hover:bg-surface-container transition-all" id="orderCard-LMS-1002" onclick="selectOrder('LMS-1002')">
+<div class="flex items-start justify-between mb-space-xs">
+<div>
+<div class="flex items-center gap-space-sm">
+<span class="font-label-code text-headline-sm font-bold text-on-surface">LMS-1002</span>
+<span class="px-space-xs py-0.5 rounded text-[10px] font-label-status uppercase bg-surface-container-lowest text-on-surface-variant">Archived</span>
+</div>
+<span class="font-body-xs text-body-xs text-on-surface-variant">Placed yesterday at 14:22 PM</span>
+</div>
+<!-- Status Chip -->
+<span class="inline-flex items-center gap-1.5 h-6 px-space-sm rounded text-label-status font-label-status uppercase bg-error-container text-on-error-container" id="chip-LMS-1002">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+                  DELIVERY_FAILED
+                </span>
+</div>
+<div class="my-space-sm p-space-sm bg-surface-container-lowest rounded-lg flex items-center justify-between">
+<span class="font-body-sm text-body-sm text-on-surface">1x Product B (PB-200)</span>
+<span class="font-label-code text-label-code text-on-surface font-bold">$45.00</span>
+</div>
+<div class="flex items-center justify-between pt-space-xs text-body-xs">
+<span class="text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">location_on</span> Bellevue, WA
+                </span>
+<div class="flex items-center gap-space-sm">
+<span class="text-on-surface-variant font-label-code text-[11px]">Cannot cancel</span>
+<button class="text-secondary font-semibold hover:underline" type="button">View Timeline →</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- In-System Client Notification Preview Widget -->
+<div class="bg-surface-container-lowest p-space-xl rounded-xl shadow-sm">
+<div class="flex items-center justify-between pb-space-md mb-space-md">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-[22px]">notifications_active</span>
+<h3 class="font-headline-md text-headline-md text-on-surface">Automated Alerts Feed</h3>
+</div>
+<span class="font-label-code text-body-xs text-on-surface-variant">Push &amp; In-App Sync</span>
+</div>
+<div class="space-y-space-sm" id="notificationsFeed">
+<!-- Delivery Failed Notification Notice -->
+<div class="p-space-md rounded-xl bg-surface-container-low flex gap-space-md items-start">
+<div class="w-8 h-8 rounded-full bg-error-container text-on-error-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px]">error</span>
+</div>
+<div class="flex-1">
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-body-sm text-on-surface font-semibold">Delivery Attempt Failed (LMS-1002)</span>
+<span class="font-label-code text-body-xs text-on-surface-variant">Yesterday 16:45</span>
+</div>
+<p class="font-body-xs text-body-xs text-on-surface-variant mt-1">
+                  Delivery attempt failed: Standard Reason #4 (Commercial Access Gate Closed / Unreachable Security Desk). Driver Ken rescheduled routing.
+                </p>
+</div>
+</div>
+<!-- Order Confirmed Notification -->
+<div class="p-space-md rounded-xl bg-surface-container-low flex gap-space-md items-start">
+<div class="w-8 h-8 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+</div>
+<div class="flex-1">
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-body-sm text-on-surface font-semibold">Order Placed &amp; Authorized (LMS-1001)</span>
+<span class="font-label-code text-body-xs text-on-surface-variant">09:14 AM</span>
+</div>
+<p class="font-body-xs text-body-xs text-on-surface-variant mt-1">
+                  Payment confirmed. Order LMS-1001 transferred to warehouse packing queue. Picking assignment pending.
+                </p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Detail / Timeline Inspector (7 Cols) -->
+<div class="xl:col-span-7 flex flex-col gap-space-lg">
+<div class="bg-surface-container-lowest p-space-xl rounded-xl shadow-sm">
+<!-- Timeline Header -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-md pb-space-lg mb-space-lg">
+<div>
+<div class="flex items-center gap-space-sm mb-1">
+<span class="font-label-table-head text-label-table-head uppercase text-on-surface-variant">Tracking Progression</span>
+<span class="font-label-code text-headline-md font-bold text-secondary" id="timelineOrderId">LMS-1001</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant" id="timelineSubtitle">Commercial Delivery to 482 Logistics Parkway, Bay 4, Seattle, WA</p>
+</div>
+<div class="flex items-center gap-space-sm">
+<button class="px-space-md py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-body-sm font-semibold transition-colors flex items-center gap-1" onclick="simulateOrderAdvance()">
+<span class="material-symbols-outlined text-[18px] text-secondary">fast_forward</span>
+                Simulate Workflow Step
+              </button>
+</div>
+</div>
+<!-- Official Workflow Stepper -->
+<!-- States: AWAITING_PAYMENT -> READY_FOR_PICKING (Active) -> PICKING (Locked) -> READY_FOR_PICKUP -> SHIPPED -> OUT_FOR_DELIVERY -> DELIVERED -->
+<div class="relative pl-6 space-y-space-xl before:absolute before:left-[19px] before:top-2 before:bottom-2 before:w-[2px] before:bg-surface-container-highest" id="workflowTimelineContainer">
+<!-- Step 1: AWAITING_PAYMENT -->
+<div class="relative flex items-start gap-space-lg timeline-step" data-step="AWAITING_PAYMENT">
+<div class="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-on-secondary shrink-0 z-10 shadow-xs -ml-4">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<div class="flex-1 bg-surface-container-low p-space-md rounded-xl">
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-body-md font-bold text-on-surface">1. AWAITING_PAYMENT</span>
+<span class="font-label-code text-body-xs text-on-surface-variant">Completed (09:12 AM)</span>
+</div>
+<p class="font-body-xs text-body-xs text-on-surface-variant mt-1">Order basket created, inventory temporary hold allocated.</p>
+</div>
+</div>
+<!-- Step 2: READY_FOR_PICKING -->
+<div class="relative flex items-start gap-space-lg timeline-step" data-step="READY_FOR_PICKING">
+<div class="w-8 h-8 rounded-full bg-secondary ring-4 ring-secondary/20 flex items-center justify-center text-on-secondary shrink-0 z-10 shadow-xs -ml-4" id="stepDot-READY_FOR_PICKING">
+<span class="material-symbols-outlined text-[18px]">radio_button_checked</span>
+</div>
+<div class="flex-1 bg-surface-container-lowest shadow-sm p-space-md rounded-xl">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="font-headline-sm text-body-md font-bold text-secondary">2. READY_FOR_PICKING</span>
+<span class="px-space-xs py-0.5 rounded text-[10px] font-label-status uppercase bg-secondary-fixed text-on-secondary-fixed">Current Stage</span>
+</div>
+<span class="font-label-code text-body-xs text-secondary font-bold">Active (09:14 AM)</span>
+</div>
+<p class="font-body-xs text-body-xs text-on-surface-variant mt-1">Payment verified. Manifest queued in warehouse picking backlog. Client order cancellation is still permitted.</p>
+</div>
+</div>
+<!-- Step 3: PICKING -->
+<div class="relative flex items-start gap-space-lg timeline-step opacity-60" data-step="PICKING">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant shrink-0 z-10 -ml-4" id="stepDot-PICKING">
+<span class="material-symbols-outlined text-[16px]">lock</span>
+</div>
+<div class="flex-1 bg-surface-container-low p-space-md rounded-xl">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="font-headline-sm text-body-md font-semibold text-on-surface">3. PICKING</span>
+<span class="px-space-xs py-0.5 rounded text-[10px] font-label-status uppercase bg-surface-container-high text-on-surface-variant">Cancellation Locked</span>
+</div>
+<span class="font-label-code text-body-xs text-on-surface-variant">Pending Picker Assignment</span>
+</div>
+<p class="font-body-xs text-body-xs text-on-surface-variant mt-1">Warehouse personnel Mei physically gathering items. Cancellation disabled once picking commences.</p>
+</div>
+</div>
+<!-- Step 4: READY_FOR_PICKUP -->
+<div class="relative flex items-start gap-space-lg timeline-step opacity-60" data-step="READY_FOR_PICKUP">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant shrink-0 z-10 -ml-4" id="stepDot-READY_FOR_PICKUP">
+<span class="material-symbols-outlined text-[16px]">inventory</span>
+</div>
+<div class="flex-1 bg-surface-container-low p-space-md rounded-xl">
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-body-md font-semibold text-on-surface">4. READY_FOR_PICKUP</span>
+<span class="font-label-code text-body-xs text-on-surface-variant">Staging Dock</span>
+</div>
+<p class="font-body-xs text-body-xs text-on-surface-variant mt-1">Items packaged into shipping parcel, labeled, and staged in outbound Bay 4.</p>
+</div>
+</div>
+<!-- Step 5: SHIPPED -->
+<div class="relative flex items-start gap-space-lg timeline-step opacity-60" data-step="SHIPPED">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant shrink-0 z-10 -ml-4" id="stepDot-SHIPPED">
+<span class="material-symbols-outlined text-[16px]">local_shipping</span>
+</div>
+<div class="flex-1 bg-surface-container-low p-space-md rounded-xl">
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-body-md font-semibold text-on-surface">5. SHIPPED</span>
+<span class="font-label-code text-body-xs text-on-surface-variant">Carrier Handover</span>
+</div>
+<p class="font-body-xs text-body-xs text-on-surface-variant mt-1">Handed over to field courier vehicle #VAN-08 (Ken).</p>
+</div>
+</div>
+<!-- Step 6: OUT_FOR_DELIVERY -->
+<div class="relative flex items-start gap-space-lg timeline-step opacity-60" data-step="OUT_FOR_DELIVERY">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant shrink-0 z-10 -ml-4" id="stepDot-OUT_FOR_DELIVERY">
+<span class="material-symbols-outlined text-[16px]">near_me</span>
+</div>
+<div class="flex-1 bg-surface-container-low p-space-md rounded-xl">
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-body-md font-semibold text-on-surface">6. OUT_FOR_DELIVERY</span>
+<span class="font-label-code text-body-xs text-on-surface-variant">Final Mile</span>
+</div>
+<p class="font-body-xs text-body-xs text-on-surface-variant mt-1">Van en route to destination address.</p>
+</div>
+</div>
+<!-- Step 7: DELIVERED -->
+<div class="relative flex items-start gap-space-lg timeline-step opacity-60" data-step="DELIVERED">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant shrink-0 z-10 -ml-4" id="stepDot-DELIVERED">
+<span class="material-symbols-outlined text-[16px]">task_alt</span>
+</div>
+<div class="flex-1 bg-surface-container-low p-space-md rounded-xl">
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-body-md font-semibold text-on-surface">7. DELIVERED</span>
+<span class="font-label-code text-body-xs text-on-surface-variant">POD Signature</span>
+</div>
+<p class="font-body-xs text-body-xs text-on-surface-variant mt-1">Package handed off with digital signature captured.</p>
+</div>
+</div>
+</div>
+<!-- Internal Data Protection Callout Notice -->
+<div class="mt-space-xl p-space-md rounded-xl bg-surface-container flex items-center gap-space-md text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-[24px]">visibility_off</span>
+<div class="font-body-xs text-body-xs">
+<strong>Client Privacy Policy Notice:</strong> Internal warehouse barcode audit hashes, picker employee internal IDs, and driver vehicle telematics logs are strictly segregated from the client self-service portal.
+            </div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- PAYMENT CHECKOUT MODAL (Simulated Gateway) -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-space-md hidden" id="paymentModal">
+<!-- Solid clean backdrop -->
+<div class="absolute inset-0 bg-primary/60" onclick="closePaymentModal()"></div>
+<div class="relative w-full max-w-xl bg-surface-container-lowest rounded-xl shadow-2xl p-space-xl overflow-hidden z-10">
+<div class="flex items-start justify-between pb-space-md mb-space-md">
+<div>
+<div class="flex items-center gap-space-sm">
+<div class="w-7 h-7 rounded bg-secondary flex items-center justify-center text-on-secondary">
+<span class="material-symbols-outlined text-[18px]">lock</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface font-bold">Simulated Payment Gateway</h3>
+</div>
+<p class="font-body-xs text-body-xs text-on-surface-variant mt-1">Encrypted Payment Channel - Enterprise Billing Token</p>
+</div>
+<button class="text-on-surface-variant hover:text-on-surface p-1 rounded" onclick="closePaymentModal()">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Prototype Compliance Disclaimer -->
+<div class="p-space-md rounded-lg bg-surface-container-high mb-space-lg text-body-xs text-on-surface-variant">
+<div class="flex gap-space-sm items-start">
+<span class="material-symbols-outlined text-secondary text-[20px]">info</span>
+<div>
+<span class="font-bold text-on-surface block">Prototype Demo Payment Environment:</span>
+            No real payment details or raw credit card numbers stored. Relational DB stores method (<code class="font-label-code text-secondary font-bold">CREDIT_CARD_AUTH</code>), UTC timestamp, and gateway reference token only.
+          </div>
+</div>
+</div>
+<!-- Payment Manifest Summary -->
+<div class="bg-surface-container-low p-space-md rounded-xl mb-space-lg space-y-space-xs font-body-sm">
+<div class="flex justify-between text-on-surface-variant">
+<span>Target Order Generated:</span>
+<span class="font-label-code text-on-surface font-bold">LMS-1001</span>
+</div>
+<div class="flex justify-between text-on-surface-variant">
+<span>Items to Reserve:</span>
+<span class="font-body-sm text-on-surface" id="modalItemsText">2x Product A</span>
+</div>
+<div class="flex justify-between pt-space-xs font-headline-sm text-headline-sm text-on-surface">
+<span>Total Authorized Charge:</span>
+<span class="font-label-code text-secondary font-bold" id="modalTotalCharge">$160.00</span>
+</div>
+</div>
+<!-- Failure Warning Notice (Transient) -->
+<div class="hidden p-space-md rounded-lg bg-error-container text-on-error-container mb-space-md text-body-sm flex items-start gap-space-sm" id="paymentFailureBanner">
+<span class="material-symbols-outlined text-[20px] text-error">error</span>
+<div>
+<strong class="block">Payment Authorization Rejected</strong>
+          Simulated insufficient credit limit or gateway timeout. Stock reservations have been unlocked and released back to warehouse shelves.
+        </div>
+</div>
+<!-- Dual Simulation Action Buttons -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md pt-space-sm">
+<button class="py-3 px-space-md bg-secondary text-on-secondary rounded-lg font-headline-sm text-body-sm flex items-center justify-center gap-space-xs shadow-md hover:bg-secondary-container transition-all" onclick="simulatePaymentSuccess()" type="button">
+<span class="material-symbols-outlined text-[18px]">check_circle</span>
+          Simulate Successful Payment
+        </button>
+<button class="py-3 px-space-md bg-surface-container-high hover:bg-error-container text-error rounded-lg font-headline-sm text-body-sm flex items-center justify-center gap-space-xs transition-all" onclick="simulatePaymentFailure()" type="button">
+<span class="material-symbols-outlined text-[18px]">cancel</span>
+          Simulate Failed Payment
+        </button>
+</div>
+</div>
+</div>
+<!-- ORDER CANCELLATION CONFIRMATION MODAL -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-space-md hidden" id="cancelModal">
+<div class="absolute inset-0 bg-primary/60" onclick="closeCancelModal()"></div>
+<div class="relative w-full max-w-md bg-surface-container-lowest rounded-xl shadow-2xl p-space-xl z-10">
+<div class="w-12 h-12 rounded-full bg-error-container text-error flex items-center justify-center mb-space-md">
+<span class="material-symbols-outlined text-[24px]">cancel</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface font-bold">Cancel Order LMS-1001?</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-2 leading-relaxed">
+        This order is currently in <span class="font-bold text-secondary">READY_FOR_PICKING</span>. Canceling will immediately release all reserved inventory items back into available warehouse stock and trigger an automated refund voucher.
+      </p>
+<div class="flex items-center justify-end gap-space-md mt-space-xl">
+<button class="px-space-md py-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-body-sm font-semibold transition-colors" onclick="closeCancelModal()" type="button">
+          Keep Order
+        </button>
+<button class="px-space-md py-2 rounded-lg bg-error text-on-error font-body-sm font-semibold shadow-sm hover:opacity-90 transition-opacity" onclick="confirmCancelOrder()" type="button">
+          Confirm Cancellation
+        </button>
+</div>
+</div>
+</div>
+<!-- TOAST NOTIFICATION CONTAINER -->
+<div class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-space-md p-space-md rounded-xl bg-primary-container text-on-primary shadow-xl" id="toastNotification">
+<span class="material-symbols-outlined text-[24px] text-secondary" id="toastIcon">check_circle</span>
+<div>
+<h4 class="font-headline-sm text-body-sm font-bold" id="toastTitle">Order Updated</h4>
+<p class="font-body-xs text-body-xs text-on-primary-container" id="toastMessage">Action successfully synchronized.</p>
+</div>
+</div>
+</div>
+<script>
+  // State management for order creation
+  const inventoryDb = {
+    'PA-100': { name: 'Product A', price: 80.00, stock: 12 },
+    'PB-200': { name: 'Product B', price: 45.00, stock: 5 }
+  };
+
+  let nextRowId = 2;
+  let currentActiveTimelineOrder = 'LMS-1001';
+  let lms1001Status = 'READY_FOR_PICKING';
+
+  function switchMainTab(tab) {
+    const createView = document.getElementById('viewCreateOrder');
+    const trackView = document.getElementById('viewTrackOrders');
+    const tabCreateBtn = document.getElementById('tabCreateBtn');
+    const tabTrackBtn = document.getElementById('tabTrackBtn');
+
+    if (tab === 'create') {
+      createView.classList.remove('hidden');
+      trackView.classList.add('hidden');
+      tabCreateBtn.classList.add('bg-surface-container-lowest', 'text-on-surface', 'shadow-sm');
+      tabCreateBtn.classList.remove('text-on-surface-variant');
+      tabTrackBtn.classList.remove('bg-surface-container-lowest', 'text-on-surface', 'shadow-sm');
+      tabTrackBtn.classList.add('text-on-surface-variant');
+    } else {
+      createView.classList.add('hidden');
+      trackView.classList.remove('hidden');
+      tabTrackBtn.classList.add('bg-surface-container-lowest', 'text-on-surface', 'shadow-sm');
+      tabTrackBtn.classList.remove('text-on-surface-variant');
+      tabCreateBtn.classList.remove('bg-surface-container-lowest', 'text-on-surface', 'shadow-sm');
+      tabCreateBtn.classList.add('text-on-surface-variant');
+    }
+  }
+
+  function recalculateCart() {
+    const rows = document.querySelectorAll('.line-item-row');
+    let subtotal = 0;
+    const manifestItemsContainer = document.getElementById('summaryManifestItems');
+    manifestItemsContainer.innerHTML = '';
+
+    rows.forEach(row => {
+      const select = row.querySelector('.product-select');
+      const qtyInput = row.querySelector('.qty-input');
+      const sku = select.value;
+      const product = inventoryDb[sku];
+      const qty = parseInt(qtyInput.value) || 0;
+      const lineCost = qty * product.price;
+
+      row.querySelector('.line-subtotal').textContent = '$' + lineCost.toFixed(2);
+      subtotal += lineCost;
+
+      // Append summary item
+      const itemEl = document.createElement('div');
+      itemEl.className = 'flex items-center justify-between py-1 bg-surface-container-low px-space-sm rounded';
+      itemEl.innerHTML = `
+        <div>
+          <span class="font-semibold">${qty}x</span> ${product.name} 
+          <span class="font-label-code text-body-xs text-on-surface-variant">(${sku})</span>
+        </div>
+        <span class="font-label-code text-on-surface font-medium">$${lineCost.toFixed(2)}</span>
+      `;
+      manifestItemsContainer.appendChild(itemEl);
+    });
+
+    document.getElementById('summarySubtotal').textContent = '$' + subtotal.toFixed(2);
+    document.getElementById('summaryGrandTotal').textContent = '$' + subtotal.toFixed(2);
+  }
+
+  function validateQty(input) {
+    const row = input.closest('.line-item-row');
+    const select = row.querySelector('.product-select');
+    const sku = select.value;
+    const maxStock = inventoryDb[sku].stock;
+    const warning = row.querySelector('.stock-warning');
+    const proceedBtn = document.getElementById('btnProceedPayment');
+
+    let currentVal = parseInt(input.value) || 0;
+
+    if (currentVal > maxStock) {
+      warning.classList.remove('hidden');
+      warning.querySelector('.warning-text').textContent = `Insufficient stock! Maximum available for ${sku} is ${maxStock}.`;
+      proceedBtn.disabled = true;
+      proceedBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    } else if (currentVal <= 0) {
+      input.value = 1;
+      warning.classList.add('hidden');
+      proceedBtn.disabled = false;
+      proceedBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+    } else {
+      warning.classList.add('hidden');
+      proceedBtn.disabled = false;
+      proceedBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+
+    recalculateCart();
+  }
+
+  function stepQty(button, delta) {
+    const row = button.closest('.line-item-row');
+    const input = row.querySelector('.qty-input');
+    let val = (parseInt(input.value) || 0) + delta;
+    if (val < 1) val = 1;
+    input.value = val;
+    validateQty(input);
+  }
+
+  function updateLineRow(select) {
+    const row = select.closest('.line-item-row');
+    const qtyInput = row.querySelector('.qty-input');
+    qtyInput.max = inventoryDb[select.value].stock;
+    validateQty(qtyInput);
+  }
+
+  function addLineItem() {
+    const container = document.getElementById('lineItemsContainer');
+    const newRow = document.createElement('div');
+    newRow.className = 'line-item-row p-space-md bg-surface-container-low rounded-xl relative transition-all';
+    newRow.setAttribute('data-row-id', nextRowId++);
+    newRow.innerHTML = `
+      <div class="grid grid-cols-1 sm:grid-cols-12 gap-space-md items-end">
+        <div class="sm:col-span-6">
+          <label class="block font-label-table-head text-label-table-head uppercase text-on-surface-variant mb-1">Select Product</label>
+          <select onchange="updateLineRow(this)" class="product-select w-full h-10 px-space-md rounded-lg bg-surface-container-lowest text-on-surface font-body-md text-body-md focus:outline-none shadow-xs">
+            <option value="PB-200" data-name="Product B" data-price="45.00" data-stock="5" selected>Product B (SKU: PB-200, $45.00) - 5 in stock</option>
+            <option value="PA-100" data-name="Product A" data-price="80.00" data-stock="12">Product A (SKU: PA-100, $80.00) - 12 in stock</option>
+          </select>
+        </div>
+        <div class="sm:col-span-3">
+          <label class="block font-label-table-head text-label-table-head uppercase text-on-surface-variant mb-1">Quantity</label>
+          <div class="flex items-center bg-surface-container-lowest rounded-lg h-10 px-1 shadow-xs">
+            <button type="button" onclick="stepQty(this, -1)" class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high rounded text-body-lg font-bold">-</button>
+            <input type="number" min="1" max="5" value="1" oninput="validateQty(this)" class="qty-input w-full text-center bg-transparent text-on-surface font-label-code text-label-code font-bold focus:outline-none" />
+            <button type="button" onclick="stepQty(this, 1)" class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high rounded text-body-lg font-bold">+</button>
+          </div>
+        </div>
+        <div class="sm:col-span-3 flex items-center justify-between sm:justify-end gap-space-md">
+          <div class="text-right">
+            <span class="block font-label-table-head text-label-table-head uppercase text-on-surface-variant">Line Total</span>
+            <span class="line-subtotal font-label-code text-headline-sm text-secondary font-bold">$45.00</span>
+          </div>
+          <button type="button" onclick="removeLineItem(this)" class="text-error hover:bg-error-container/30 p-2 rounded-lg transition-colors" title="Remove line item">
+            <span class="material-symbols-outlined text-[20px]">delete</span>
+          </button>
+        </div>
+      </div>
+      <div class="stock-warning hidden mt-space-sm px-space-sm py-1 bg-error-container text-on-error-container text-body-xs font-body-xs rounded flex items-center gap-space-xs">
+        <span class="material-symbols-outlined text-[16px]">warning</span>
+        <span class="warning-text">Insufficient stock! Exceeds shelf availability.</span>
+      </div>
+    `;
+    container.appendChild(newRow);
+    recalculateCart();
+  }
+
+  function removeLineItem(btn) {
+    const rows = document.querySelectorAll('.line-item-row');
+    if (rows.length <= 1) {
+      showToast('Minimum Item Limit', 'An order requires at least one product line item.', 'error');
+      return;
+    }
+    btn.closest('.line-item-row').remove();
+    recalculateCart();
+  }
+
+  function openPaymentModal() {
+    const modal = document.getElementById('paymentModal');
+    const total = document.getElementById('summaryGrandTotal').textContent;
+    document.getElementById('modalTotalCharge').textContent = total;
+    document.getElementById('paymentFailureBanner').classList.add('hidden');
+    modal.classList.remove('hidden');
+  }
+
+  function closePaymentModal() {
+    document.getElementById('paymentModal').classList.add('hidden');
+  }
+
+  function simulatePaymentSuccess() {
+    closePaymentModal();
+    lms1001Status = 'READY_FOR_PICKING';
+
+    // Update Order LMS-1001 in list
+    const chip = document.getElementById('chip-LMS-1001');
+    chip.className = 'inline-flex items-center gap-1.5 h-6 px-space-sm rounded text-label-status font-label-status uppercase bg-secondary-fixed text-on-secondary-fixed';
+    chip.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> READY_FOR_PICKING';
+
+    const cancelBtn = document.getElementById('cancelBtn-LMS-1001');
+    if (cancelBtn) cancelBtn.classList.remove('hidden');
+
+    showToast('Payment Authorized!', 'Order LMS-1001 created. Status: READY_FOR_PICKING', 'check_circle');
+
+    // Switch to Tracking Timeline tab
+    setTimeout(() => {
+      switchMainTab('track');
+      selectOrder('LMS-1001');
+    }, 600);
+  }
+
+  function simulatePaymentFailure() {
+    const banner = document.getElementById('paymentFailureBanner');
+    banner.classList.remove('hidden');
+    showToast('Authorization Declined', 'Simulated gateway error. Stock reservation released.', 'error');
+  }
+
+  function selectOrder(orderId) {
+    currentActiveTimelineOrder = orderId;
+    const card1001 = document.getElementById('orderCard-LMS-1001');
+    const card1002 = document.getElementById('orderCard-LMS-1002');
+    const title = document.getElementById('timelineOrderId');
+    const sub = document.getElementById('timelineSubtitle');
+
+    if (orderId === 'LMS-1001') {
+      card1001.classList.add('bg-surface-container-high');
+      card1001.classList.remove('bg-surface-container-low');
+      card1002.classList.remove('bg-surface-container-high');
+      card1002.classList.add('bg-surface-container-low');
+      title.textContent = 'LMS-1001';
+      sub.textContent = 'Commercial Delivery to 482 Logistics Parkway, Bay 4, Seattle, WA';
+      renderTimelineForOrder('LMS-1001');
+    } else {
+      card1002.classList.add('bg-surface-container-high');
+      card1002.classList.remove('bg-surface-container-low');
+      card1001.classList.remove('bg-surface-container-high');
+      card1001.classList.add('bg-surface-container-low');
+      title.textContent = 'LMS-1002';
+      sub.textContent = 'Commercial Delivery to 800 5th Ave, Suite 120, Bellevue, WA';
+      renderTimelineForOrder('LMS-1002');
+    }
+  }
+
+  function renderTimelineForOrder(orderId) {
+    const steps = document.querySelectorAll('.timeline-step');
+    if (orderId === 'LMS-1002') {
+      // Failed delivery order
+      steps.forEach(step => {
+        const stepName = step.getAttribute('data-step');
+        if (['AWAITING_PAYMENT', 'READY_FOR_PICKING', 'PICKING', 'READY_FOR_PICKUP', 'SHIPPED', 'OUT_FOR_DELIVERY'].includes(stepName)) {
+          step.classList.remove('opacity-60');
+          const dot = step.querySelector('div:first-child');
+          if (dot) {
+            dot.className = 'w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-on-secondary shrink-0 z-10 shadow-xs -ml-4';
+            dot.innerHTML = '<span class="material-symbols-outlined text-[16px]">check</span>';
+          }
+        } else if (stepName === 'DELIVERED') {
+          step.classList.remove('opacity-60');
+          const dot = step.querySelector('div:first-child');
+          if (dot) {
+            dot.className = 'w-8 h-8 rounded-full bg-error flex items-center justify-center text-on-error shrink-0 z-10 shadow-xs -ml-4';
+            dot.innerHTML = '<span class="material-symbols-outlined text-[16px]">error</span>';
+          }
+          step.querySelector('.flex-1').innerHTML = `
+            <div class="flex items-center justify-between">
+              <span class="font-headline-sm text-body-md font-bold text-error">7. DELIVERY_FAILED</span>
+              <span class="font-label-code text-body-xs text-error font-bold">Failed Yesterday</span>
+            </div>
+            <p class="font-body-xs text-body-xs text-on-surface-variant mt-1">Recipient location security barricade inaccessible after business hours. Automated return routing triggered.</p>
+          `;
+        }
+      });
+    } else {
+      // Order 1001 default state
+      renderLMS1001Steps();
+    }
+  }
+
+  function renderLMS1001Steps() {
+    const workflow = ['AWAITING_PAYMENT', 'READY_FOR_PICKING', 'PICKING', 'READY_FOR_PICKUP', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED'];
+    const activeIndex = workflow.indexOf(lms1001Status);
+
+    document.querySelectorAll('.timeline-step').forEach((stepEl, idx) => {
+      const dot = stepEl.querySelector('div:first-child');
+      if (lms1001Status === 'CANCELLED') {
+        stepEl.classList.add('opacity-50');
+        return;
+      }
+
+      if (idx < activeIndex) {
+        stepEl.classList.remove('opacity-60');
+        dot.className = 'w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-on-secondary shrink-0 z-10 shadow-xs -ml-4';
+        dot.innerHTML = '<span class="material-symbols-outlined text-[16px]">check</span>';
+      } else if (idx === activeIndex) {
+        stepEl.classList.remove('opacity-60');
+        dot.className = 'w-8 h-8 rounded-full bg-secondary ring-4 ring-secondary/20 flex items-center justify-center text-on-secondary shrink-0 z-10 shadow-xs -ml-4';
+        dot.innerHTML = '<span class="material-symbols-outlined text-[18px]">radio_button_checked</span>';
+      } else {
+        stepEl.classList.add('opacity-60');
+        dot.className = 'w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant shrink-0 z-10 -ml-4';
+        dot.innerHTML = '<span class="material-symbols-outlined text-[16px]">lock</span>';
+      }
+    });
+
+    const cancelBtn = document.getElementById('cancelBtn-LMS-1001');
+    if (cancelBtn) {
+      if (lms1001Status === 'READY_FOR_PICKING') {
+        cancelBtn.classList.remove('hidden');
+      } else {
+        cancelBtn.classList.add('hidden');
+      }
+    }
+  }
+
+  function simulateOrderAdvance() {
+    if (currentActiveTimelineOrder === 'LMS-1002') {
+      showToast('Archived Order', 'Order LMS-1002 has completed failed lifecycle dispatch.', 'info');
+      return;
+    }
+
+    const workflow = ['READY_FOR_PICKING', 'PICKING', 'READY_FOR_PICKUP', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED'];
+    const curIdx = workflow.indexOf(lms1001Status);
+    if (curIdx < workflow.length - 1) {
+      lms1001Status = workflow[curIdx + 1];
+      const chip = document.getElementById('chip-LMS-1001');
+      chip.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> ${lms1001Status}`;
+      renderLMS1001Steps();
+      showToast('Workflow Step Simulated', `Order LMS-1001 advanced to: ${lms1001Status}`, 'fast_forward');
+    } else {
+      showToast('Complete', 'Order LMS-1001 is already DELIVERED.', 'check_circle');
+    }
+  }
+
+  function requestCancelOrder(orderId) {
+    if (lms1001Status !== 'READY_FOR_PICKING') {
+      showToast('Action Forbidden', 'Orders that have begun PICKING cannot be cancelled.', 'error');
+      return;
+    }
+    document.getElementById('cancelModal').classList.remove('hidden');
+  }
+
+  function closeCancelModal() {
+    document.getElementById('cancelModal').classList.add('hidden');
+  }
+
+  function confirmCancelOrder() {
+    closeCancelModal();
+    lms1001Status = 'CANCELLED';
+
+    const chip = document.getElementById('chip-LMS-1001');
+    chip.className = 'inline-flex items-center gap-1.5 h-6 px-space-sm rounded text-label-status font-label-status uppercase bg-surface-container-high text-on-surface-variant';
+    chip.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-on-surface-variant"></span> CANCELLED';
+
+    const cancelBtn = document.getElementById('cancelBtn-LMS-1001');
+    if (cancelBtn) cancelBtn.classList.add('hidden');
+
+    showToast('Order Cancelled', 'Stock hold refunded. Order LMS-1001 status is CANCELLED.', 'check_circle');
+    renderLMS1001Steps();
+  }
+
+  function switchRoleNotice(roleName) {
+    showToast('Role Transition Demo', `To operate as ${roleName}, use the global system header or sidebar navigation link.`, 'swap_horiz');
+  }
+
+  function showToast(title, msg, icon = 'check_circle') {
+    const toast = document.getElementById('toastNotification');
+    document.getElementById('toastTitle').textContent = title;
+    document.getElementById('toastMessage').textContent = msg;
+    document.getElementById('toastIcon').textContent = icon;
+
+    toast.classList.remove('translate-y-24', 'opacity-0');
+    toast.classList.add('translate-y-0', 'opacity-100');
+
+    setTimeout(() => {
+      toast.classList.remove('translate-y-0', 'opacity-100');
+      toast.classList.add('translate-y-24', 'opacity-0');
+    }, 4000);
+  }
+
+  // Initialize summary numbers on render
+  recalculateCart();
+</script></main></div></body></html>

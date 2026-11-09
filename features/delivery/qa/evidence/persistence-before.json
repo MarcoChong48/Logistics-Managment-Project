@@ -1,0 +1,60 @@
+{
+  "packages": [
+    {
+      "id": "PKG-1001",
+      "status": "DELIVERED",
+      "custody": "RECIPIENT",
+      "returnStatus": null,
+      "instruction": null,
+      "approved": false,
+      "pendingCancellation": false
+    },
+    {
+      "id": "PKG-1002",
+      "status": "CANCELLED",
+      "custody": "WAREHOUSE",
+      "returnStatus": "RECEIVED",
+      "instruction": "CANCEL",
+      "approved": false,
+      "pendingCancellation": false
+    },
+    {
+      "id": "PKG-1003",
+      "status": "READY_FOR_PICKUP",
+      "custody": "WAREHOUSE",
+      "returnStatus": "RECEIVED",
+      "instruction": null,
+      "approved": false,
+      "pendingCancellation": false
+    }
+  ],
+  "attempts": [
+    {
+      "id": "ATT-5ad36530-8d8c-4fde-b7da-4b2c9de59141",
+      "packageId": "PKG-1002",
+      "outcome": "FAILED"
+    },
+    {
+      "id": "ATT-8fa2330c-8c95-48bb-a7c4-4f36f0781e08",
+      "packageId": "PKG-1002",
+      "outcome": "FAILED"
+    },
+    {
+      "id": "ATT-d297805c-a1d3-4d19-bcb2-068b556e97cd",
+      "packageId": "PKG-1001",
+      "outcome": "DELIVERED"
+    }
+  ],
+  "returns": [
+    {
+      "id": "RET-b0f95d69-d623-4b4f-8341-f713471d4061",
+      "packageId": "PKG-1002",
+      "status": "RECEIVED"
+    },
+    {
+      "id": "RET-d0f287e1-d791-4b93-82a2-8fe9f94ac34b",
+      "packageId": "PKG-1002",
+      "status": "RECEIVED"
+    }
+  ]
+}

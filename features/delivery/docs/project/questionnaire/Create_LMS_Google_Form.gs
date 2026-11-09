@@ -1,0 +1,1001 @@
+/**
+ * LMS questionnaire builder. Paste this complete file into a standalone
+ * Google Apps Script project and run createLmsQuestionnaire.
+ * Creates an unpublished Google Form. It does not email or share the form.
+ *
+ * Official references:
+ * https://developers.google.com/apps-script/reference/forms/form-app
+ * https://developers.google.com/apps-script/reference/forms/multiple-choice-item
+ */
+const LMS_QUESTIONNAIRE = {
+  "schemaVersion": 1,
+  "title": "LMS 專案未定事項意見問卷｜U-01 至 U-16",
+  "language": "zh-Hant",
+  "source": "GrandProject/PROJECT_DETAILS.md (including 4 November 2026 confirmations)",
+  "description": "本問卷收集九位組員對專案未定事項的意見，回覆只供會議討論，不會自動變成團隊批准。\n每題單選A、B或Others／其他；選Others後可自行輸入方案、理由、疑慮或『需要討論』。如希望選A／B並補充，請選Others填『A：…』或『B：…』。\nA、B只是方案編號，並非推薦排序。題目說明列出已確認規則及仍待核實資料；官方課程日期不能以投票決定。\n已確認五位Coding、四位Testing，四角色前後端各一人、另設Database工作；新功能開Git branch、小功能交Testing及最後整合。這些不重投。\n不要求姓名／電郵，也不在問卷收集實際密碼、恢復碼、API key或客戶個人資料。",
+  "confirmationMessage": "已收到你的意見。答案會供團隊討論；仍需正式確認及記錄，才更新專案決定。",
+  "settings": {
+    "required": true,
+    "collectEmail": false,
+    "shuffleQuestions": false,
+    "progressBar": true,
+    "publishOnCreate": false,
+    "nativeOther": true
+  },
+  "sections": [
+    {
+      "id": "U-01",
+      "title": "部署安排",
+      "help": "影響全組能否共用同一系統、手機掃碼、付款結果接收及證明檔案保存。尚未選定供應商或預算。",
+      "questions": [
+        {
+          "id": "U01-Q01",
+          "title": "你傾向採用哪種部署安排？",
+          "help": "兩方案都要有持久的資料庫及證明檔案儲存。若傾向「本機伺服器＋安全臨時網址」或「單一電腦示範」，請選 Others 並寫明。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "共用 HTTPS 網站，以文件化的人工部署、備份及復原檢查管理。"
+            },
+            {
+              "key": "B",
+              "text": "共用 HTTPS 網站，另設演練環境、自動部署檢查、排程備份及健康提示。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "U-02",
+      "title": "可量度的品質與驗收條件",
+      "help": "定義可重複的測試條件及門檻；以下數值都是候選值，尚未批准或量度。舊稿的1秒、5分鐘及99%並非已確認承諾。",
+      "questions": [
+        {
+          "id": "U02-Q01",
+          "title": "你傾向以哪組規模作驗收測試基礎？",
+          "help": "外部付款等待及媒體上傳需分開量度。若想改裝置、數據量、同時操作人數或支援瀏覽器，請選 Others 寫明。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "受控規模：1部手機＋1部電腦、100件產品／500張訂單、5個同時登入工作階段。"
+            },
+            {
+              "key": "B",
+              "text": "擴大規模：包含A的檢查，增加手機／瀏覽器組合、500件產品／2,000張訂單、20個同時工作階段及24小時觀察。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        },
+        {
+          "id": "U02-Q02",
+          "title": "應如何訂立具體驗收門檻？",
+          "help": "候選值：指定LMS操作95%回應在2秒內，每操作至少100個樣本；已有帳戶的新用戶5人中至少4人，可無協助於6分鐘內建立正確未付款訂單；兩次60分鐘演練及15分鐘人工復原目標。24小時觀察不能證明長期99%可用率。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "以說明中的數值及明確計時／測試條件，作待全組確認的第一版門檻。"
+            },
+            {
+              "key": "B",
+              "text": "先用候選值進行預演，再按記錄結果及實際裝置共同訂立門檻，正式驗收前凍結規格。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "U-03",
+      "title": "工作範圍、共用責任及合併流程",
+      "help": "已確認：全組9人，5 Coding／4 Testing；四角色各一人負責前端及Java後端，另設Database負責人；新功能開Git branch，小功能完成即交Testing，最後整合。人選、共用責任及合併細節仍未定。",
+      "questions": [
+        {
+          "id": "U03-Q01",
+          "title": "Database負責人的工作範圍應包括甚麼？",
+          "help": "保留四個角色各自的前後端負責人；不會把所有Java後端自動交給Database負責人。人選或其他分工可填 Others。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "ERD、資料表／約束、資料庫版本變更及測試資料；各角色負責自己的Java資料存取程式。"
+            },
+            {
+              "key": "B",
+              "text": "包含A，並統籌共用的Java資料存取層及資料庫交易介面。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        },
+        {
+          "id": "U03-Q02",
+          "title": "共用功能及整合責任應怎樣安排？",
+          "help": "共用功能包括登入／權限、訂單狀態、付款／退款、庫存交易、通知及審計。兩方案均需逐項寫清楚責任；具名提名可填 Others。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "各共用功能指定固定負責人，另指定一位整合統籌。"
+            },
+            {
+              "key": "B",
+              "text": "各共用功能指定固定負責人，由相關負責人共同整合，並設輪值統籌。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        },
+        {
+          "id": "U03-Q03",
+          "title": "功能分支在合併前應通過哪些檢查？",
+          "help": "已確認小功能完成即交Testing。此題只決定合併門檻，不代表目前已有自動檢查或通過任何測試。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "Testing確認相關案例，再由另一位Coding成員檢查程式，由指定人合併。"
+            },
+            {
+              "key": "B",
+              "text": "包含A，另以自動建置／測試及介面檢查作合併條件。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        },
+        {
+          "id": "U03-Q04",
+          "title": "除小功能即時交Testing外，團隊應採用哪種固定檢視節奏？",
+          "help": "兩星期只是候選安排。兩者均保留小功能測試及最後整合；每週或其他週期可填 Others。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "依功能里程碑安排檢視，不固定sprint長度。"
+            },
+            {
+              "key": "B",
+              "text": "採用兩星期一輪的計劃及檢視。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "U-04",
+      "title": "錄影簡報的正式要求及製作方式",
+      "help": "已知錄影簡報長15–25分鐘，與11月23日的10分鐘課堂進度報告分開。官方截止日期、提交途徑、格式及參與要求需查證，不能由投票決定。",
+      "questions": [
+        {
+          "id": "U04-Q01",
+          "title": "你目前是否已有錄影簡報的正式課程指示可提供核對？",
+          "help": "需核對截止時間、提交途徑、檔案要求、參與／發言及示範要求；不能假設截止日是12月8日。若有公告連結、部分資料或需安排查證的人選，可直接在 Others 寫明。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "有，可提供OLE公告或教師指示作核對。"
+            },
+            {
+              "key": "B",
+              "text": "沒有，需要向OLE／教師核實。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        },
+        {
+          "id": "U04-Q02",
+          "title": "在符合正式課程指示的前提下，你傾向哪種錄影製作方式？",
+          "help": "B須先確認課程容許剪接。兩者均只使用真實實作及測試證據，不假設所有組員必須發言。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "共同綵排後，按統一大綱協調錄製。"
+            },
+            {
+              "key": "B",
+              "text": "按章節分段錄製，加入說明圖及剪接後合成。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "U-05",
+      "title": "架構、技術及共用規格",
+      "help": "Java／Spring Boot、瀏覽器介面及關聯式資料庫方向已確認。前端框架、資料庫產品、版本、共用介面及安裝方式仍未定；Database Draft v0.4未獲批准。",
+      "questions": [
+        {
+          "id": "U05-Q01",
+          "title": "你傾向哪種應用程式結構？",
+          "help": "兩者均需後端業務／權限檢查，現有HTML只作視覺參考；不表示採用微服務。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "一個Spring Boot應用程式，由伺服器產生HTML頁面，例如Thymeleaf，配合需要的JavaScript。"
+            },
+            {
+              "key": "B",
+              "text": "一個Spring Boot JSON API後端，配合獨立建置的React／Vue等瀏覽器前端。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        },
+        {
+          "id": "U05-Q02",
+          "title": "關聯式資料庫方面，你希望優先評估哪個候選？",
+          "help": "MySQL和PostgreSQL是為本問卷列出的比較候選，並非現有文件已選定的產品。需核對全組環境、部署支援、交易／約束及資料庫版本變更方式；其他產品或需進一步比較可填 Others。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "MySQL。"
+            },
+            {
+              "key": "B",
+              "text": "PostgreSQL。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        },
+        {
+          "id": "U05-Q03",
+          "title": "共用資料及介面規格應以哪種方式管理？",
+          "help": "包括訂單識別碼、狀態、付款與庫存效果、QR輸入／回應及錯誤格式。B增加設定及維護工作。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "維護共同的狀態／資料欄位／API文件與範例，由成員檢查各模組是否一致。"
+            },
+            {
+              "key": "B",
+              "text": "包含A，另加入可執行的介面檢查及可重建的共用測試環境。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        },
+        {
+          "id": "U05-Q04",
+          "title": "目前是否已有可提交全組審核的開發環境版本清單及啟動指引？",
+          "help": "應列JDK、Spring Boot、建置工具、前端及資料庫版本、QR實作及安裝步驟。部分資料、文件連結或擬議負責人可填 Others；不要提交密碼或金鑰。Proof儲存見U-09，付款設定見U-16。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "有，可以提供現有候選清單及指引。"
+            },
+            {
+              "key": "B",
+              "text": "沒有，需要全組共同制定。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "U-06",
+      "title": "庫存差異與回倉檢查",
+      "help": "已確認Warehouse要核對實收數量及狀況；缺貨由Admin決定等待補貨或全單取消／退款。詳細損壞及不足的計算／處理仍未定。",
+      "questions": [
+        {
+          "id": "U06-Q01",
+          "title": "收到缺件、損壞退貨或盤點差異時，需要多詳細的記錄？",
+          "help": "損壞／缺失貨品不能因取消訂單而成為可售庫存，也不能虛增實收數量；保留真實盤點及原有訂單需求。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "基本差異處理：記錄實收數量、狀況、原因及調整；顯示不可售數量及預留不足，阻止受影響訂單繼續。"
+            },
+            {
+              "key": "B",
+              "text": "包含A，加入差異追查個案、證據、受影響預留／訂單清單及解決檢查表。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "U-07",
+      "title": "包裝完成後的受控換貨及重新核對",
+      "help": "貨品損壞／缺失仍走缺貨流程；外包裝損壞但貨品完好，可按已確認方式重新包裝。",
+      "questions": [
+        {
+          "id": "U07-Q01",
+          "title": "包裝完成後如貨品損壞／缺失，而Admin決定等補貨，應怎樣重新驗貨？",
+          "help": "兩方案均建議以已記錄的Admin決定授權處理，由指定Warehouse負責人執行；期間不可取件，只補回同SKU和原訂數量，保留原掃描／作者並再次確認包裝。授權及重新驗證細節仍待採納。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "只重新核對受影響貨品：記錄移除及替換掃描、檢查其餘內容，再確認包裝；情況不明先停下覆核。"
+            },
+            {
+              "key": "B",
+              "text": "整個包裹重新驗貨：重新掃描所有貨品，按內容、數量、標籤及狀況檢查表，再確認包裝。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "U-08",
+      "title": "人工核實及客戶要求的修改方式",
+      "help": "重送仍需回倉確認、客戶指示和Admin批准；待處理的取消要求會阻止重送批准。人工核實方法及要求修改細則未定。",
+      "questions": [
+        {
+          "id": "U08-Q01",
+          "title": "客戶想更改仍待Admin審批的重送／取消要求，應如何處理？",
+          "help": "只能批准目前有效的要求；舊畫面不能令已失效要求獲批。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "撤回後重新提交：每張訂單同時只有一項有效要求，保留舊紀錄。"
+            },
+            {
+              "key": "B",
+              "text": "直接修改並保留版本：保存修改歷史，Admin必須針對最新版本審批。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        },
+        {
+          "id": "U08-Q02",
+          "title": "人工核實及一次性臨時密碼交接，需要哪種授權方式？",
+          "help": "兩方案均提議在Client／員工／Admin帳戶建立時提供一次性恢復碼，只顯示一次並保存不可還原的核對資料。這是新提議；不支持恢復碼可選 Others。遺失碼的可信人工核實程序仍需另訂，訂單號碼或地址本身不足以證明權限。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "採用恢復碼及已核實的人工交接，暫不另加短效支援授權碼。"
+            },
+            {
+              "key": "B",
+              "text": "包含A，讓已登入並重新驗證的客戶產生綁定指定訂單／操作的一次性短效支援授權；候選有效期5分鐘，仍待確認。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "U-09",
+      "title": "配送證明的存取、儲存及保留",
+      "help": "配送成功需要signature或photo之一。基準保留期：詳細DeliveryAttempt及proof一年、operational audit三年；詳細查看權限、格式／大小及摘要政策未定。",
+      "questions": [
+        {
+          "id": "U09-Q01",
+          "title": "是否採用目前建議的配送證明查看權限？",
+          "help": "建議：訂單所屬Client，以及正在處理該次配送的Delivery Worker可查看；Warehouse／Admin只看結果資料。選B只代表未採納，須另訂政策，不能自動授予其他角色存取權。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "採用上述受限查看權限。"
+            },
+            {
+              "key": "B",
+              "text": "不採用上述權限組合，另訂可查看角色及條件。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        },
+        {
+          "id": "U09-Q02",
+          "title": "配送簽名／相片應存放在哪裡？",
+          "help": "兩者均須受保護、可持久保存、經授權才可讀取；重新啟動便消失的臨時檔案空間不適用，並須處理備份到期。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "應用程式的私人持久儲存：放在公開網站目錄之外，設定權限及基本到期清理。"
+            },
+            {
+              "key": "B",
+              "text": "私人物件儲存服務：另加入刪除工作監察及檔案／紀錄核對，增加設定與維護。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        },
+        {
+          "id": "U09-Q03",
+          "title": "詳細配送嘗試及proof按一年期限刪除後，客戶應保留多少歷史？",
+          "help": "兩者均不能取回已刪除的簽名／相片；三年audit只保留獲准的必要資料。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "保留訂單最終狀態，顯示詳細配送資料已到期，不新增長期客戶事件摘要。"
+            },
+            {
+              "key": "B",
+              "text": "另保留最少量事件摘要，例如『某日已送達』，候選三年清理，不包含proof、內部備註、地址或電話。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        },
+        {
+          "id": "U09-Q04",
+          "title": "配送證明的檔案格式及大小，應如何定初試規格？",
+          "help": "現有候選是JPEG／PNG相片、產生PNG簽名，每檔最多5MB。數值仍待確認；上傳失敗不能把配送標成完成或過早清除已捕捉內容。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "先用上述格式及5MB候選上限作手機試驗起點，再確認正式規格。"
+            },
+            {
+              "key": "B",
+              "text": "先收集組員手機的實際拍照／簽名輸出及上傳結果，再制定格式和大小上限。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "U-10",
+      "title": "取件清單、未完成認領及配送前退回",
+      "help": "已確認一張清單由一位Delivery Worker認領，逐件accepted pickup才改custody及庫存；沒有日常工人之間直接交接功能。回復及例外細則未定。",
+      "questions": [
+        {
+          "id": "U10-Q01",
+          "title": "是否採用『一個包裹只在一張未關閉清單、認領後固定內容』的建議？",
+          "help": "此限制是待確認的額外防錯規則；無論採用與否，都須防止同一次領件重複取走或扣庫存。選B不代表允許任意修改已領件歷史。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "採用：每個合資格包裹只可在一張未關閉清單，認領後不更改成員。"
+            },
+            {
+              "key": "B",
+              "text": "暫不採用此固定方式，另訂清單編輯及包裹重複加入的受控規則。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        },
+        {
+          "id": "U10-Q02",
+          "title": "取件清單已被認領但沒有完成時，應如何跟進？",
+          "help": "只可釋放Warehouse確認仍在倉內的未取件項目；逾時不能自動轉移已取走包裹的管有權。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "人工關閉及監督釋放：正常由認領人關閉；擱置清單由Warehouse核實，再由Admin處理。"
+            },
+            {
+              "key": "B",
+              "text": "包含A，另提示長時間沒有取件活動的清單；候選30分鐘後提示覆核，不自動釋放包裹。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        },
+        {
+          "id": "U10-Q03",
+          "title": "配送前退回Warehouse，是否採用目前建議的回隊列方式？",
+          "help": "必須保留原取件及Warehouse確認退回，不建立假的客戶配送失敗。建議：首次配送退回到READY_FOR_PICKUP；已獲批重送的包裹回READY_FOR_REDELIVERY，保留資格限制。已領件後的例外實物重派，亦建議先Warehouse確認回倉，再由新負責人重新領件；單改指派不轉移管有權。A表示採用此組建議，B時狀態及例外重派細則仍未定，可在Others提出替代流程。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "採用上述回隊列方式，重新取件後才可配送。"
+            },
+            {
+              "key": "B",
+              "text": "不採用上述狀態對應，另訂退回後的隊列及狀態。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "U-11",
+      "title": "產品／帳戶停用及角色變更",
+      "help": "停用產品／用戶須保留歷史。不能因產品停用而默默取消已付款訂單，指派變更亦不能冒充實際包裹交接。",
+      "questions": [
+        {
+          "id": "U11-Q01",
+          "title": "產品停用時，既有未付款訂單是否繼續按原資料付款？",
+          "help": "現有建議：停用阻止新訂單，但既有訂單保留原資料及原付款期限；真實缺貨按例外流程。選B不等於授權自動取消或把未知付款當失敗。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "採用建議：既有未付款訂單仍可付款，除非另有已授權的缺貨／例外處理。"
+            },
+            {
+              "key": "B",
+              "text": "不採用此政策，另訂停用對未付款訂單及付款中流程的影響。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        },
+        {
+          "id": "U11-Q02",
+          "title": "一般員工角色變更，需要預先交接安排嗎？",
+          "help": "兩方案都建議停用／封鎖立即撤銷存取，保護最後可用Admin；一般角色變更需重新登入。細則仍待採納；如有不同取向請寫Others。最後Admin無法登入時，由安裝負責人採用甚麼可信人工復原程序仍需另訂，請在Others提出，不設公開繞過。當前權限必須在受保護操作時有效，原作者及進度須保留。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "即時變更及人工交接：Admin人工重新指派未完成工作。"
+            },
+            {
+              "key": "B",
+              "text": "加入影響預覽及預定交接：一般角色變更可待記錄交接後生效；緊急停用／封鎖仍立即處理。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "U-12",
+      "title": "重複配送失敗及沒有回覆的結案方式",
+      "help": "目前未確認最大嘗試次數、回覆期限、自動取消、費用或棄置規則。每次重送仍須回倉確認、客戶指示、Admin批准及再次取件。",
+      "questions": [
+        {
+          "id": "U12-Q01",
+          "title": "重複失敗或長時間沒有回覆，需要哪種覆核提示？",
+          "help": "提示只觸發人員覆核，不等於重送次數上限，亦不能自動取消訂單或釋放庫存；其他數值或明確次數上限提案可填Others。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "人工覆核清單：顯示失敗紀錄、等待時間及未解決個案，暫不加入固定次數／日期提示。"
+            },
+            {
+              "key": "B",
+              "text": "加入可設定提示：以兩次失敗後覆核、確認退回三日後提醒、七日無指示再覆核作候選起點。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        },
+        {
+          "id": "U12-Q02",
+          "title": "經跟進仍沒有客戶指示的退回訂單，是否新增Admin結案權限？",
+          "help": "新增權限尚未批准。兩者均不推定客戶同意重送，也不新增退貨費、棄置、損壞扣款或部分退款。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "暫不新增結案權限：保留未解決個案及貨品／預留紀錄，繼續跟進，按已確認客戶要求及Admin流程處理取消。"
+            },
+            {
+              "key": "B",
+              "text": "新增受控全單取消／退款權限：完成有紀錄跟進及Warehouse檢查後，容許Admin審批；門檻及例外須另寫清楚才實施。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "U-13",
+      "title": "註冊、預設地址及輸入驗證",
+      "help": "下單需收件人、電話及香港地址；預設資料修改不改動已建立訂單。公眾註冊只建立Client，不可自行取得員工／Admin權限。",
+      "questions": [
+        {
+          "id": "U13-Q01",
+          "title": "註冊及儲存送貨資料採用哪個範圍？",
+          "help": "兩者均不增加強制電郵、公司或郵遞區號欄位。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "以用戶名和密碼註冊；下單時填送貨資料，可儲存一組預設資料。"
+            },
+            {
+              "key": "B",
+              "text": "包含A，另加入可命名的多組收件人／地址及地址預覽。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        },
+        {
+          "id": "U13-Q02",
+          "title": "用戶名採用哪套輸入規則？",
+          "help": "長度及字元限制只是候選值。兩方案均以不分大小寫判斷重複；B的自動修正空白是為問卷補充的待討論選項。其他長度、字元或重複判定可填Others。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "4–30個英文字母、數字或底線；前後有空白時要求用戶修正。"
+            },
+            {
+              "key": "B",
+              "text": "4–30個英文字母、數字或底線；系統先移除前後空白，再驗證及判斷重複。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        },
+        {
+          "id": "U13-Q03",
+          "title": "送貨聯絡電話是否只接受香港號碼？",
+          "help": "送貨地址仍限香港；格式有效不代表已驗證持有人或可聯絡性。地址及收件人文字可用中英文。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "只接受香港電話；容許空格或連字號，儲存時統一為+852及八位數字。"
+            },
+            {
+              "key": "B",
+              "text": "接受香港及海外聯絡電話；海外號碼需國家／地區代碼，另訂驗證規則。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "U-14",
+      "title": "第一版介面改善範圍",
+      "help": "四角色介面沿用HTML原型風格，但不能照搬模擬按鈕、假資料或未實作的安全保證。",
+      "questions": [
+        {
+          "id": "U14-Q01",
+          "title": "第一版加入哪個介面改善範圍？",
+          "help": "兩方案都必須有可用的手機操作、清楚錯誤及必要掃描回饋；資料只按角色權限展示，不擴展完整購物車／GPS等已排除功能。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "目前工作面板、一致狀態名稱、基本篩選、未讀提示及醒目掃描回饋。"
+            },
+            {
+              "key": "B",
+              "text": "包含A，另加入收據下載、儲存篩選條件及簡單角色儀表板。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "U-15",
+      "title": "退款例外及回倉取消的退款條件",
+      "help": "訂單取消、退款進行中及實際退款成功必須分清。逾期確認扣款及缺貨取消的既定全額退款要求保留。",
+      "questions": [
+        {
+          "id": "U15-Q01",
+          "title": "待處理、失敗或結果未明的退款如何跟進？",
+          "help": "必要的首次退款及核實provider結果仍須實作。未知結果不能直接重複退款，退款問題不會令已取消訂單恢復送貨或預留。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "Admin人工查看例外清單及查詢供應商，確認先前結果及重試資格後才重試。"
+            },
+            {
+              "key": "B",
+              "text": "包含A，另加入定時查詢、持續例外提示及只對明確符合條件的失敗受控重試；排程間隔再確認。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        },
+        {
+          "id": "U15-Q02",
+          "title": "配送失敗回倉後，獲准取消的訂單何時全額退款？",
+          "help": "只問配送失敗回倉的取消；不影響逾期付款／缺貨的既定退款。B是為問卷補充的待討論政策。兩者均不加入部分退款、自動損壞扣款或其他退款目的地。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "Warehouse確認完整及狀況無問題，或損壞／缺件例外按U-06解決後，才批准全額退款。"
+            },
+            {
+              "key": "B",
+              "text": "Warehouse確認收回且Admin批准取消後便全額退款；損壞／缺件另作庫存及事件處理，不延後退款。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "U-16",
+      "title": "付款供應商、介面及測試帳戶",
+      "help": "已確認外部provider測試環境、測試卡、一次性HKD全單付款，不產生真實收費。需保留30分鐘輸入／重試窗口、24小時LMS確認期限、一個有效checkout、去重及取消後遲來成功扣款退款；選項不代表相容性或測試已通過。",
+      "questions": [
+        {
+          "id": "U16-Q01",
+          "title": "先以哪個供應商作付款選型及可行性核實？",
+          "help": "兩者均須核實測試權限、HKD測試卡、Java整合、結果核實、退款及時間規則。PayPal錢包未在已同意範圍；如提議錢包流程，須在Others明確提出範圍修訂，另行確認。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "Stripe的測試卡付款方案。"
+            },
+            {
+              "key": "B",
+              "text": "PayPal Sandbox的測試卡付款候選，先核實帳戶／地區可用性。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        },
+        {
+          "id": "U16-Q02",
+          "title": "客戶付款時採用哪種介面？",
+          "help": "與供應商分開選擇，須核實最終provider支援。兩者卡資料均由provider處理，LMS不儲存原始卡號；其他批准視窗／錢包可寫Others並提出所需範圍修訂。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "跳轉至供應商提供的付款頁面，完成後返回LMS。"
+            },
+            {
+              "key": "B",
+              "text": "在LMS頁面內嵌入供應商提供的付款元件。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        },
+        {
+          "id": "U16-Q03",
+          "title": "目前有沒有可供本組使用的供應商測試帳戶？",
+          "help": "只填狀態，不填密碼或API key。能登入不代表HKD測試卡、退款或LMS整合已通過；候選provider或部分狀態可填Others。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "尚未有可供本組使用的測試帳戶，需要安排申請及核實。"
+            },
+            {
+              "key": "B",
+              "text": "已有可存取的候選測試帳戶，仍須核實所需權限及功能。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        },
+        {
+          "id": "U16-Q04",
+          "title": "測試帳戶的設定及維護由誰負責？",
+          "help": "先決定責任安排；具體人選及權限再記錄，可在Others提名，不提交密鑰。",
+          "choices": [
+            {
+              "key": "A",
+              "text": "由付款整合負責人同時處理帳戶設定、設定紀錄及交接。"
+            },
+            {
+              "key": "B",
+              "text": "另指定一名帳戶設定／維護負責人，與付款整合負責人協作及交接。"
+            }
+          ],
+          "other": {
+            "enabled": true,
+            "mode": "native-free-text"
+          },
+          "required": true
+        }
+      ]
+    }
+  ]
+};
+const LMS_FORM_ID_KEY = 'LMS_UNDECIDED_FORM_V1_ID';
+const LMS_FORM_STATE_KEY = 'LMS_UNDECIDED_FORM_V1_STATE';
+
+function createLmsQuestionnaire() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    validateLmsDefinition_();
+    const properties = PropertiesService.getScriptProperties();
+    const existingId = properties.getProperty(LMS_FORM_ID_KEY);
+    if (existingId) {
+      if (properties.getProperty(LMS_FORM_STATE_KEY) !== 'COMPLETE') {
+        throw new Error('之前的建立程序未完成。請先檢查已建立的草稿；本程式不會另建重複表單或刪除已有內容。');
+      }
+      return logLmsFormInfo_(FormApp.openById(existingId));
+    }
+
+    const form = FormApp.create(LMS_QUESTIONNAIRE.title, false);
+    const initialState = {};
+    initialState[LMS_FORM_ID_KEY] = form.getId();
+    initialState[LMS_FORM_STATE_KEY] = 'BUILDING';
+    properties.setProperties(initialState);
+
+    form.setDescription(LMS_QUESTIONNAIRE.description);
+    form.setConfirmationMessage(LMS_QUESTIONNAIRE.confirmationMessage);
+    form.setCollectEmail(false);
+    form.setIsQuiz(false);
+    form.setShuffleQuestions(false);
+    form.setProgressBar(true);
+    form.setPublishingSummary(false);
+    form.setLimitOneResponsePerUser(false);
+    form.setShowLinkToRespondAgain(false);
+    form.setAllowResponseEdits(true);
+
+    LMS_QUESTIONNAIRE.sections.forEach(function(section, index) {
+      const header = index === 0
+        ? form.addSectionHeaderItem()
+        : form.addPageBreakItem();
+      header.setTitle(section.id + '｜' + section.title);
+      header.setHelpText(section.help);
+      section.questions.forEach(function(question) {
+        form.addMultipleChoiceItem()
+          .setTitle(question.id + '｜' + question.title)
+          .setHelpText(question.help + '\nOthers／其他：可填另一方案、補充意見或需要討論之處。若想選A／B並補充，請填「A：…」或「B：…」。')
+          .setChoiceValues(question.choices.map(function(choice) {
+            return choice.key + '．' + choice.text;
+          }))
+          .showOtherOption(true)
+          .setRequired(true);
+      });
+    });
+    properties.setProperty(LMS_FORM_STATE_KEY, 'COMPLETE');
+    return logLmsFormInfo_(form);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function validateLmsDefinition_() {
+  if (LMS_QUESTIONNAIRE.sections.length !== 16) {
+    throw new Error('表單必須涵蓋16項U事項。');
+  }
+  const ids = {};
+  LMS_QUESTIONNAIRE.sections.forEach(function(section, index) {
+    const expectedId = 'U-' + ('0' + (index + 1)).slice(-2);
+    if (section.id !== expectedId || !section.questions.length) {
+      throw new Error('U事項順序或題目不完整：' + section.id);
+    }
+    section.questions.forEach(function(question) {
+      if (ids[question.id]) throw new Error('重複題目：' + question.id);
+      ids[question.id] = true;
+      if (question.choices.length !== 2
+          || question.choices[0].key !== 'A'
+          || question.choices[1].key !== 'B'
+          || !question.choices[0].text
+          || !question.choices[1].text
+          || !question.other.enabled
+          || question.other.mode !== 'native-free-text') {
+        throw new Error('每題必須只有A、B及內建其他文字欄：' + question.id);
+      }
+    });
+  });
+}
+
+function logLmsFormInfo_(form) {
+  const canReadState = typeof form.supportsAdvancedResponderPermissions === 'function'
+    && form.supportsAdvancedResponderPermissions();
+  const published = canReadState ? form.isPublished() : null;
+  const result = {
+    status: published === true ? '表單已建立，目前已發佈'
+      : published === false ? '草稿已建立，尚未發佈'
+      : '表單已建立，請在編輯頁確認目前發佈狀態',
+    editUrl: form.getEditUrl(),
+    templateSectionCount: LMS_QUESTIONNAIRE.sections.length,
+    templateQuestionCount: LMS_QUESTIONNAIRE.sections.reduce(function(total, section) {
+      return total + section.questions.length;
+    }, 0),
+    published: published
+  };
+  Logger.log(JSON.stringify(result, null, 2));
+  return result;
+}

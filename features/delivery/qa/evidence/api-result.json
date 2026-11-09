@@ -1,0 +1,655 @@
+{
+  "suite": "Delivery HTTP contract checks",
+  "baseURL": "http://127.0.0.1:8080",
+  "startedAt": "2026-11-05T10:42:37.726Z",
+  "status": "passed",
+  "freshSeedRequired": true,
+  "simulatedActors": [
+    "Warehouse Place holder",
+    "Client Place holder",
+    "Admin Place holder"
+  ],
+  "steps": [
+    {
+      "name": "Anonymous API access and login CSRF are enforced",
+      "status": "passed",
+      "milliseconds": 296
+    },
+    {
+      "name": "Ken and Mei have independent authenticated Delivery sessions",
+      "status": "passed",
+      "milliseconds": 153
+    },
+    {
+      "name": "Fresh seeded data has no private contacts in pickup-list rows",
+      "status": "passed",
+      "milliseconds": 23
+    },
+    {
+      "name": "Start Delivery is blocked before actual pickup",
+      "status": "passed",
+      "milliseconds": 49
+    },
+    {
+      "name": "Claim is exclusive and safe to retry; claim is not custody",
+      "status": "passed",
+      "milliseconds": 51
+    },
+    {
+      "name": "Unknown and wrong-list QR codes leave custody unchanged",
+      "status": "passed",
+      "milliseconds": 26
+    },
+    {
+      "name": "Actual collection is once per cycle and belongs to its collector",
+      "status": "passed",
+      "milliseconds": 50
+    },
+    {
+      "name": "Start creates one attempt and success requires saved proof",
+      "status": "passed",
+      "milliseconds": 46
+    },
+    {
+      "name": "Proof content is validated and another worker cannot read it",
+      "status": "passed",
+      "milliseconds": 3352
+    },
+    {
+      "name": "Successful delivery is final, repeat-safe and revokes handler access",
+      "status": "passed",
+      "milliseconds": 30
+    },
+    {
+      "name": "Other failure needs a note and preserves the actual holder",
+      "status": "passed",
+      "milliseconds": 33
+    },
+    {
+      "name": "Return report alone cannot authorize redelivery or Client instruction",
+      "status": "passed",
+      "milliseconds": 33
+    },
+    {
+      "name": "Warehouse Place holder receipt is repeat-safe; instruction is still required",
+      "status": "passed",
+      "milliseconds": 25
+    },
+    {
+      "name": "Client/Admin Place holders approve the current return; approval is not pickup",
+      "status": "passed",
+      "milliseconds": 26
+    },
+    {
+      "name": "A new legitimate pickup succeeds and preserves the prior failed attempt",
+      "status": "passed",
+      "milliseconds": 29
+    },
+    {
+      "name": "Current cancellation blocks redelivery and cancellation remains final",
+      "status": "passed",
+      "milliseconds": 46
+    },
+    {
+      "name": "A pre-attempt return records no fake customer failure",
+      "status": "passed",
+      "milliseconds": 41
+    },
+    {
+      "name": "Concurrent claims of a replacement list select only one collector",
+      "status": "passed",
+      "milliseconds": 20
+    },
+    {
+      "name": "Logout invalidates authenticated access",
+      "status": "passed",
+      "milliseconds": 8
+    }
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/api/session",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/delivery/workspace",
+      "status": 401
+    },
+    {
+      "method": "POST",
+      "path": "/api/login",
+      "status": 403,
+      "note": "missing CSRF"
+    },
+    {
+      "method": "GET",
+      "path": "/api/session",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/login",
+      "actor": "ken",
+      "status": 401
+    },
+    {
+      "method": "GET",
+      "path": "/api/session",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/login",
+      "actor": "ken",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/session",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/session",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/login",
+      "actor": "mei",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/session",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/pickup-lists/claim",
+      "status": 403,
+      "note": "missing CSRF"
+    },
+    {
+      "method": "GET",
+      "path": "/api/delivery/workspace",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/packages/PKG-1001/start",
+      "actor": "ken",
+      "status": 403
+    },
+    {
+      "method": "GET",
+      "path": "/api/delivery/workspace",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/pickup-lists/claim",
+      "actor": "ken",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/pickup-lists/claim",
+      "actor": "ken",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/pickup-lists/claim",
+      "actor": "ken",
+      "status": 409
+    },
+    {
+      "method": "POST",
+      "path": "/api/pickup-lists/claim",
+      "actor": "mei",
+      "status": 409
+    },
+    {
+      "method": "GET",
+      "path": "/api/delivery/workspace",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/pickup-lists/claim",
+      "actor": "ken",
+      "status": 404
+    },
+    {
+      "method": "POST",
+      "path": "/api/pickup-lists/PL-1001/collect",
+      "actor": "ken",
+      "status": 404
+    },
+    {
+      "method": "POST",
+      "path": "/api/pickup-lists/PL-1001/collect",
+      "actor": "ken",
+      "status": 409
+    },
+    {
+      "method": "GET",
+      "path": "/api/delivery/workspace",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/pickup-lists/PL-1001/collect",
+      "actor": "ken",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/pickup-lists/PL-1001/collect",
+      "actor": "ken",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/pickup-lists/PL-1001/collect",
+      "actor": "ken",
+      "status": 409
+    },
+    {
+      "method": "POST",
+      "path": "/api/pickup-lists/PL-1001/collect",
+      "actor": "mei",
+      "status": 403
+    },
+    {
+      "method": "POST",
+      "path": "/api/packages/PKG-1001/start",
+      "actor": "mei",
+      "status": 403
+    },
+    {
+      "method": "GET",
+      "path": "/api/delivery/workspace",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/delivery/workspace",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/packages/PKG-1001/start",
+      "actor": "ken",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/packages/PKG-1001/start",
+      "actor": "ken",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/packages/PKG-1001/start",
+      "actor": "ken",
+      "status": 409
+    },
+    {
+      "method": "GET",
+      "path": "/api/delivery/workspace",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/packages/PKG-1001/outcome",
+      "actor": "ken",
+      "status": 400
+    },
+    {
+      "method": "GET",
+      "path": "/api/delivery/workspace",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/packages/PKG-1001/proofs",
+      "actor": "ken",
+      "status": 400
+    },
+    {
+      "method": "POST",
+      "path": "/api/packages/PKG-1001/proofs",
+      "actor": "ken",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/proofs/PROOF-5076c453-26fd-43a8-9e6e-f1d5bda8acf3",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/proofs/PROOF-5076c453-26fd-43a8-9e6e-f1d5bda8acf3",
+      "status": 403
+    },
+    {
+      "method": "POST",
+      "path": "/api/packages/PKG-1001/proofs",
+      "actor": "mei",
+      "status": 403
+    },
+    {
+      "method": "POST",
+      "path": "/api/packages/PKG-1001/outcome",
+      "actor": "ken",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/packages/PKG-1001/outcome",
+      "actor": "ken",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/packages/PKG-1001/outcome",
+      "actor": "ken",
+      "status": 403
+    },
+    {
+      "method": "GET",
+      "path": "/api/delivery/workspace",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/proofs/PROOF-5076c453-26fd-43a8-9e6e-f1d5bda8acf3",
+      "status": 403
+    },
+    {
+      "method": "POST",
+      "path": "/api/pickup-lists/PL-1001/collect",
+      "actor": "ken",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/packages/PKG-1002/start",
+      "actor": "ken",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/packages/PKG-1002/outcome",
+      "actor": "ken",
+      "status": 400
+    },
+    {
+      "method": "POST",
+      "path": "/api/packages/PKG-1002/outcome",
+      "actor": "ken",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/delivery/workspace",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/demo/packages/PKG-1002/admin-decision",
+      "actor": "ken",
+      "status": 409
+    },
+    {
+      "method": "POST",
+      "path": "/api/demo/packages/PKG-1002/client-instruction",
+      "actor": "ken",
+      "status": 409
+    },
+    {
+      "method": "POST",
+      "path": "/api/packages/PKG-1002/return",
+      "actor": "ken",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/demo/packages/PKG-1002/admin-decision",
+      "actor": "ken",
+      "status": 409
+    },
+    {
+      "method": "POST",
+      "path": "/api/demo/packages/PKG-1002/client-instruction",
+      "actor": "ken",
+      "status": 409
+    },
+    {
+      "method": "GET",
+      "path": "/api/delivery/workspace",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/demo/packages/PKG-1002/confirm-return",
+      "actor": "ken",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/demo/packages/PKG-1002/confirm-return",
+      "actor": "ken",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/demo/packages/PKG-1002/admin-decision",
+      "actor": "ken",
+      "status": 409
+    },
+    {
+      "method": "GET",
+      "path": "/api/delivery/workspace",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/demo/packages/PKG-1002/client-instruction",
+      "actor": "ken",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/demo/packages/PKG-1002/admin-decision",
+      "actor": "ken",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/delivery/workspace",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/packages/PKG-1002/start",
+      "actor": "ken",
+      "status": 403
+    },
+    {
+      "method": "POST",
+      "path": "/api/pickup-lists/claim",
+      "actor": "ken",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/pickup-lists/PL-1ad05e01-2a4f-408c-88b2-2b31bee1b47b/collect",
+      "actor": "ken",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/packages/PKG-1002/start",
+      "actor": "ken",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/delivery/workspace",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/packages/PKG-1002/outcome",
+      "actor": "ken",
+      "status": 403
+    },
+    {
+      "method": "POST",
+      "path": "/api/packages/PKG-1002/outcome",
+      "actor": "ken",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/packages/PKG-1002/return",
+      "actor": "ken",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/demo/packages/PKG-1002/confirm-return",
+      "actor": "ken",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/demo/packages/PKG-1002/client-instruction",
+      "actor": "ken",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/demo/packages/PKG-1002/admin-decision",
+      "actor": "ken",
+      "status": 409
+    },
+    {
+      "method": "POST",
+      "path": "/api/demo/packages/PKG-1002/admin-decision",
+      "actor": "ken",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/delivery/workspace",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/packages/PKG-1002/start",
+      "actor": "ken",
+      "status": 403
+    },
+    {
+      "method": "POST",
+      "path": "/api/demo/packages/PKG-1002/admin-decision",
+      "actor": "ken",
+      "status": 409
+    },
+    {
+      "method": "POST",
+      "path": "/api/pickup-lists/claim",
+      "actor": "mei",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/pickup-lists/PL-1002/collect",
+      "actor": "mei",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/delivery/workspace",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/packages/PKG-1003/return",
+      "actor": "mei",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/delivery/workspace",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/demo/packages/PKG-1003/confirm-return",
+      "actor": "mei",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/delivery/workspace",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/delivery/workspace",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/pickup-lists/claim",
+      "actor": "mei",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/pickup-lists/claim",
+      "actor": "ken",
+      "status": 409
+    },
+    {
+      "method": "GET",
+      "path": "/api/delivery/workspace",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/logout",
+      "actor": "ken",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/delivery/workspace",
+      "status": 401
+    },
+    {
+      "method": "GET",
+      "path": "/api/session",
+      "status": 200
+    }
+  ],
+  "notCovered": [
+    "Camera hardware",
+    "Real shared-role authentication",
+    "Cloud storage/deployment",
+    "External payment/refund",
+    "Restart/backup/retention",
+    "Direct stock ledger assertions (not exposed by this API)",
+    "Performance targets"
+  ],
+  "finishedAt": "2026-11-05T10:42:42.075Z",
+  "passedSteps": 19,
+  "failedSteps": 0
+}

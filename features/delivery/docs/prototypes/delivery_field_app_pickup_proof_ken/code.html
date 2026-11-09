@@ -1,0 +1,775 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_dashboard" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"on-error":"#ffffff","on-tertiary":"#ffffff","surface-variant":"#d3e4fe","secondary":"#0051d5","on-primary":"#ffffff","on-primary-container":"#7c839b","tertiary":"#000000","on-secondary":"#ffffff","surface-container-highest":"#d3e4fe","on-background":"#0b1c30","on-tertiary-fixed-variant":"#3c475a","surface-container-high":"#dce9ff","primary-fixed-dim":"#bec6e0","secondary-fixed":"#dbe1ff","tertiary-container":"#111c2d","on-surface-variant":"#45464d","secondary-container":"#316bf3","outline":"#76777d","outline-variant":"#c6c6cd","surface-container-low":"#eff4ff","primary":"#000000","tertiary-fixed":"#d8e3fb","inverse-surface":"#213145","on-tertiary-container":"#79849a","error-container":"#ffdad6","primary-container":"#131b2e","surface-container":"#e5eeff","inverse-primary":"#bec6e0","primary-fixed":"#dae2fd","surface-container-lowest":"#ffffff","tertiary-fixed-dim":"#bcc7de","secondary-fixed-dim":"#b4c5ff","on-primary-fixed":"#131b2e","on-secondary-container":"#fefcff","inverse-on-surface":"#eaf1ff","error":"#ba1a1a","on-tertiary-fixed":"#111c2d","on-primary-fixed-variant":"#3f465c","on-error-container":"#93000a","on-surface":"#0b1c30","on-secondary-fixed-variant":"#003ea8","surface":"#f8f9ff","surface-dim":"#cbdbf5","surface-bright":"#f8f9ff","surface-tint":"#565e74","background":"#f8f9ff","on-secondary-fixed":"#00174b"},borderRadius:{DEFAULT:"0.125rem",lg:"0.25rem",xl:"0.5rem",full:"0.75rem"},spacing:{gutter:"1rem","space-2xl":"3rem","gutter-desktop":"1.5rem","space-xl":"2rem","space-md":"1rem",margin:"1rem","space-sm":"0.5rem","space-lg":"1.5rem","space-xs":"0.25rem","margin-desktop":"2rem"},fontFamily:{"headline-xl":["Inter"],"label-table-head":["Inter"],"headline-md":["Inter"],"body-sm":["Inter"],"headline-lg":["Inter"],"label-status":["Inter"],"body-lg":["Inter"],"headline-sm":["Inter"],"body-md":["Inter"],"body-xs":["Inter"],"label-code":["JetBrains Mono"]},fontSize:{"headline-xl":["30px",{lineHeight:"38px",letterSpacing:"-0.02em",fontWeight:"700"}],"label-table-head":["11px",{lineHeight:"14px",letterSpacing:"0.05em",fontWeight:"600"}],"headline-md":["20px",{lineHeight:"28px",letterSpacing:"-0.01em",fontWeight:"600"}],"body-sm":["13px",{lineHeight:"18px",fontWeight:"400"}],"headline-lg":["24px",{lineHeight:"32px",letterSpacing:"-0.015em",fontWeight:"600"}],"label-status":["11px",{lineHeight:"14px",letterSpacing:"0.04em",fontWeight:"700"}],"body-lg":["16px",{lineHeight:"24px",fontWeight:"400"}],"headline-sm":["16px",{lineHeight:"24px",fontWeight:"600"}],"body-md":["14px",{lineHeight:"20px",fontWeight:"400"}],"body-xs":["12px",{lineHeight:"16px",fontWeight:"400"}],"label-code":["12px",{lineHeight:"16px",letterSpacing:"0.02em",fontWeight:"500"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><header class="fixed top-0 left-0 right-0 h-14 bg-primary-container text-on-primary z-50 shadow-[0_1px_8px_rgba(0,0,0,0.08)] flex items-center justify-between px-margin-desktop"><div class="flex items-center gap-space-lg"><div class="flex items-center gap-space-sm"><img alt="LMS Brand Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1XID8S36_nPbJl9JTZSeHXZlVu9bO52ehFG5vN1RadDJSJbb1-cUi7w5uBzF6HouEPHm214qtAZUDmg3UFcXx30kIw5K0rJcLlo-qrWNaMX3ohptDGI0o1_zRhYhv7gcqou8X3rDahnQ20ey4P9T0jLnT1H8dubaSiVXBYJcZwvQGQscARyTczTXpHcGr4MOI3LVmQ2NY7kZ7qqQ7IX7VVfzGkdh7egqzjC-tj6eCfJQq63mkDzcH0fS8XS"><span class="font-headline-sm text-headline-sm font-semibold tracking-tight text-on-primary hidden sm:inline">NEXUS LMS</span></div><span class="inline-flex items-center px-space-sm py-0.5 rounded text-label-status font-label-status uppercase bg-tertiary-container text-on-tertiary-container border border-outline-variant/30 tracking-wider">PROTOTYPE / DEMO ENVIRONMENT</span></div><nav class="hidden xl:flex items-center gap-space-xs bg-tertiary-container/80 p-1 rounded-xl" data-active-classes="bg-secondary-container text-on-secondary-container rounded-lg font-headline-sm"><a class="px-space-md py-1.5 text-on-primary-container text-body-sm font-body-sm transition-colors hover:text-on-primary" data-path="client-portal" href="#">Client Portal</a><a class="px-space-md py-1.5 text-on-primary-container text-body-sm font-body-sm transition-colors hover:text-on-primary" data-path="warehouse-operations" href="#">Warehouse Operations (Mei)</a><a aria-current="page" class="px-space-md py-1.5 transition-colors bg-secondary-container text-on-secondary-container rounded-lg font-headline-sm" data-path="delivery-field-app" href="#">Delivery Field App (Ken)</a><a class="px-space-md py-1.5 text-on-primary-container text-body-sm font-body-sm transition-colors hover:text-on-primary" data-path="system-administration" href="#">System Administration (Alex)</a></nav><div class="flex items-center gap-space-md"><button aria-label="Notifications" class="relative p-1.5 rounded-lg text-on-primary-container hover:text-on-primary hover:bg-tertiary-container transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-secondary"></span></button><div class="flex items-center gap-space-sm pl-space-sm border-l border-outline-variant/20"><div class="flex flex-col text-right hidden md:block"><span class="text-body-xs font-body-xs font-medium text-on-primary leading-none">Alex Vance</span><span class="text-[10px] font-label-status text-on-primary-container uppercase tracking-wider">Operations Lead</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><aside class="fixed left-0 top-14 bottom-0 w-64 bg-surface-container-low shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex flex-col py-space-md"><div class="px-space-md pb-space-sm mb-space-sm border-b border-outline-variant/30 flex items-center justify-between"><span class="text-label-table-head font-label-table-head uppercase tracking-wider text-on-surface-variant">Operational Console</span><span class="text-label-code font-label-code text-secondary font-medium">v4.2-rel</span></div><nav class="flex-1 px-space-sm flex flex-col gap-space-xs overflow-y-auto" data-active-classes="bg-secondary-container text-on-secondary-container font-headline-sm rounded-lg"><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors text-body-md font-body-md" data-path="overview-dashboard" href="#"><span class="material-symbols-outlined text-[20px]">grid_view</span><span class="">Overview Dashboard</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors text-body-md font-body-md" data-path="client-portal" href="#"><span class="material-symbols-outlined text-[20px]">domain</span><span class="">Client Portal</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors text-body-md font-body-md" data-path="warehouse-operations" href="#"><span class="material-symbols-outlined text-[20px]">warehouse</span><span class="">Warehouse (Mei)</span></a><a aria-current="page" class="flex items-center gap-space-sm px-space-md py-2.5 transition-colors bg-secondary-container text-on-secondary-container font-headline-sm rounded-lg" data-path="delivery-field-app" href="#"><span class="material-symbols-outlined text-[20px]">local_shipping</span><span class="">Delivery App (Ken)</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors text-body-md font-body-md" data-path="system-administration" href="#"><span class="material-symbols-outlined text-[20px]">tune</span><span class="">Administration (Alex)</span></a><div class="my-space-sm border-t border-outline-variant/30"></div><span class="px-space-md text-[10px] font-label-table-head uppercase tracking-wider text-on-surface-variant">Audit &amp; Logistics</span><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors text-body-md font-body-md" data-path="live-dispatch-tracking" href="#"><span class="material-symbols-outlined text-[20px]">radar</span><span class="">Live Dispatch</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors text-body-md font-body-md" data-path="inventory-catalog" href="#"><span class="material-symbols-outlined text-[20px]">inventory_2</span><span class="">Inventory Matrix</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors text-body-md font-body-md" data-path="audit-logs" href="#"><span class="material-symbols-outlined text-[20px]">history_edu</span><span class="">Audit Trails</span></a></nav><div class="p-space-md mt-auto border-t border-outline-variant/30 bg-surface-container"><div class="flex items-center justify-between text-body-xs font-body-xs text-on-surface-variant"><span class="">Sync Pipeline</span><span class="inline-flex items-center gap-1 text-secondary font-medium"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>Active</span></div><div class="mt-1 text-[11px] font-label-code text-on-surface-variant/80 truncate">node-east-us.lms-core.internal</div></div></aside><div class="pl-64"><main class="w-full pt-14 bg-surface min-h-screen px-gutter-desktop py-space-lg"><div class="flex flex-col w-full">
+<!-- Toast System Container -->
+<div class="fixed top-16 right-6 z-50 flex flex-col gap-space-xs pointer-events-none w-80" id="toast-container"></div>
+<!-- Operational Field Header -->
+<div class="w-full bg-surface-container-lowest rounded-xl p-space-lg shadow-sm mb-space-lg flex flex-col xl:flex-row xl:items-center xl:justify-between gap-space-lg">
+<div class="flex items-start md:items-center gap-space-md">
+<div class="relative">
+<div class="w-14 h-14 rounded-full bg-primary-container text-on-primary flex items-center justify-center shadow-md">
+<span class="material-symbols-outlined text-[32px]">local_shipping</span>
+</div>
+<span class="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-secondary-container ring-2 ring-surface-container-lowest flex items-center justify-center">
+<span class="w-2 h-2 rounded-full bg-surface-container-lowest"></span>
+</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-sm flex-wrap">
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Kenji "Ken" Tanaka</h1>
+<span class="px-space-sm py-0.5 rounded text-label-status font-label-status uppercase bg-secondary/10 text-secondary">
+            Field Courier #FC-9941
+          </span>
+<span class="px-space-sm py-0.5 rounded text-label-status font-label-status uppercase bg-surface-container-high text-on-surface-variant font-label-code">
+            SECURE ACCESS TIER 2
+          </span>
+</div>
+<div class="flex items-center gap-space-md mt-1 text-body-sm font-body-sm text-on-surface-variant flex-wrap">
+<span class="inline-flex items-center gap-1 font-label-code">
+<span class="material-symbols-outlined text-[16px] text-secondary">directions_car</span>
+            Van Fleet #08 (EV-Transit) • Lic: 8XLM92
+          </span>
+<span class="inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">hub</span>
+            Hub: South Sector Metro Bay 4
+          </span>
+<span class="inline-flex items-center gap-1 text-secondary font-medium">
+<span class="material-symbols-outlined text-[16px]">sync_saved_locally</span>
+            Shift Active (07:30 - 16:30)
+          </span>
+</div>
+</div>
+</div>
+<!-- Telemetry & Load Status Indicators -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-space-sm">
+<div class="bg-surface-container-low p-space-sm rounded-lg flex flex-col justify-between">
+<span class="font-label-table-head text-label-table-head text-on-surface-variant uppercase">Battery &amp; Telemetry</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-headline-md text-headline-md text-on-surface">94%</span>
+<span class="font-label-code text-label-code text-secondary">OK</span>
+</div>
+</div>
+<div class="bg-surface-container-low p-space-sm rounded-lg flex flex-col justify-between">
+<span class="font-label-table-head text-label-table-head text-on-surface-variant uppercase">Payload Load</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-headline-md text-headline-md text-on-surface" id="stat-load-count">1/4</span>
+<span class="text-body-xs font-body-xs text-on-surface-variant">units</span>
+</div>
+</div>
+<div class="bg-surface-container-low p-space-sm rounded-lg flex flex-col justify-between">
+<span class="font-label-table-head text-label-table-head text-on-surface-variant uppercase">Current Status</span>
+<span class="mt-1 inline-flex items-center gap-1.5 px-space-xs py-0.5 rounded text-label-status font-label-status uppercase bg-surface-container text-on-surface-variant" id="badge-courier-state">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+          Dock Scanning
+        </span>
+</div>
+<div class="bg-surface-container-low p-space-sm rounded-lg flex flex-col justify-between">
+<span class="font-label-table-head text-label-table-head text-on-surface-variant uppercase">Route Sequence</span>
+<span class="mt-1 font-label-code text-label-code text-on-surface">ROUTE-PAC-04</span>
+</div>
+</div>
+</div>
+<!-- SECTION 1: Warehouse Pickup Queue & List Scanning -->
+<div class="w-full bg-surface-container-lowest rounded-xl p-space-lg shadow-sm mb-space-lg">
+<div class="flex flex-col md:flex-row md:items-center justify-between pb-space-md gap-space-sm">
+<div>
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-[24px]">qr_code_scanner</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">1. Warehouse Pickup Queue &amp; List Scanning</h2>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+          Scan outbound manifestation batch list followed by individual high-capacity package barcodes to accept custodial transit.
+        </p>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="px-space-md py-2 rounded bg-secondary text-on-secondary text-headline-sm font-headline-sm flex items-center gap-space-xs shadow-sm hover:opacity-90 transition-all" id="btn-scan-picklist" onclick="scanPickupList()">
+<span class="material-symbols-outlined text-[18px]">receipt_long</span>
+          Scan Pickup-List QR (PL-BATCH-402)
+        </button>
+</div>
+</div>
+<!-- Batch Manifestation Card -->
+<div class="bg-surface-container-low rounded-xl p-space-md mb-space-md transition-all" id="manifest-card">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-12 h-12 bg-surface-container-lowest rounded-lg flex items-center justify-center text-on-surface shadow-xs">
+<span class="material-symbols-outlined text-[28px]">assignment_turned_in</span>
+</div>
+<div>
+<div class="flex items-center gap-space-sm">
+<span class="font-label-code text-label-code font-bold text-on-surface">PL-BATCH-402</span>
+<span class="px-space-xs py-0.5 rounded text-label-status font-label-status uppercase bg-surface-container-high text-on-surface-variant" id="batch-status-badge">
+                Pending Verification
+              </span>
+</div>
+<div class="text-body-xs font-body-xs text-on-surface-variant mt-1">
+              Bay 04 • Staged by Mei Lin (Warehouse) • Priority Manifest • Assigned: Ken Tanaka
+            </div>
+</div>
+</div>
+<!-- Simulation Barcode Test Bar -->
+<div class="flex flex-wrap items-center gap-space-xs">
+<span class="font-label-table-head text-label-table-head uppercase text-on-surface-variant pr-2">Simulate Package Scan:</span>
+<button class="opacity-50 cursor-not-allowed px-space-sm py-1.5 rounded bg-surface-container-lowest text-on-surface hover:bg-surface-container text-body-sm font-body-sm flex items-center gap-1 shadow-xs transition-colors" disabled="" id="btn-scan-1001" onclick="scanPackageQR('PKG-LMS-1001')">
+<span class="material-symbols-outlined text-[16px] text-secondary">barcode_scanner</span>
+            Scan PKG-LMS-1001
+          </button>
+<button class="opacity-50 cursor-not-allowed px-space-sm py-1.5 rounded bg-surface-container-lowest text-on-surface hover:bg-surface-container text-body-sm font-body-sm flex items-center gap-1 shadow-xs transition-colors" disabled="" id="btn-scan-8888" onclick="scanPackageQR('PKG-LMS-8888')">
+<span class="material-symbols-outlined text-[16px] text-error">warning</span>
+            Scan Unassigned (PKG-LMS-8888)
+          </button>
+<button class="opacity-50 cursor-not-allowed px-space-sm py-1.5 rounded bg-surface-container-lowest text-on-surface hover:bg-surface-container text-body-sm font-body-sm flex items-center gap-1 shadow-xs transition-colors" disabled="" id="btn-scan-dup" onclick="scanPackageQR('PKG-LMS-DUP')">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">content_copy</span>
+            Scan Duplicate QR
+          </button>
+</div>
+</div>
+</div><div class="hidden mb-space-md p-space-md rounded-lg bg-error-container text-on-error-container border border-error/20 flex items-center justify-between" id="scan-error-banner"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-error text-[22px]">error</span><div><div class="font-headline-sm text-headline-sm" id="scan-error-title">Scan Rejected</div><div class="text-body-sm font-body-sm" id="scan-error-msg">Package is not assigned to this pickup list.</div></div></div><button class="text-body-xs font-body-xs underline px-2 py-1" onclick="document.getElementById('scan-error-banner').classList.add('hidden')">Dismiss</button></div>
+<!-- Warehouse Items Table -->
+<div class="overflow-x-auto rounded-lg bg-surface-container-low">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-surface-container-high text-on-surface-variant font-label-table-head text-label-table-head uppercase">
+<th class="py-2.5 px-space-md">Package Tracking</th>
+<th class="py-2.5 px-space-md">Order ID</th>
+<th class="py-2.5 px-space-md">SKU / Item</th>
+<th class="py-2.5 px-space-md">Pickup Status</th>
+<th class="py-2.5 px-space-md">Staging Location</th>
+<th class="py-2.5 px-space-md">Custody Timestamp</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container" id="pickup-queue-body"><tr class="text-body-sm font-body-sm hover:bg-surface-container-lowest transition-colors" id="row-pkg-1001"><td class="py-3 px-space-md font-label-code font-bold text-on-surface flex items-center gap-1.5"><span class="">PKG-LMS-1001</span><button class="text-on-surface-variant hover:text-secondary p-0.5 rounded" onclick="copyToClipboard('PKG-LMS-1001')" title="Copy"><span class="material-symbols-outlined text-[14px]">content_copy</span></button></td><td class="py-3 px-space-md font-label-code">ORD-LMS-1001</td><td class="py-3 px-space-md text-on-surface">Pro Audio Monitor Headphones × 1</td><td class="py-3 px-space-md"><span class="inline-flex items-center gap-1 px-space-xs py-0.5 rounded text-label-status font-label-status uppercase bg-surface-container-high text-on-surface" id="badge-pkg-1001"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>READY_FOR_PICKUP</span></td><td class="py-3 px-space-md font-label-code text-on-surface-variant">SHELF-B4-09</td><td class="py-3 px-space-md text-on-surface-variant font-label-code" id="timestamp-pkg-1001">Pending Scan</td></tr><tr class="text-body-sm font-body-sm hover:bg-surface-container-lowest transition-colors" id="row-pkg-1002"><td class="py-3 px-space-md font-label-code font-bold text-on-surface flex items-center gap-1.5"><span class="">PKG-LMS-1002</span><button class="text-on-surface-variant hover:text-secondary p-0.5 rounded" onclick="copyToClipboard('PKG-LMS-1002')" title="Copy"><span class="material-symbols-outlined text-[14px]">content_copy</span></button></td><td class="py-3 px-space-md font-label-code">ORD-LMS-1002</td><td class="py-3 px-space-md text-on-surface">Product B (Industrial Sensor Kit) × 1</td><td class="py-3 px-space-md"><span class="inline-flex items-center gap-1 px-space-xs py-0.5 rounded text-label-status font-label-status uppercase bg-surface-container text-on-surface"><span class="w-1.5 h-1.5 rounded-full bg-on-surface-variant"></span>SHIPPED</span></td><td class="py-3 px-space-md font-label-code text-on-surface-variant">VAN-CAB-SEC-2</td><td class="py-3 px-space-md text-on-surface-variant font-label-code">Today, 08:14 AM (Ken)</td></tr></tbody>
+</table>
+</div>
+</div>
+<!-- SECTION 2: My Deliveries Active Roster -->
+<div class="w-full bg-surface-container-lowest rounded-xl p-space-lg shadow-sm mb-space-lg">
+<div class="flex flex-col md:flex-row md:items-center justify-between pb-space-md gap-space-sm">
+<div>
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-[24px]">pin_drop</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">2. My Deliveries Active Roster</h2>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+          Custodial manifests locked to courier Ken Tanaka. Recipient PII is strictly shielded under LMS Role Policy 4.2.
+        </p>
+</div>
+<div class="flex items-center gap-space-xs text-body-xs font-body-xs bg-surface-container-low px-space-md py-1.5 rounded-lg text-on-surface-variant"><span class="material-symbols-outlined text-[16px] text-secondary">shield</span><span class="">PII Data Masked • Authorized Driver View Access Enabled</span></div>
+</div>
+<!-- Active Deliveries Table -->
+<div class="overflow-x-auto rounded-lg bg-surface-container-low">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-surface-container-high text-on-surface-variant font-label-table-head text-label-table-head uppercase">
+<th class="py-2.5 px-space-md">Order ID &amp; Items</th>
+<th class="py-2.5 px-space-md">Client Details (Role-Restricted)</th>
+<th class="py-2.5 px-space-md">Shipping Address</th>
+<th class="py-2.5 px-space-md">Operational Status</th>
+<th class="py-2.5 px-space-md">Attempt Status</th>
+<th class="py-2.5 px-space-md text-right">Driver Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container"><tr class="text-body-sm font-body-sm hover:bg-surface-container-lowest transition-colors" id="roster-row-1001"><td class="py-4 px-space-md"><div class="font-label-code font-bold text-on-surface">ORD-LMS-1001</div><div class="text-body-xs font-body-xs text-on-surface-variant mt-0.5">PKG-LMS-1001 • Pro Audio Monitor Headphones × 1</div></td><td class="py-4 px-space-md"><div class="font-headline-sm text-headline-sm text-on-surface">Sarah Chen</div><div class="font-label-code text-label-code text-on-surface-variant flex items-center gap-1 mt-0.5"><span class="material-symbols-outlined text-[14px]">call</span><span class="">+1 (555) ***-9201</span></div></td><td class="py-4 px-space-md"><div class="text-on-surface font-medium">742 Evergreen Terrace, Unit ***, Springfield</div><div class="text-body-xs font-body-xs text-on-surface-variant">Springfield District, Bay Ridge Sector</div></td><td class="py-4 px-space-md"><div class="flex flex-col gap-1 items-start"><span class="inline-flex items-center gap-1 px-space-xs py-0.5 rounded text-label-status font-label-status uppercase bg-surface-container text-on-surface-variant" id="badge-roster-status-1001"><span class="w-1.5 h-1.5 rounded-full bg-outline"></span>SHIPPED</span><span class="inline-flex items-center gap-1 px-space-xs py-0.5 rounded text-label-status font-label-status uppercase bg-surface-container-high text-secondary font-label-code">Payment: PAID</span></div></td><td class="py-4 px-space-md"><span class="inline-flex items-center gap-1 px-space-xs py-0.5 rounded text-label-status font-label-status uppercase bg-surface-container text-on-surface-variant" id="badge-attempt-1001">Attempt 0</span></td><td class="py-4 px-space-md text-right"><div class="flex flex-col items-end gap-1"><div class="flex items-center justify-end gap-space-xs"><button class="px-space-sm py-1.5 rounded bg-surface-container-high text-on-surface text-body-sm font-body-sm flex items-center gap-1 hover:bg-surface-container transition-colors" onclick="openDetailsDrawer('1001')"><span class="material-symbols-outlined text-[16px]">visibility</span>View Details</button><button class="px-space-md py-1.5 rounded bg-secondary text-on-secondary text-headline-sm font-headline-sm flex items-center gap-1 shadow-xs hover:opacity-90 transition-all" id="btn-start-delivery-1001" onclick="startDelivery('1001')"><span class="material-symbols-outlined text-[16px]">navigation</span>Start Delivery</button><button class="opacity-50 cursor-not-allowed px-space-md py-1.5 rounded bg-primary text-on-primary text-headline-sm font-headline-sm flex items-center gap-1 shadow-xs hover:opacity-90 transition-all" disabled="" id="btn-open-outcome-1001" onclick="openOutcomeModal('1001')"><span class="material-symbols-outlined text-[16px]">fact_check</span>Log Outcome</button></div><span class="text-[11px] text-on-surface-variant italic">Starts delivery only for this order; leaves others unchanged</span></div></td></tr><tr class="text-body-sm font-body-sm hover:bg-surface-container-lowest transition-colors" id="roster-row-1002"><td class="py-4 px-space-md"><div class="font-label-code font-bold text-on-surface">ORD-LMS-1002</div><div class="text-body-xs font-body-xs text-on-surface-variant mt-0.5">PKG-LMS-1002 • Product B (Sensor Kit) × 1</div></td><td class="py-4 px-space-md"><div class="font-headline-sm text-headline-sm text-on-surface">Marcus Holloway</div><div class="font-label-code text-label-code text-on-surface-variant flex items-center gap-1 mt-0.5"><span class="material-symbols-outlined text-[14px]">call</span><span class="">+1 (555) ***-0348</span></div></td><td class="py-4 px-space-md"><div class="text-on-surface font-medium">884 Howard Street, Suite ***, Downtown</div><div class="text-body-xs font-body-xs text-on-surface-variant">Downtown Logistics Plaza, Tower B</div></td><td class="py-4 px-space-md"><div class="flex flex-col gap-1 items-start"><span class="inline-flex items-center gap-1 px-space-xs py-0.5 rounded text-label-status font-label-status uppercase bg-error-container text-on-error-container" id="badge-roster-status-1002"><span class="w-1.5 h-1.5 rounded-full bg-error"></span>DELIVERY_FAILED</span><span class="inline-flex items-center gap-1 px-space-xs py-0.5 rounded text-label-status font-label-status uppercase bg-surface-container-high text-secondary font-label-code">Payment: PAID</span></div></td><td class="py-4 px-space-md"><span class="inline-flex items-center gap-1 px-space-xs py-0.5 rounded text-label-status font-label-status uppercase bg-error-container text-on-error-container font-label-code">Prior Attempt: 1</span></td><td class="py-4 px-space-md text-right"><div class="flex items-center justify-end gap-space-xs"><button class="px-space-sm py-1.5 rounded bg-surface-container-high text-on-surface text-body-sm font-body-sm flex items-center gap-1 hover:bg-surface-container transition-colors" onclick="openDetailsDrawer('1002')"><span class="material-symbols-outlined text-[16px]">visibility</span>View Details</button><button class="px-space-md py-1.5 rounded bg-surface-container text-on-surface text-headline-sm font-headline-sm flex items-center gap-1 hover:bg-surface-container-high transition-colors" onclick="scrollToHistory1002()"><span class="material-symbols-outlined text-[16px]">history</span>View Delivery Attempt History</button></div></td></tr></tbody>
+</table>
+</div>
+</div>
+<!-- SECTION 3: Delivery Outcome & Proof Capture Panel -->
+<div class="w-full grid grid-cols-1 xl:grid-cols-12 gap-space-lg mb-space-2xl">
+<!-- Active Outcome Action Panel for LMS-1001 -->
+<div class="xl:col-span-7 bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between pb-space-sm mb-space-sm">
+<div>
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-[24px]">assignment_turned_in</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">3. Outcome &amp; Proof Capture Console</h2>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Active Target: Order LMS-1001 (Sarah Chen)</p>
+</div>
+<span class="px-space-sm py-1 rounded text-label-status font-label-status uppercase bg-surface-container text-on-surface-variant" id="outcome-eligibility-badge">
+            Requires OUT_FOR_DELIVERY Status
+          </span>
+</div>
+<!-- Outcome Mode Tabs -->
+<div class="flex items-center gap-space-xs bg-surface-container-low p-1 rounded-lg mb-space-md">
+<button class="flex-1 py-2 text-center text-headline-sm font-headline-sm rounded bg-surface-container-lowest text-on-surface shadow-xs transition-all flex items-center justify-center gap-1.5" id="tab-btn-success" onclick="switchOutcomeTab('success')">
+<span class="material-symbols-outlined text-[18px] text-secondary">check_circle</span>
+            Tab 1: Successful Delivery
+          </button>
+<button class="flex-1 py-2 text-center text-body-sm font-body-sm rounded text-on-surface-variant hover:text-on-surface transition-all flex items-center justify-center gap-1.5" id="tab-btn-failure" onclick="switchOutcomeTab('failure')">
+<span class="material-symbols-outlined text-[18px] text-error">cancel</span>
+            Tab 2: Failed Delivery Attempt
+          </button>
+</div>
+<!-- TAB 1 CONTENT: Successful Delivery -->
+<div class="flex flex-col gap-space-md" id="tab-content-success">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<!-- Proof Option A: Digital Signature Pad -->
+<div class="bg-surface-container-low p-space-md rounded-lg flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="text-headline-sm font-headline-sm text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px] text-secondary">draw</span>
+                    Recipient Digital Signature
+                  </span>
+<button class="text-body-xs font-body-xs text-on-surface-variant hover:text-error transition-colors" onclick="clearCanvasSignature()">Clear</button>
+</div>
+<div class="relative bg-surface-container-lowest rounded-lg h-36 flex items-center justify-center overflow-hidden cursor-crosshair">
+<canvas class="w-full h-full" height="144" id="signature-canvas" width="300"></canvas>
+<div class="absolute pointer-events-none flex flex-col items-center justify-center text-on-surface-variant/40" id="sig-placeholder">
+<span class="material-symbols-outlined text-[24px]">gesture</span>
+<span class="text-body-xs font-body-xs">Sign on tablet / stylus interface</span>
+</div>
+</div>
+</div>
+<div class="mt-2 text-body-xs font-body-xs text-on-surface-variant flex items-center justify-between">
+<span class="">Touch/Mouse enabled</span>
+<span class="font-label-code">SHA-256 Hash Generated</span>
+</div>
+</div>
+<!-- Proof Option B: Photo Proof Upload Preview -->
+<div class="bg-surface-container-low p-space-md rounded-lg flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="text-headline-sm font-headline-sm text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px] text-secondary">add_a_photo</span>
+                    Backup Photo Proof
+                  </span>
+<span class="text-body-xs font-body-xs text-on-surface-variant">Doorstep / Porch</span>
+</div>
+<div class="bg-surface-container-lowest rounded-lg h-36 flex flex-col items-center justify-center p-space-sm text-center cursor-pointer hover:bg-surface-container-high transition-colors overflow-hidden relative" id="photo-dropzone" onclick="simulatePhotoCapture()">
+<img class="hidden absolute inset-0 w-full h-full object-cover" data-alt="Clear high resolution photograph of a sealed brown parcel with high visibility shipping barcode sitting on a clean residential porch door threshold under crisp natural daylight." id="photo-preview-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAhjMGkBVszhN6o7DkRfvmk_wayJ_hrnHKyV96Xzsr9mYC_JCsxr4ptAgA3-TRGBN2uSuG7FL0gZNGqwCIRCMZEOd1P4R_BKdDoV5AA190KkIAry3RZo3CCOE1drFFh5NC2vq-VpkrZFOfSIaYuLG8bcR1dtVq09f2WpwBTFOr5ffGGLTTn_9Uh_zqO9RtmJBBTNvgOmWaDRPf0c2kP7ffqxGcpK0qPCVEHxOJVKrlmlzgDMxx3C60mdg">
+<div class="flex flex-col items-center justify-center" id="photo-empty-state">
+<span class="material-symbols-outlined text-[32px] text-secondary">photo_camera</span>
+<span class="text-body-sm font-body-sm font-medium text-on-surface mt-1">Tap to Capture Package Photo</span>
+<span class="text-body-xs font-body-xs text-on-surface-variant">or browse internal vehicle cam</span>
+</div>
+</div>
+</div>
+<div class="mt-2 text-body-xs font-body-xs text-on-surface-variant flex items-center justify-between">
+<span id="photo-state-text" class="">No image buffered</span>
+<button class="hidden text-error hover:underline" id="btn-clear-photo" onclick="clearPhoto()">Remove</button>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-low p-space-md rounded-lg flex items-center gap-space-sm text-body-xs font-body-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px] text-secondary">verified_user</span>
+<span class="">Proof of delivery requires either Recipient Signature OR Doorstep Confirmation Photo. Both will be recorded into the cryptographic LMS DeliveryAttempt ledger.</span>
+</div>
+<button class="opacity-50 cursor-not-allowed w-full py-2.5 rounded bg-secondary text-on-secondary font-headline-sm text-headline-sm flex items-center justify-center gap-space-xs shadow-sm hover:opacity-90 transition-all" disabled="" id="btn-submit-success" onclick="openSuccessConfirmModal()"><span class="material-symbols-outlined text-[20px]">task_alt</span>Submit Proof &amp; Mark DELIVERED</button>
+</div>
+<!-- TAB 2 CONTENT: Failed Delivery Attempt -->
+<div class="hidden flex-col gap-space-md" id="tab-content-failure">
+<div class="bg-surface-container-low p-space-md rounded-lg flex flex-col gap-space-md">
+<div>
+<label class="block font-label-table-head text-label-table-head uppercase text-on-surface-variant mb-1.5" for="fail-reason-select">
+                Failure Root Cause <span class="text-error">*</span>
+</label>
+<select class="w-full bg-surface-container-lowest text-on-surface rounded-lg px-space-md py-2 text-body-sm font-body-sm shadow-xs focus:outline-none" id="fail-reason-select" onchange="handleFailureReasonChange()">
+<option value="">-- Select Valid Delivery Failure Reason --</option>
+<option value="Client not home">Client not home</option>
+<option value="Wrong address">Wrong address</option>
+<option value="Client refused">Client refused</option>
+<option value="Unable to contact client">Unable to contact client</option>
+<option value="Other">Other (Requires explicit justification note)</option>
+</select>
+</div>
+<div>
+<div class="flex items-center justify-between mb-1.5">
+<label class="block font-label-table-head text-label-table-head uppercase text-on-surface-variant" for="fail-note-input">
+                  Operational Driver Notes <span class="hidden text-error" id="note-required-tag">* MANDATORY</span>
+</label>
+<span class="text-body-xs font-body-xs text-on-surface-variant" id="char-count">0 / 250</span>
+</div>
+<textarea class="w-full bg-surface-container-lowest text-on-surface rounded-lg p-space-md text-body-sm font-body-sm shadow-xs focus:outline-none" id="fail-note-input" maxlength="250" oninput="updateCharCount()" placeholder="Add field remarks (e.g. Gated community access code expired, intercom unresponsive...)" rows="3"></textarea>
+</div>
+<!-- Mandatory explicit policy note -->
+<div class="bg-surface-container-high/60 p-space-md rounded-lg flex items-start gap-space-sm text-body-xs font-body-xs text-on-surface">
+<span class="material-symbols-outlined text-[20px] text-secondary shrink-0">info</span>
+<div>
+<strong class="font-semibold block mb-0.5">Policy Notice on Non-Delivery Evidence:</strong>
+<span class="">Photo is NOT required for failed delivery attempts (a photo cannot reliably prove that a client was not home). Dispatch protocols prioritize client notification over unnecessary imaging.</span>
+</div>
+</div>
+</div>
+<button class="opacity-50 cursor-not-allowed w-full py-2.5 rounded bg-error text-on-error font-headline-sm text-headline-sm flex items-center justify-center gap-space-xs shadow-sm hover:opacity-90 transition-all" disabled="" id="btn-submit-failure" onclick="submitFailedAttempt()">
+<span class="material-symbols-outlined text-[20px]">report_problem</span>
+            Record Delivery Attempt &amp; Queue In-System Client Notification
+          </button>
+</div>
+</div>
+<!-- Quick status indicator bar at card foot -->
+<div class="pt-space-md mt-space-md bg-surface-container-low px-space-md py-space-sm rounded-lg flex items-center justify-between text-body-xs font-body-xs text-on-surface-variant">
+<span class="">Courier Custody: <strong>Ken Tanaka (Logged In)</strong></span>
+<span class="">Reassignment Lock: <strong>Disabled (Admin Authorization Only)</strong></span>
+</div>
+</div>
+<!-- READ-ONLY Historical DeliveryAttempt Log for Order LMS-1002 -->
+<div class="xl:col-span-5 bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col" id="historical-audit-panel"><div class="flex items-center justify-between pb-space-sm mb-space-sm"><div><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-secondary text-[24px]">history</span><h2 class="font-headline-md text-headline-md text-on-surface">Delivery Attempt History: LMS-1002</h2></div><p class="font-body-sm text-body-sm text-on-surface-variant">Read-Only Prior Attempt Log</p></div><span class="px-space-xs py-0.5 rounded text-label-status font-label-status uppercase bg-error-container text-on-error-container">FAILED ATTEMPT #1</span></div><div class="bg-surface-container-low rounded-lg p-space-md flex-1 flex flex-col justify-between"><div class="flex flex-col gap-space-md"><div class="flex items-center justify-between pb-space-xs"><div><span class="font-label-code text-label-code font-bold text-on-surface">ORD-LMS-1002 • PKG-LMS-1002</span><div class="text-body-xs font-body-xs text-on-surface-variant">Product B (Industrial Sensor Kit) × 1</div></div><span class="font-label-code text-label-code px-space-xs py-0.5 rounded bg-surface-container text-on-surface-variant">VAN #08</span></div><div class="bg-surface-container-lowest p-space-md rounded-lg shadow-xs flex flex-col gap-space-sm"><div class="flex items-center justify-between"><span class="inline-flex items-center gap-1 font-label-status text-label-status uppercase text-error"><span class="w-1.5 h-1.5 rounded-full bg-error"></span>Attempt #1: 09:42 AM Today</span><span class="font-label-code text-label-code px-space-xs py-0.5 rounded bg-error-container text-on-error-container font-label-status">DELIVERY_FAILED</span></div><div class="grid grid-cols-2 gap-space-xs text-body-xs font-body-xs"><div class="text-on-surface-variant">Reason:</div><div class="text-on-surface font-medium">Client not home</div><div class="text-on-surface-variant">Recorded Courier:</div><div class="text-on-surface font-medium font-label-code">Ken Tanaka (FC-9941)</div><div class="text-on-surface-variant">Attempt Notes:</div><div class="text-on-surface font-medium col-span-2 bg-surface-container-low p-space-sm rounded mt-1 italic">"Doorbell rang 3 times, phone unanswered after 5 rings."</div></div></div><div class="bg-surface-container-high/60 p-space-md rounded-lg flex items-start gap-space-sm text-body-xs font-body-xs text-on-surface"><span class="material-symbols-outlined text-[20px] text-secondary shrink-0">info</span><div><strong class="font-semibold block text-on-surface mb-0.5">Operational Status Note:</strong><p class="text-on-surface-variant">Status is DELIVERY_FAILED. Awaiting Admin redelivery authorization (worker-to-worker handover is not permitted).</p></div></div></div><div class="mt-space-md pt-space-sm flex items-center justify-between text-body-xs font-body-xs text-on-surface-variant"><span class="font-label-code">Attempt ID: ATT-8201-901</span><span class="inline-flex items-center gap-1 text-on-surface"><span class="material-symbols-outlined text-[14px]">verified</span>Read-Only Record</span></div></div></div>
+</div>
+<!-- CONFIRMATION MODAL: Submit Delivery Proof -->
+<div class="fixed inset-0 z-50 hidden flex items-center justify-center bg-primary/60 p-space-md" id="modal-delivery-details"><div class="bg-surface-container-lowest rounded-xl max-w-md w-full p-space-lg shadow-xl flex flex-col gap-space-md"><div class="flex items-center justify-between border-b border-outline-variant/30 pb-space-sm"><div class="flex items-center gap-space-sm text-secondary"><span class="material-symbols-outlined text-[24px]">badge</span><div><h3 class="font-headline-md text-headline-md text-on-surface" id="details-modal-title">Delivery Details</h3><span class="text-body-xs font-body-xs text-on-surface-variant">Authorized Driver Contact &amp; Access View</span></div></div><button class="p-1 text-on-surface-variant hover:text-on-surface rounded" onclick="closeDetailsDrawer()"><span class="material-symbols-outlined text-[20px]">close</span></button></div><div class="flex flex-col gap-space-sm text-body-sm font-body-sm"><div class="bg-surface-container-low p-space-md rounded-lg space-y-2"><div class="flex justify-between"><span class="text-on-surface-variant font-label-table-head uppercase">Recipient:</span><span class="font-medium text-on-surface" id="details-recipient-name">Sarah Chen</span></div><div class="flex justify-between"><span class="text-on-surface-variant font-label-table-head uppercase">Direct Phone:</span><a class="font-label-code text-secondary flex items-center gap-1 hover:underline" href="#" id="details-recipient-phone"><span class="material-symbols-outlined text-[14px]">call</span>+1 (555) 438-9201</a></div><div class="flex justify-between"><span class="text-on-surface-variant font-label-table-head uppercase">Payment:</span><span class="font-label-code text-secondary font-medium">PAID (Credit Card Verified)</span></div><div class="flex flex-col gap-0.5 pt-1"><span class="text-on-surface-variant font-label-table-head uppercase">Full Delivery Address:</span><span class="font-medium text-on-surface" id="details-recipient-address">742 Evergreen Terrace, Unit 4B, Springfield District, Bay Ridge Sector</span></div></div><div class="bg-surface-container-high/40 p-space-md rounded-lg"><div class="font-label-table-head uppercase text-on-surface-variant mb-1">Courier Instructions:</div><p class="text-body-xs font-body-xs text-on-surface" id="details-recipient-notes">Ring intercom bell for 4B. If no answer, porch drop permitted with photo proof or call proxy phone.</p></div></div><div class="flex justify-end pt-space-xs"><button class="px-space-md py-2 rounded bg-secondary text-on-secondary text-headline-sm font-headline-sm hover:opacity-90 transition-all" onclick="closeDetailsDrawer()">Close</button></div></div></div><div class="fixed inset-0 z-50 hidden flex items-center justify-center bg-primary/60 p-space-md" id="modal-confirm-success">
+<div class="bg-surface-container-lowest rounded-xl max-w-md w-full p-space-lg shadow-xl flex flex-col gap-space-md">
+<div class="flex items-center gap-space-sm text-secondary">
+<div class="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">verified</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Confirm Delivery Completion</h3>
+<span class="text-body-xs font-body-xs text-on-surface-variant">Order ORD-LMS-1001 • Recipient: Sarah Chen</span>
+</div>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant">
+        Are you ready to commit this delivery proof? Once confirmed:
+      </p>
+<ul class="text-body-sm font-body-sm text-on-surface space-y-1.5 bg-surface-container-low p-space-md rounded-lg">
+<li class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[16px]">check</span>
+          Package status changes to <strong>DELIVERED</strong>.
+        </li>
+<li class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[16px]">check</span>
+          Immutable <strong>DeliveryAttempt</strong> record written with courier Ken.
+        </li>
+<li class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[16px]">check</span>
+          Digital proof archived into customer portal receipt.
+        </li>
+</ul>
+<div class="flex items-center justify-end gap-space-sm pt-space-xs">
+<button class="px-space-md py-2 rounded bg-surface-container text-on-surface text-headline-sm font-headline-sm hover:bg-surface-container-high transition-colors" onclick="closeSuccessConfirmModal()">
+          Cancel
+        </button>
+<button class="px-space-md py-2 rounded bg-secondary text-on-secondary text-headline-sm font-headline-sm hover:opacity-90 transition-all flex items-center gap-1 shadow-sm" onclick="commitSuccessProof()">
+<span class="material-symbols-outlined text-[18px]">done_all</span>
+          Confirm &amp; Finalize
+        </button>
+</div>
+</div>
+</div>
+<!-- Client-side Interactive State Machine -->
+<script>
+    // State Tracker
+    const state = {
+      pickupListScanned: false,
+      pkg1001Status: 'READY_FOR_PICKUP', // READY_FOR_PICKUP -> SHIPPED -> OUT_FOR_DELIVERY -> DELIVERED (or DELIVERY_FAILED)
+      pkg1001Collected: false,
+      order1001DeliveryStarted: false,
+      hasSignature: false,
+      hasPhoto: false,
+      currentTab: 'success',
+      failReason: '',
+      failNote: ''
+    };
+
+    // Helper: Toast Notifications
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+
+      const toast = document.createElement('div');
+      toast.className = `p-space-md rounded-lg shadow-md flex items-start gap-space-sm pointer-events-auto transform transition-all duration-300 translate-y-2 opacity-0 text-body-sm font-body-sm bg-surface-container-lowest text-on-surface`;
+      
+      let icon = 'info';
+      let accentBg = 'bg-secondary';
+      if (type === 'success') {
+        icon = 'check_circle';
+        accentBg = 'bg-secondary';
+      } else if (type === 'error') {
+        icon = 'error';
+        accentBg = 'bg-error';
+      } else if (type === 'warning') {
+        icon = 'warning';
+        accentBg = 'bg-secondary-container';
+      }
+
+      toast.innerHTML = `
+        <div class="w-1.5 self-stretch rounded-full ${accentBg} shrink-0"></div>
+        <span class="material-symbols-outlined text-[20px] shrink-0 text-on-surface">${icon}</span>
+        <div class="flex-1">${message}</div>
+      `;
+
+      container.appendChild(toast);
+
+      // Trigger animation
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      });
+
+      // Auto dismiss
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => {
+          if (toast.parentNode) toast.parentNode.removeChild(toast);
+        }, 300);
+      }, 4200);
+    }
+
+    // Helper: Copy Tracking ID
+    function copyToClipboard(text) {
+      navigator.clipboard?.writeText(text);
+      showToast(`Copied tracking ID "${text}" to clipboard.`, 'info');
+    }
+
+    // SECTION 1: Pickup List QR Scanning
+    function scanPickupList() {
+      if (state.pickupListScanned) {
+        showToast('Pickup List PL-BATCH-402 is already verified and active.', 'warning');
+        return;
+      }
+
+      state.pickupListScanned = true;
+      showToast('Pickup-List QR (PL-BATCH-402) accepted. Manifest unlocked.', 'success');
+
+      // Update Manifest UI
+      const badge = document.getElementById('batch-status-badge');
+      badge.textContent = 'Active Manifest &bull; Bay 04 Loaded';
+      badge.className = 'px-space-xs py-0.5 rounded text-label-status font-label-status uppercase bg-secondary/10 text-secondary';
+
+      const btnPicklist = document.getElementById('btn-scan-picklist');
+      btnPicklist.classList.add('bg-surface-container', 'text-on-surface');
+      btnPicklist.classList.remove('bg-secondary', 'text-on-secondary');
+      btnPicklist.innerHTML = `<span class="material-symbols-outlined text-[18px] text-secondary">check</span> PL-BATCH-402 Accepted`;
+
+      // Enable simulation buttons
+      ['btn-scan-1001', 'btn-scan-8888', 'btn-scan-dup'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+          btn.disabled = false;
+          btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+      });
+    }
+
+    // SECTION 1: Simulated Package QR Scanning
+    function scanPackageQR(barcode) {
+      if (!state.pickupListScanned) {
+        showToast('Please scan and accept the Pickup-List QR first.', 'warning');
+        return;
+      }
+
+      if (barcode === 'PKG-LMS-8888') {
+        showToast('Package not assigned to this pickup list (Code: REJECT-UNASSIGNED).', 'error');
+        return;
+      }
+
+      if (barcode === 'PKG-LMS-DUP') {
+        if (!state.pkg1001Collected) {
+          showToast('Scan PKG-LMS-1001 first to simulate a duplicate subsequent scan.', 'warning');
+          return;
+        }
+        showToast('Duplicate scan: Package already marked as collected by Ken.', 'error');
+        return;
+      }
+
+      if (barcode === 'PKG-LMS-1001') {
+        if (state.pkg1001Collected) {
+          showToast('Duplicate scan: Package already marked as collected.', 'error');
+          return;
+        }
+
+        // Perform acceptance
+        state.pkg1001Collected = true;
+        state.pkg1001Status = 'SHIPPED';
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        // Update Section 1 table
+        const badge1001 = document.getElementById('badge-pkg-1001');
+        badge1001.className = 'inline-flex items-center gap-1 px-space-xs py-0.5 rounded text-label-status font-label-status uppercase bg-secondary/10 text-secondary';
+        badge1001.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> SHIPPED (In Van)`;
+
+        document.getElementById('timestamp-pkg-1001').textContent = `Today, ${timeStr} (Ken)`;
+        document.getElementById('stat-load-count').textContent = '2/4';
+
+        // Update Section 2 Roster
+        const rosterBadge = document.getElementById('badge-roster-status-1001');
+        rosterBadge.className = 'inline-flex items-center gap-1 px-space-xs py-0.5 rounded text-label-status font-label-status uppercase bg-secondary/10 text-secondary';
+        rosterBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> SHIPPED`;
+
+        const btnStart = document.getElementById('btn-start-delivery-1001');
+        btnStart.disabled = false;
+        btnStart.classList.remove('opacity-50', 'cursor-not-allowed');
+
+        showToast('Valid QR! PKG-LMS-1001 status changed to SHIPPED. Added to active courier roster.', 'success');
+      }
+    }
+
+    // SECTION 2: Individual Start Delivery
+    function startDelivery(orderId) {
+      if (orderId === '1001') {
+        state.pkg1001Status = 'OUT_FOR_DELIVERY';
+        state.order1001DeliveryStarted = true;
+
+        // Update only Order 1001
+        const rosterBadge = document.getElementById('badge-roster-status-1001');
+        rosterBadge.className = 'inline-flex items-center gap-1 px-space-xs py-0.5 rounded text-label-status font-label-status uppercase bg-secondary-container text-on-secondary-container';
+        rosterBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-surface-container-lowest animate-pulse"></span> OUT_FOR_DELIVERY`;
+
+        const btnStart = document.getElementById('btn-start-delivery-1001');
+        btnStart.disabled = true;
+        btnStart.classList.add('opacity-50', 'cursor-not-allowed');
+        btnStart.innerHTML = `<span class="material-symbols-outlined text-[16px]">check</span> En Route`;
+
+        // Enable Outcome Logging
+        const btnOutcome = document.getElementById('btn-open-outcome-1001');
+        btnOutcome.disabled = false;
+        btnOutcome.classList.remove('opacity-50', 'cursor-not-allowed');
+
+        const eligibilityBadge = document.getElementById('outcome-eligibility-badge');
+        eligibilityBadge.className = 'px-space-sm py-1 rounded text-label-status font-label-status uppercase bg-secondary-container text-on-secondary-container';
+        eligibilityBadge.textContent = 'Active: OUT_FOR_DELIVERY';
+
+        // Courier status in header
+        const courierState = document.getElementById('badge-courier-state');
+        courierState.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span> Out On Route`;
+
+        // Check outcome buttons
+        checkOutcomeSubmitValidity();
+
+        showToast('Order LMS-1001 switched to OUT_FOR_DELIVERY. Other orders remain untouched.', 'success');
+      }
+    }
+
+    // SECTION 3: Tab Switching
+    function switchOutcomeTab(tab) {
+      state.currentTab = tab;
+      const btnSuccess = document.getElementById('tab-btn-success');
+      const btnFailure = document.getElementById('tab-btn-failure');
+      const contentSuccess = document.getElementById('tab-content-success');
+      const contentFailure = document.getElementById('tab-content-failure');
+
+      if (tab === 'success') {
+        btnSuccess.className = 'flex-1 py-2 text-center text-headline-sm font-headline-sm rounded bg-surface-container-lowest text-on-surface shadow-xs transition-all flex items-center justify-center gap-1.5';
+        btnFailure.className = 'flex-1 py-2 text-center text-body-sm font-body-sm rounded text-on-surface-variant hover:text-on-surface transition-all flex items-center justify-center gap-1.5';
+        contentSuccess.classList.remove('hidden');
+        contentSuccess.classList.add('flex');
+        contentFailure.classList.add('hidden');
+        contentFailure.classList.remove('flex');
+      } else {
+        btnFailure.className = 'flex-1 py-2 text-center text-headline-sm font-headline-sm rounded bg-surface-container-lowest text-on-surface shadow-xs transition-all flex items-center justify-center gap-1.5';
+        btnSuccess.className = 'flex-1 py-2 text-center text-body-sm font-body-sm rounded text-on-surface-variant hover:text-on-surface transition-all flex items-center justify-center gap-1.5';
+        contentFailure.classList.remove('hidden');
+        contentFailure.classList.add('flex');
+        contentSuccess.classList.add('hidden');
+        contentSuccess.classList.remove('flex');
+      }
+      checkOutcomeSubmitValidity();
+    }
+
+    // Signature Canvas Logic
+    const canvas = document.getElementById('signature-canvas');
+    let ctx = null;
+    let isDrawing = false;
+
+    if (canvas) {
+      ctx = canvas.getContext('2d');
+      ctx.lineWidth = 2.5;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#0b1c30';
+
+      function startDraw(e) {
+        if (!state.order1001DeliveryStarted) return;
+        isDrawing = true;
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
+        const y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        document.getElementById('sig-placeholder').classList.add('opacity-0');
+      }
+
+      function draw(e) {
+        if (!isDrawing) return;
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        state.hasSignature = true;
+        checkOutcomeSubmitValidity();
+      }
+
+      function stopDraw() {
+        if (!isDrawing) return;
+        isDrawing = false;
+        ctx.closePath();
+      }
+
+      canvas.addEventListener('mousedown', startDraw);
+      canvas.addEventListener('mousemove', draw);
+      window.addEventListener('mouseup', stopDraw);
+
+      canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDraw(e); }, { passive: false });
+      canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); }, { passive: false });
+      window.addEventListener('touchend', stopDraw);
+    }
+
+    function clearCanvasSignature() {
+      if (!ctx || !canvas) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      state.hasSignature = false;
+      document.getElementById('sig-placeholder').classList.remove('opacity-0');
+      checkOutcomeSubmitValidity();
+    }
+
+    // Photo Capture Simulation
+    function simulatePhotoCapture() {
+      if (!state.order1001DeliveryStarted) {
+        showToast('Start delivery on Order LMS-1001 first to enable proof capture.', 'warning');
+        return;
+      }
+      state.hasPhoto = true;
+      document.getElementById('photo-preview-img').classList.remove('hidden');
+      document.getElementById('photo-empty-state').classList.add('hidden');
+      document.getElementById('photo-state-text').textContent = 'Image verified (1.8 MB)';
+      document.getElementById('btn-clear-photo').classList.remove('hidden');
+      checkOutcomeSubmitValidity();
+      showToast('Doorstep delivery photograph buffered.', 'info');
+    }
+
+    function clearPhoto() {
+      state.hasPhoto = false;
+      document.getElementById('photo-preview-img').classList.add('hidden');
+      document.getElementById('photo-empty-state').classList.remove('hidden');
+      document.getElementById('photo-state-text').textContent = 'No image buffered';
+      document.getElementById('btn-clear-photo').classList.add('hidden');
+      checkOutcomeSubmitValidity();
+    }
+
+    // Failure Reason & Form Dynamics
+    function handleFailureReasonChange() {
+      const select = document.getElementById('fail-reason-select');
+      const val = select.value;
+      state.failReason = val;
+
+      const noteTag = document.getElementById('note-required-tag');
+      const noteInput = document.getElementById('fail-note-input');
+
+      if (val === 'Other') {
+        noteTag.classList.remove('hidden');
+        noteInput.setAttribute('placeholder', 'CRITICAL: Explain specific physical or operational roadblock why delivery could not be executed.');
+      } else {
+        noteTag.classList.add('hidden');
+        noteInput.setAttribute('placeholder', 'Add field remarks (e.g. Gated community access code expired, intercom unresponsive...)');
+      }
+
+      checkOutcomeSubmitValidity();
+    }
+
+    function updateCharCount() {
+      const input = document.getElementById('fail-note-input');
+      state.failNote = input.value;
+      document.getElementById('char-count').textContent = `${input.value.length} / 250`;
+      checkOutcomeSubmitValidity();
+    }
+
+    // Validation check for outcome buttons
+    function checkOutcomeSubmitValidity() {
+      const btnSuccess = document.getElementById('btn-submit-success');
+      const btnFailure = document.getElementById('btn-submit-failure');
+
+      // Success Tab check
+      const successValid = state.order1001DeliveryStarted && (state.hasSignature || state.hasPhoto) && state.pkg1001Status === 'OUT_FOR_DELIVERY';
+      if (btnSuccess) {
+        btnSuccess.disabled = !successValid;
+        if (successValid) {
+          btnSuccess.classList.remove('opacity-50', 'cursor-not-allowed');
+        } else {
+          btnSuccess.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+      }
+
+      // Failure Tab check
+      let failureValid = state.order1001DeliveryStarted && state.pkg1001Status === 'OUT_FOR_DELIVERY' && state.failReason !== '';
+      if (state.failReason === 'Other' && (!state.failNote || state.failNote.trim().length === 0)) {
+        failureValid = false;
+      }
+
+      if (btnFailure) {
+        btnFailure.disabled = !failureValid;
+        if (failureValid) {
+          btnFailure.classList.remove('opacity-50', 'cursor-not-allowed');
+        } else {
+          btnFailure.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+      }
+    }
+
+    // Modal Actions
+    function openSuccessConfirmModal() {
+      document.getElementById('modal-confirm-success').classList.remove('hidden');
+    }
+
+    function closeSuccessConfirmModal() {
+      document.getElementById('modal-confirm-success').classList.add('hidden');
+    }
+
+    function commitSuccessProof() {
+      closeSuccessConfirmModal();
+      state.pkg1001Status = 'DELIVERED';
+
+      // Update Roster Status
+      const rosterBadge = document.getElementById('badge-roster-status-1001');
+      rosterBadge.className = 'inline-flex items-center gap-1 px-space-xs py-0.5 rounded text-label-status font-label-status uppercase bg-secondary/10 text-secondary';
+      rosterBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> DELIVERED`;
+
+      // Update Attempt Badge
+      const attemptBadge = document.getElementById('badge-attempt-1001');
+      attemptBadge.className = 'inline-flex items-center gap-1 px-space-xs py-0.5 rounded text-label-status font-label-status uppercase bg-secondary/10 text-secondary font-label-code';
+      attemptBadge.textContent = 'Attempt 1 (Success)';
+
+      // Disable outcome buttons
+      document.getElementById('btn-open-outcome-1001').disabled = true;
+      document.getElementById('btn-open-outcome-1001').classList.add('opacity-50', 'cursor-not-allowed');
+      document.getElementById('btn-submit-success').disabled = true;
+      document.getElementById('btn-submit-success').classList.add('opacity-50', 'cursor-not-allowed');
+
+      // Update Eligibility Badge
+      const eligibilityBadge = document.getElementById('outcome-eligibility-badge');
+      eligibilityBadge.className = 'px-space-sm py-1 rounded text-label-status font-label-status uppercase bg-secondary/10 text-secondary';
+      eligibilityBadge.textContent = 'DELIVERED &bull; DeliveryAttempt Committed';
+
+      showToast('Delivery completed! Status set to DELIVERED. DeliveryAttempt record written.', 'success');
+    }
+
+    function submitFailedAttempt() {
+      state.pkg1001Status = 'DELIVERY_FAILED';
+
+      // Update Roster Status
+      const rosterBadge = document.getElementById('badge-roster-status-1001');
+      rosterBadge.className = 'inline-flex items-center gap-1 px-space-xs py-0.5 rounded text-label-status font-label-status uppercase bg-error-container text-on-error-container';
+      rosterBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-error"></span> DELIVERY_FAILED`;
+
+      // Update Attempt Badge
+      const attemptBadge = document.getElementById('badge-attempt-1001');
+      attemptBadge.className = 'inline-flex items-center gap-1 px-space-xs py-0.5 rounded text-label-status font-label-status uppercase bg-error-container text-on-error-container font-label-code';
+      attemptBadge.textContent = 'Attempt 1 (Failed)';
+
+      // Disable failure submit
+      document.getElementById('btn-submit-failure').disabled = true;
+      document.getElementById('btn-submit-failure').classList.add('opacity-50', 'cursor-not-allowed');
+      document.getElementById('btn-open-outcome-1001').disabled = true;
+      document.getElementById('btn-open-outcome-1001').classList.add('opacity-50', 'cursor-not-allowed');
+
+      // Update Eligibility Badge
+      const eligibilityBadge = document.getElementById('outcome-eligibility-badge');
+      eligibilityBadge.className = 'px-space-sm py-1 rounded text-label-status font-label-status uppercase bg-error-container text-on-error-container';
+      eligibilityBadge.textContent = 'DELIVERY_FAILED &bull; Attempt 1 Logged';
+
+      showToast(`Delivery Attempt recorded (${state.failReason}). In-system client notification has been queued.`, 'warning');
+    }
+
+    function openOutcomeModal(id) {
+      document.getElementById('tab-btn-success').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function scrollToHistory1002() {
+      document.getElementById('historical-audit-panel').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      showToast('Viewing immutable audit ledger for Order LMS-1002.', 'info');
+    }
+  </script>
+</div></main></div>
+
+</body></html>

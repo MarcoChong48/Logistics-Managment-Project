@@ -1,0 +1,10 @@
+{
+  "browser": "Chrome headless",
+  "desktop": "1440 x 1000",
+  "mobile": "390 x 844",
+  "login": "passed",
+  "placeHolderNotice": "passed",
+  "horizontalOverflow": "none",
+  "pageErrors": [],
+  "cameraHardware": "not tested"
+}

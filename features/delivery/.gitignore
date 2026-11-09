@@ -1,0 +1,14 @@
+.tools/
+.cache/
+qa/.data/
+qa/node_modules/
+restore-check/
+data/
+backups/
+logs/
+backend/target/
+frontend/node_modules/
+frontend/dist/
+*.log
+.DS_Store
+

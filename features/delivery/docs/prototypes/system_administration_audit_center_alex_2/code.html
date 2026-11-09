@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"on-error":"#ffffff","on-tertiary":"#ffffff","surface-variant":"#d3e4fe","secondary":"#0051d5","on-primary":"#ffffff","on-primary-container":"#7c839b","tertiary":"#000000","on-secondary":"#ffffff","surface-container-highest":"#d3e4fe","on-background":"#0b1c30","on-tertiary-fixed-variant":"#3c475a","surface-container-high":"#dce9ff","primary-fixed-dim":"#bec6e0","secondary-fixed":"#dbe1ff","tertiary-container":"#111c2d","on-surface-variant":"#45464d","secondary-container":"#316bf3","outline":"#76777d","outline-variant":"#c6c6cd","surface-container-low":"#eff4ff","primary":"#000000","tertiary-fixed":"#d8e3fb","inverse-surface":"#213145","on-tertiary-container":"#79849a","error-container":"#ffdad6","primary-container":"#131b2e","surface-container":"#e5eeff","inverse-primary":"#bec6e0","primary-fixed":"#dae2fd","surface-container-lowest":"#ffffff","tertiary-fixed-dim":"#bcc7de","secondary-fixed-dim":"#b4c5ff","on-primary-fixed":"#131b2e","on-secondary-container":"#fefcff","inverse-on-surface":"#eaf1ff","error":"#ba1a1a","on-tertiary-fixed":"#111c2d","on-primary-fixed-variant":"#3f465c","on-error-container":"#93000a","on-surface":"#0b1c30","on-secondary-fixed-variant":"#003ea8","surface":"#f8f9ff","surface-dim":"#cbdbf5","surface-bright":"#f8f9ff","surface-tint":"#565e74","background":"#f8f9ff","on-secondary-fixed":"#00174b"},borderRadius:{DEFAULT:"0.125rem",lg:"0.25rem",xl:"0.5rem",full:"0.75rem"},spacing:{gutter:"1rem","space-2xl":"3rem","gutter-desktop":"1.5rem","space-xl":"2rem","space-md":"1rem",margin:"1rem","space-sm":"0.5rem","space-lg":"1.5rem","space-xs":"0.25rem","margin-desktop":"2rem"},fontFamily:{"headline-xl":["Inter"],"label-table-head":["Inter"],"headline-md":["Inter"],"body-sm":["Inter"],"headline-lg":["Inter"],"label-status":["Inter"],"body-lg":["Inter"],"headline-sm":["Inter"],"body-md":["Inter"],"body-xs":["Inter"],"label-code":["JetBrains Mono"]},fontSize:{"headline-xl":["30px",{lineHeight:"38px",letterSpacing:"-0.02em",fontWeight:"700"}],"label-table-head":["11px",{lineHeight:"14px",letterSpacing:"0.05em",fontWeight:"600"}],"headline-md":["20px",{lineHeight:"28px",letterSpacing:"-0.01em",fontWeight:"600"}],"body-sm":["13px",{lineHeight:"18px",fontWeight:"400"}],"headline-lg":["24px",{lineHeight:"32px",letterSpacing:"-0.015em",fontWeight:"600"}],"label-status":["11px",{lineHeight:"14px",letterSpacing:"0.04em",fontWeight:"700"}],"body-lg":["16px",{lineHeight:"24px",fontWeight:"400"}],"headline-sm":["16px",{lineHeight:"24px",fontWeight:"600"}],"body-md":["14px",{lineHeight:"20px",fontWeight:"400"}],"body-xs":["12px",{lineHeight:"16px",fontWeight:"400"}],"label-code":["12px",{lineHeight:"16px",letterSpacing:"0.02em",fontWeight:"500"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><header class="fixed top-0 left-0 right-0 h-14 bg-primary-container text-on-primary z-50 shadow-[0_1px_8px_rgba(0,0,0,0.08)] flex items-center justify-between px-margin-desktop"><div class="flex items-center gap-space-lg"><div class="flex items-center gap-space-sm"><img alt="LMS Brand Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1XID8S36_nPbJl9JTZSeHXZlVu9bO52ehFG5vN1RadDJSJbb1-cUi7w5uBzF6HouEPHm214qtAZUDmg3UFcXx30kIw5K0rJcLlo-qrWNaMX3ohptDGI0o1_zRhYhv7gcqou8X3rDahnQ20ey4P9T0jLnT1H8dubaSiVXBYJcZwvQGQscARyTczTXpHcGr4MOI3LVmQ2NY7kZ7qqQ7IX7VVfzGkdh7egqzjC-tj6eCfJQq63mkDzcH0fS8XS"/><span class="font-headline-sm text-headline-sm font-semibold tracking-tight text-on-primary hidden sm:inline">NEXUS LMS</span></div><span class="inline-flex items-center px-space-sm py-0.5 rounded text-label-status font-label-status uppercase bg-tertiary-container text-on-tertiary-container border border-outline-variant/30 tracking-wider">PROTOTYPE / DEMO ENVIRONMENT</span></div><nav class="hidden xl:flex items-center gap-space-xs bg-tertiary-container/80 p-1 rounded-xl" data-active-classes="bg-secondary-container text-on-secondary-container rounded-lg font-headline-sm"><a class="px-space-md py-1.5 text-on-primary-container text-body-sm font-body-sm transition-colors hover:text-on-primary" data-path="client-portal" href="#">Client Portal</a><a class="px-space-md py-1.5 text-on-primary-container text-body-sm font-body-sm transition-colors hover:text-on-primary" data-path="warehouse-operations" href="#">Warehouse Operations (Mei)</a><a class="px-space-md py-1.5 text-on-primary-container text-body-sm font-body-sm transition-colors hover:text-on-primary" data-path="delivery-field-app" href="#">Delivery Field App (Ken)</a><a aria-current="page" class="px-space-md py-1.5 transition-colors bg-secondary-container text-on-secondary-container rounded-lg font-headline-sm" data-path="system-administration" href="#">System Administration (Alex)</a></nav><div class="flex items-center gap-space-md"><button aria-label="Notifications" class="relative p-1.5 rounded-lg text-on-primary-container hover:text-on-primary hover:bg-tertiary-container transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-secondary"></span></button><div class="flex items-center gap-space-sm pl-space-sm border-l border-outline-variant/20"><div class="flex flex-col text-right hidden md:block"><span class="text-body-xs font-body-xs font-medium text-on-primary leading-none">Alex Vance</span><span class="text-[10px] font-label-status text-on-primary-container uppercase tracking-wider">Operations Lead</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><aside class="fixed left-0 top-14 bottom-0 w-64 bg-surface-container-low shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex flex-col py-space-md"><div class="px-space-md pb-space-sm mb-space-sm border-b border-outline-variant/30 flex items-center justify-between"><span class="text-label-table-head font-label-table-head uppercase tracking-wider text-on-surface-variant">Operational Console</span><span class="text-label-code font-label-code text-secondary font-medium">v4.2-rel</span></div><nav class="flex-1 px-space-sm flex flex-col gap-space-xs overflow-y-auto" data-active-classes="bg-secondary-container text-on-secondary-container font-headline-sm rounded-lg"><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors text-body-md font-body-md" data-path="overview-dashboard" href="#"><span class="material-symbols-outlined text-[20px]">grid_view</span><span>Overview Dashboard</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors text-body-md font-body-md" data-path="client-portal" href="#"><span class="material-symbols-outlined text-[20px]">domain</span><span>Client Portal</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors text-body-md font-body-md" data-path="warehouse-operations" href="#"><span class="material-symbols-outlined text-[20px]">warehouse</span><span>Warehouse (Mei)</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors text-body-md font-body-md" data-path="delivery-field-app" href="#"><span class="material-symbols-outlined text-[20px]">local_shipping</span><span>Delivery App (Ken)</span></a><a aria-current="page" class="flex items-center gap-space-sm px-space-md py-2.5 transition-colors bg-secondary-container text-on-secondary-container font-headline-sm rounded-lg" data-path="system-administration" href="#"><span class="material-symbols-outlined text-[20px]">tune</span><span>Administration (Alex)</span></a><div class="my-space-sm border-t border-outline-variant/30"></div><span class="px-space-md text-[10px] font-label-table-head uppercase tracking-wider text-on-surface-variant">Audit &amp; Logistics</span><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors text-body-md font-body-md" data-path="live-dispatch-tracking" href="#"><span class="material-symbols-outlined text-[20px]">radar</span><span>Live Dispatch</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors text-body-md font-body-md" data-path="inventory-catalog" href="#"><span class="material-symbols-outlined text-[20px]">inventory_2</span><span>Inventory Matrix</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors text-body-md font-body-md" data-path="audit-logs" href="#"><span class="material-symbols-outlined text-[20px]">history_edu</span><span>Audit Trails</span></a></nav><div class="p-space-md mt-auto border-t border-outline-variant/30 bg-surface-container"><div class="flex items-center justify-between text-body-xs font-body-xs text-on-surface-variant"><span>Sync Pipeline</span><span class="inline-flex items-center gap-1 text-secondary font-medium"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>Active</span></div><div class="mt-1 text-[11px] font-label-code text-on-surface-variant/80 truncate">node-east-us.lms-core.internal</div></div></aside><div class="pl-64"><main class="w-full pt-14 bg-surface min-h-screen px-gutter-desktop py-space-lg"><div class="flex flex-col w-full">
+<!-- Toast Feedback Anchor -->
+<div class="fixed top-20 right-8 z-50 transform translate-y-[-20px] opacity-0 pointer-events-none transition-all duration-300 flex items-center gap-space-md p-space-md rounded-xl bg-surface-container-lowest shadow-xl" id="toastNotification">
+<div class="w-1.5 h-10 rounded-full bg-secondary" id="toastAccent"></div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface" id="toastTitle">Security Event Logged</span>
+<span class="font-body-xs text-body-xs text-on-surface-variant" id="toastMsg">Action verified and registered to ledger.</span>
+</div>
+<button class="p-1 text-on-surface-variant hover:text-on-surface ml-space-sm" onclick="hideToast()" type="button">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<!-- Section 1: Executive Security Command Header -->
+<div class="w-full flex flex-col xl:flex-row xl:items-center justify-between gap-space-lg mb-space-xl p-space-xl rounded-xl bg-surface-container-lowest shadow-sm">
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-sm flex-wrap">
+<span class="font-label-code text-label-code text-secondary px-space-sm py-0.5 rounded bg-surface-container uppercase">ID: ADM-092-SEC</span>
+<span class="font-label-status text-label-status px-2 py-0.5 rounded uppercase bg-surface-container text-on-surface-variant flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+          Cluster: node-east-us
+        </span>
+<span class="font-label-status text-label-status px-2 py-0.5 rounded uppercase bg-surface-container-high text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px] text-secondary">verified_user</span>
+          Zero-Trust Perimeter Active
+        </span>
+</div>
+<h1 class="font-headline-xl text-headline-xl text-on-surface tracking-tight mt-1">Alex (System Administrator)</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant max-w-3xl">
+        Central governance console for operational lifecycle rules, role-level authorization policies, delivery exceptions, and append-only audit enforcement.
+      </p>
+</div>
+<div class="flex flex-wrap items-center gap-space-md">
+<!-- Session Countdown Badge -->
+<div class="flex items-center gap-space-sm px-space-md py-space-sm bg-surface-container rounded-lg">
+<span class="material-symbols-outlined text-[20px] text-secondary">timer</span>
+<div class="flex flex-col text-left">
+<span class="font-label-table-head text-label-table-head text-on-surface-variant uppercase">Session Timeout</span>
+<span class="font-label-code text-label-code text-on-surface font-semibold" id="sessionTimerDisplay">14m 42s</span>
+</div>
+</div>
+<!-- Policy Badge -->
+<div class="flex items-center gap-space-sm px-space-md py-space-sm bg-primary text-on-primary rounded-lg shadow-sm">
+<span class="material-symbols-outlined text-[20px]">lock_clock</span>
+<div class="flex flex-col text-left">
+<span class="font-label-status text-label-status text-primary-fixed uppercase tracking-wider">Policy: Autolock</span>
+<span class="font-body-xs text-body-xs text-on-primary">5 Tries / 15m Lock</span>
+</div>
+</div>
+<!-- Quick Lock Action -->
+<button class="px-space-md py-2.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface transition-colors flex items-center gap-1.5 font-headline-sm text-headline-sm" onclick="triggerToast('Session Locked', 'Alex console transitioned to security standby.', 'secondary')" type="button">
+<span class="material-symbols-outlined text-[18px]">lock</span>
+<span>Lock Console</span>
+</button>
+</div>
+</div>
+<!-- Section 2: KPI Overview Cards & Privacy Perimeter -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-space-lg mb-space-xl">
+<!-- Card 1: Total Orders Distribution -->
+<div class="p-space-lg bg-surface-container-lowest rounded-xl shadow-sm flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-table-head text-label-table-head text-on-surface-variant uppercase tracking-wider">Active Pipeline</span>
+<div class="font-headline-xl text-headline-xl text-on-surface mt-1">4 Orders</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-surface-container-low flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[22px]">conveyor_belt</span>
+</div>
+</div>
+<!-- Mini Progress Stack -->
+<div class="mt-space-md">
+<div class="w-full h-2 rounded-full bg-surface-container overflow-hidden flex">
+<div class="h-full bg-secondary" style="width: 25%" title="1 Ready for Picking"></div>
+<div class="h-full bg-secondary-container" style="width: 25%" title="1 Shipped"></div>
+<div class="h-full bg-error" style="width: 25%" title="1 Delivery Failed"></div>
+<div class="h-full bg-on-surface" style="width: 25%" title="1 Delivered"></div>
+</div>
+<div class="grid grid-cols-2 gap-y-1 gap-x-2 mt-space-sm font-label-code text-[11px] text-on-surface-variant">
+<div class="flex items-center gap-1.5 truncate"><span class="w-2 h-2 rounded-full bg-secondary"></span>1 Pick Pending</div>
+<div class="flex items-center gap-1.5 truncate"><span class="w-2 h-2 rounded-full bg-secondary-container"></span>1 In Transit</div>
+<div class="flex items-center gap-1.5 truncate"><span class="w-2 h-2 rounded-full bg-error"></span>1 Deliv Failed</div>
+<div class="flex items-center gap-1.5 truncate"><span class="w-2 h-2 rounded-full bg-on-surface"></span>1 Completed</div>
+</div>
+</div>
+</div>
+<!-- Card 2: Low-Stock Monitor -->
+<div class="p-space-lg bg-surface-container-lowest rounded-xl shadow-sm flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-table-head text-label-table-head text-on-surface-variant uppercase tracking-wider">Threshold Alerts</span>
+<div class="font-headline-xl text-headline-xl text-on-surface mt-1">2 Tracked</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-surface-container-low flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[22px]">inventory</span>
+</div>
+</div>
+<div class="mt-space-md flex flex-col gap-space-xs font-body-xs text-body-xs">
+<div class="flex items-center justify-between p-1.5 rounded bg-surface-container-low">
+<span class="font-medium text-on-surface">PB-200 (Product B)</span>
+<span class="font-label-code text-error font-semibold">5 Units (Min: 2)</span>
+</div>
+<div class="flex items-center justify-between p-1.5 rounded bg-surface-container-low">
+<span class="font-medium text-on-surface">PA-100 (Product A)</span>
+<span class="font-label-code text-secondary font-semibold">12 Units (Min: 3)</span>
+</div>
+</div>
+</div>
+<!-- Card 3: Recent Delivery Exceptions -->
+<div class="p-space-lg bg-surface-container-lowest rounded-xl shadow-sm flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-table-head text-label-table-head text-on-surface-variant uppercase tracking-wider">Unresolved Failures</span>
+<div class="font-headline-xl text-headline-xl text-error mt-1 flex items-center gap-2">
+            1 Action Req.
+            <span class="w-2.5 h-2.5 rounded-full bg-error animate-pulse"></span>
+</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-error-container flex items-center justify-center text-error">
+<span class="material-symbols-outlined text-[22px]">warning</span>
+</div>
+</div>
+<div class="mt-space-md">
+<p class="font-body-xs text-body-xs text-on-surface-variant">Order <span class="font-label-code text-on-surface font-semibold">LMS-1002</span> halted during final-mile handover. Dispatch resolution pending administrator sign-off.</p>
+<a class="inline-flex items-center gap-1 font-label-status text-label-status text-secondary uppercase hover:underline mt-2" href="#resolution-desk">
+          Jump to Desk <span class="material-symbols-outlined text-[14px]">format_h4</span>
+</a>
+</div>
+</div>
+<!-- Card 4: Strict Privacy Notice Guard -->
+<div class="p-space-lg bg-surface-container-high rounded-xl shadow-sm flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px] text-secondary">shield</span>
+<span class="font-label-table-head text-label-table-head text-on-surface-variant uppercase tracking-wider">Privacy Partition</span>
+</div>
+<span class="font-label-status text-label-status px-1.5 py-0.5 rounded uppercase bg-surface-container-lowest text-secondary">GDPR/HIPAA</span>
+</div>
+<div class="mt-space-sm">
+<p class="font-body-xs text-body-xs text-on-surface leading-relaxed">
+          Physical address coordinates &amp; telephone records are obfuscated from System Admin views. In accordance with zero-knowledge fulfillment protocols, PII is stored exclusively in ephemeral driver routing tokens.
+        </p>
+</div>
+<div class="mt-space-sm pt-space-xs flex items-center justify-between text-[11px] font-label-code text-on-surface-variant">
+<span>Token Hash Partition</span>
+<span class="text-secondary font-semibold">ENCRYPTED_SHA256</span>
+</div>
+</div>
+</div>
+<!-- Section 3: Delivery Exceptions & Resolution Desk -->
+<section class="w-full mb-space-xl p-space-xl rounded-xl bg-surface-container-lowest shadow-sm" id="resolution-desk">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md mb-space-lg">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-lg bg-error-container text-error flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">assignment_late</span>
+</div>
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Delivery Exceptions &amp; Resolution Desk</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Active resolution queue for failed deliveries requiring courier reassignment or redelivery authorizations.</p>
+</div>
+</div>
+<span class="font-label-status text-label-status px-space-md py-1 rounded uppercase bg-surface-container text-on-surface-variant">
+        1 Exception Queued
+      </span>
+</div>
+<!-- Active Exception Item Table Card -->
+<div class="overflow-x-auto rounded-lg bg-surface-container-low">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container text-on-surface-variant font-label-table-head text-label-table-head uppercase tracking-wider">
+<th class="py-3 px-space-md">Order ID</th>
+<th class="py-3 px-space-md">Contents</th>
+<th class="py-3 px-space-md">Last Assignee</th>
+<th class="py-3 px-space-md">Exception Reason</th>
+<th class="py-3 px-space-md">Current State</th>
+<th class="py-3 px-space-md text-right">Administrative Actions</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface divide-y divide-transparent">
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="py-space-md px-space-md">
+<div class="flex items-center gap-2">
+<span class="font-label-code text-label-code font-bold text-secondary">LMS-1002</span>
+<button class="text-outline hover:text-on-surface" onclick="navigator.clipboard.writeText('LMS-1002'); triggerToast('Copied', 'Tracking identifier copied to clipboard.', 'secondary')" title="Copy Order ID" type="button">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded bg-surface-container flex items-center justify-center font-label-code text-[11px]">1x</span>
+<span class="font-medium text-body-sm">Product B (SKU: PB-200)</span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">sports_motorsports</span>
+<span class="font-body-sm font-medium" id="orderAssignee">Ken (Courier)</span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex flex-col">
+<span class="font-body-sm text-error font-medium">Client not home</span>
+<span class="font-label-code text-[11px] text-on-surface-variant">Waypoint attempt: 14:22:09 UTC</span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-label-status font-label-status uppercase bg-error-container text-on-error-container" id="orderStateBadge">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+                DELIVERY_FAILED
+              </span>
+</td>
+<td class="py-space-md px-space-md text-right">
+<div class="inline-flex items-center gap-space-sm justify-end">
+<button class="px-space-md py-1.5 rounded bg-primary text-on-primary hover:bg-tertiary-container transition-colors font-headline-sm text-headline-sm flex items-center gap-1" id="btnApproveRedelivery" onclick="openRedeliveryModal()" type="button">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+<span>Approve Redelivery</span>
+</button>
+<button class="px-space-md py-1.5 rounded bg-surface-container-high hover:bg-surface-variant text-on-surface transition-colors font-headline-sm text-headline-sm flex items-center gap-1" onclick="openReassignModal()" type="button">
+<span class="material-symbols-outlined text-[16px]">swap_horiz</span>
+<span>Reassign Courier</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Assignment Audit Trail snippet inside card -->
+<div class="mt-space-md p-space-md bg-surface-container-low rounded-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-space-sm">
+<div class="flex items-center gap-2 font-label-code text-[11px] text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-secondary">history</span>
+<span>AUDIT CHAIN FOR LMS-1002:</span>
+<span class="text-on-surface" id="orderAuditSnippet">Initial Dispatch: Ken at 13:40 UTC -&gt; Failure Registered at 14:22 UTC.</span>
+</div>
+<span class="font-label-code text-[11px] text-secondary">Actor Signed: Alex (Lead Admin)</span>
+</div>
+</section>
+<!-- Section 4: Product Catalogue & Inventory Thresholds Management -->
+<section class="w-full mb-space-xl p-space-xl rounded-xl bg-surface-container-lowest shadow-sm">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md mb-space-lg">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-lg bg-surface-container text-secondary flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">shelves</span>
+</div>
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Product Catalogue &amp; Inventory Thresholds</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Physical counts are strictly synchronized via Warehouse (Mei). System Administrators maintain safety margins and listing visibility.</p>
+</div>
+</div>
+<div class="flex items-center gap-space-sm">
+<span class="font-label-code text-label-code text-on-surface-variant px-space-sm py-1 bg-surface-container rounded">
+          Sync: In-Memory / Active
+        </span>
+</div>
+</div>
+<div class="overflow-x-auto rounded-lg bg-surface-container-low">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container text-on-surface-variant font-label-table-head text-label-table-head uppercase tracking-wider">
+<th class="py-3 px-space-md">SKU</th>
+<th class="py-3 px-space-md">Product Descriptor</th>
+<th class="py-3 px-space-md">Unit Value</th>
+<th class="py-3 px-space-md">QR Routing Code</th>
+<th class="py-3 px-space-md">Physical Stock (WH Read-Only)</th>
+<th class="py-3 px-space-md">Low-Stock Margin</th>
+<th class="py-3 px-space-md">Catalogue Status</th>
+<th class="py-3 px-space-md text-right">Commit Controls</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface divide-y divide-transparent">
+<!-- Row 1: Product A -->
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="py-space-md px-space-md">
+<span class="font-label-code text-label-code font-bold text-secondary">PA-100</span>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex flex-col">
+<span class="font-medium text-body-sm text-on-surface">Product A (Precision Sensor Node)</span>
+<span class="font-label-code text-[11px] text-on-surface-variant">Category: Hardware Modules</span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<span class="font-label-code text-body-sm font-semibold">$80.00</span>
+</td>
+<td class="py-space-md px-space-md">
+<div class="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-surface-container font-label-code text-label-code text-on-surface">
+<span class="material-symbols-outlined text-[14px] text-secondary">qr_code_2</span>
+<span>QR-NX-PA100</span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex items-center gap-2">
+<span class="font-headline-sm text-headline-sm text-on-surface">12</span>
+<span class="font-label-code text-[10px] text-on-surface-variant px-1 py-0.5 rounded bg-surface-container">LOCKED BY MEI</span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex items-center gap-2">
+<input class="w-16 h-8 text-center font-label-code text-body-sm bg-surface-container-lowest text-on-surface rounded focus:outline-none focus:ring-1 focus:ring-secondary" id="thresh-PA100" max="99" min="1" type="number" value="3"/>
+<span class="font-body-xs text-on-surface-variant">units</span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" onchange="toggleProductStatus('PA-100', this.checked)" type="checkbox"/>
+<div class="w-9 h-5 bg-surface-container peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-secondary"></div>
+<span class="ml-2 font-label-status text-label-status uppercase text-secondary" id="status-label-PA-100">ACTIVE</span>
+</label>
+</td>
+<td class="py-space-md px-space-md text-right">
+<button class="px-space-md py-1 rounded bg-surface-container-high hover:bg-secondary hover:text-on-secondary text-on-surface transition-colors font-label-status text-label-status uppercase" onclick="saveProductThreshold('PA-100')" type="button">
+                Save
+              </button>
+</td>
+</tr>
+<!-- Row 2: Product B -->
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="py-space-md px-space-md">
+<span class="font-label-code text-label-code font-bold text-secondary">PB-200</span>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex flex-col">
+<span class="font-medium text-body-sm text-on-surface">Product B (Industrial Actuator Valve)</span>
+<span class="font-label-code text-[11px] text-on-surface-variant">Category: Pneumatics</span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<span class="font-label-code text-body-sm font-semibold">$45.00</span>
+</td>
+<td class="py-space-md px-space-md">
+<div class="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-surface-container font-label-code text-label-code text-on-surface">
+<span class="material-symbols-outlined text-[14px] text-secondary">qr_code_2</span>
+<span>QR-NX-PB200</span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex items-center gap-2">
+<span class="font-headline-sm text-headline-sm text-on-surface">5</span>
+<span class="font-label-code text-[10px] text-on-surface-variant px-1 py-0.5 rounded bg-surface-container">LOCKED BY MEI</span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex items-center gap-2">
+<input class="w-16 h-8 text-center font-label-code text-body-sm bg-surface-container-lowest text-on-surface rounded focus:outline-none focus:ring-1 focus:ring-secondary" id="thresh-PB200" max="99" min="1" type="number" value="2"/>
+<span class="font-body-xs text-on-surface-variant">units</span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" onchange="toggleProductStatus('PB-200', this.checked)" type="checkbox"/>
+<div class="w-9 h-5 bg-surface-container peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-secondary"></div>
+<span class="ml-2 font-label-status text-label-status uppercase text-secondary" id="status-label-PB-200">ACTIVE</span>
+</label>
+</td>
+<td class="py-space-md px-space-md text-right">
+<button class="px-space-md py-1 rounded bg-surface-container-high hover:bg-secondary hover:text-on-secondary text-on-surface transition-colors font-label-status text-label-status uppercase" onclick="saveProductThreshold('PB-200')" type="button">
+                Save
+              </button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Section 5: User Management & Security Access -->
+<section class="w-full mb-space-xl p-space-xl rounded-xl bg-surface-container-lowest shadow-sm">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md mb-space-lg">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-lg bg-surface-container text-secondary flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">manage_accounts</span>
+</div>
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">User Management &amp; Security Access</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Account state orchestration, lock mitigation, and single-use credential generation.</p>
+</div>
+</div>
+<div class="p-space-sm px-space-md rounded-lg bg-surface-container-high flex items-center gap-2 text-on-surface">
+<span class="material-symbols-outlined text-[18px] text-secondary">security</span>
+<span class="font-label-code text-label-code">Strict Rule: Zero Stored Hashes Visible</span>
+</div>
+</div>
+<!-- Security Policy Banner -->
+<div class="p-space-md rounded-lg bg-surface-container-low mb-space-md grid grid-cols-1 md:grid-cols-3 gap-space-md font-body-xs text-body-xs">
+<div class="flex items-start gap-2">
+<span class="material-symbols-outlined text-[18px] text-error mt-0.5">lock_clock</span>
+<span><strong>Lockout Trigger:</strong> 5 failed authentication attempts automatically lock access for 15 minutes unless manually unlocked by Alex.</span>
+</div>
+<div class="flex items-start gap-2">
+<span class="material-symbols-outlined text-[18px] text-secondary mt-0.5">key</span>
+<span><strong>Temporary Passwords:</strong> Ephemeral 24-hr single-use tokens; forced mandatory rotation at initial handshake.</span>
+</div>
+<div class="flex items-start gap-2">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant mt-0.5">visibility_off</span>
+<span><strong>Privacy Compliance:</strong> Cleartext passwords, hashes, and salt keys are cryptographically isolated from the presentation layer.</span>
+</div>
+</div>
+<!-- User Accounts Table -->
+<div class="overflow-x-auto rounded-lg bg-surface-container-low">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container text-on-surface-variant font-label-table-head text-label-table-head uppercase tracking-wider">
+<th class="py-3 px-space-md">Identity / User</th>
+<th class="py-3 px-space-md">Role Authorization</th>
+<th class="py-3 px-space-md">Account Status</th>
+<th class="py-3 px-space-md">Last Login</th>
+<th class="py-3 px-space-md">Failed Retries</th>
+<th class="py-3 px-space-md text-right">Security Operations</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface divide-y divide-transparent" id="userTableBody">
+<!-- Alex -->
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="py-space-md px-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-[12px]">AV</div>
+<div>
+<div class="font-medium text-body-sm text-on-surface">Alex Vance</div>
+<div class="font-label-code text-[11px] text-on-surface-variant">alex.admin@lms-core.internal</div>
+</div>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<span class="font-label-status text-label-status px-2 py-0.5 rounded uppercase bg-primary text-on-primary">SYSTEM ADMIN</span>
+</td>
+<td class="py-space-md px-space-md">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-label-status font-label-status uppercase bg-surface-container-highest text-secondary">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                ACTIVE
+              </span>
+</td>
+<td class="py-space-md px-space-md font-label-code text-body-xs">Today, 08:30:12</td>
+<td class="py-space-md px-space-md">
+<span class="font-label-code text-body-xs text-on-surface-variant">0 / 5</span>
+</td>
+<td class="py-space-md px-space-md text-right">
+<span class="font-label-code text-[11px] text-on-surface-variant italic">Active Session (Self)</span>
+</td>
+</tr>
+<!-- Mei -->
+<tr class="hover:bg-surface-container-high transition-colors" id="row-mei">
+<td class="py-space-md px-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-full bg-surface-container text-on-surface flex items-center justify-center font-bold text-[12px]">ML</div>
+<div>
+<div class="font-medium text-body-sm text-on-surface">Mei Lin</div>
+<div class="font-label-code text-[11px] text-on-surface-variant">mei.warehouse@lms-core.internal</div>
+</div>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<span class="font-label-status text-label-status px-2 py-0.5 rounded uppercase bg-surface-container text-on-surface">WAREHOUSE</span>
+</td>
+<td class="py-space-md px-space-md">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-label-status font-label-status uppercase bg-surface-container-highest text-secondary" id="status-mei">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                ACTIVE
+              </span>
+</td>
+<td class="py-space-md px-space-md font-label-code text-body-xs">Today, 07:15:44</td>
+<td class="py-space-md px-space-md">
+<span class="font-label-code text-body-xs text-on-surface-variant" id="fail-mei">0 / 5</span>
+</td>
+<td class="py-space-md px-space-md text-right">
+<div class="inline-flex items-center gap-1 justify-end">
+<button class="p-1.5 rounded hover:bg-surface-container text-on-surface" onclick="openRoleModal('Mei Lin', 'WAREHOUSE')" title="Change Role" type="button">
+<span class="material-symbols-outlined text-[18px]">badge</span>
+</button>
+<button class="p-1.5 rounded hover:bg-surface-container text-on-surface" id="lockbtn-mei" onclick="toggleUserLock('mei')" title="Toggle Lock" type="button">
+<span class="material-symbols-outlined text-[18px]">lock_open</span>
+</button>
+<button class="p-1.5 rounded hover:bg-surface-container text-secondary" onclick="generateTempPassword('Mei Lin')" title="Generate Temp Password" type="button">
+<span class="material-symbols-outlined text-[18px]">key</span>
+</button>
+<button class="p-1.5 rounded hover:bg-surface-container text-error" onclick="banUser('Mei Lin')" title="Ban User" type="button">
+<span class="material-symbols-outlined text-[18px]">block</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Ken -->
+<tr class="hover:bg-surface-container-high transition-colors" id="row-ken">
+<td class="py-space-md px-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-full bg-surface-container text-on-surface flex items-center justify-center font-bold text-[12px]">KT</div>
+<div>
+<div class="font-medium text-body-sm text-on-surface">Ken Takahashi</div>
+<div class="font-label-code text-[11px] text-on-surface-variant">ken.field@lms-core.internal</div>
+</div>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<span class="font-label-status text-label-status px-2 py-0.5 rounded uppercase bg-surface-container text-on-surface">DELIVERY</span>
+</td>
+<td class="py-space-md px-space-md">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-label-status font-label-status uppercase bg-surface-container-highest text-secondary" id="status-ken">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                ACTIVE
+              </span>
+</td>
+<td class="py-space-md px-space-md font-label-code text-body-xs">Today, 09:12:01</td>
+<td class="py-space-md px-space-md">
+<span class="font-label-code text-body-xs text-on-surface-variant" id="fail-ken">1 / 5</span>
+</td>
+<td class="py-space-md px-space-md text-right">
+<div class="inline-flex items-center gap-1 justify-end">
+<button class="p-1.5 rounded hover:bg-surface-container text-on-surface" onclick="openRoleModal('Ken Takahashi', 'DELIVERY')" title="Change Role" type="button">
+<span class="material-symbols-outlined text-[18px]">badge</span>
+</button>
+<button class="p-1.5 rounded hover:bg-surface-container text-on-surface" id="lockbtn-ken" onclick="toggleUserLock('ken')" title="Toggle Lock" type="button">
+<span class="material-symbols-outlined text-[18px]">lock_open</span>
+</button>
+<button class="p-1.5 rounded hover:bg-surface-container text-secondary" onclick="generateTempPassword('Ken Takahashi')" title="Generate Temp Password" type="button">
+<span class="material-symbols-outlined text-[18px]">key</span>
+</button>
+<button class="p-1.5 rounded hover:bg-surface-container text-error" onclick="banUser('Ken Takahashi')" title="Ban User" type="button">
+<span class="material-symbols-outlined text-[18px]">block</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Sarah -->
+<tr class="hover:bg-surface-container-high transition-colors" id="row-sarah">
+<td class="py-space-md px-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-full bg-surface-container text-on-surface flex items-center justify-center font-bold text-[12px]">SC</div>
+<div>
+<div class="font-medium text-body-sm text-on-surface">Sarah Connor</div>
+<div class="font-label-code text-[11px] text-on-surface-variant">sarah.client@partner-network.com</div>
+</div>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<span class="font-label-status text-label-status px-2 py-0.5 rounded uppercase bg-surface-container text-on-surface">CLIENT</span>
+</td>
+<td class="py-space-md px-space-md">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-label-status font-label-status uppercase bg-error-container text-on-error-container" id="status-sarah">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+                LOCKED (5 FAILS)
+              </span>
+</td>
+<td class="py-space-md px-space-md font-label-code text-body-xs">Yesterday, 18:22:10</td>
+<td class="py-space-md px-space-md">
+<span class="font-label-code text-body-xs text-error font-bold" id="fail-sarah">5 / 5</span>
+</td>
+<td class="py-space-md px-space-md text-right">
+<div class="inline-flex items-center gap-1 justify-end">
+<button class="p-1.5 rounded hover:bg-surface-container text-on-surface" onclick="openRoleModal('Sarah Connor', 'CLIENT')" title="Change Role" type="button">
+<span class="material-symbols-outlined text-[18px]">badge</span>
+</button>
+<button class="px-2 py-1 rounded bg-secondary text-on-secondary font-label-status text-label-status uppercase flex items-center gap-1" id="lockbtn-sarah" onclick="toggleUserLock('sarah')" title="Manual Unlock" type="button">
+<span class="material-symbols-outlined text-[14px]">lock_open</span>
+                  Unlock
+                </button>
+<button class="p-1.5 rounded hover:bg-surface-container text-secondary" onclick="generateTempPassword('Sarah Connor')" title="Generate Temp Password" type="button">
+<span class="material-symbols-outlined text-[18px]">key</span>
+</button>
+<button class="p-1.5 rounded hover:bg-surface-container text-error" onclick="banUser('Sarah Connor')" title="Ban User" type="button">
+<span class="material-symbols-outlined text-[18px]">block</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Section 6: System Logs & Audit Trails (3 Tabs) -->
+<section class="w-full mb-space-xl p-space-xl rounded-xl bg-surface-container-lowest shadow-sm">
+<div class="flex flex-col xl:flex-row xl:items-center justify-between gap-space-md mb-space-lg">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">System Logs &amp; Audit Trails</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Immutable, chronologically partitioned event records for compliance and supply chain verification.</p>
+</div>
+<!-- Append-Only Relational Badge (Mandatory Requirement) -->
+<div class="inline-flex items-center gap-2 px-space-md py-2 rounded-lg bg-surface-container-high text-on-surface">
+<span class="material-symbols-outlined text-[18px] text-secondary">database</span>
+<span class="font-label-code text-label-code font-medium">Audit logs are append-only relational records and cannot be edited or deleted through the interface.</span>
+</div>
+</div>
+<!-- Tab Buttons -->
+<div class="flex items-center gap-space-xs border-b border-transparent bg-surface-container-low p-1 rounded-xl mb-space-md">
+<button class="flex-1 py-2 px-space-md rounded-lg font-headline-sm text-headline-sm transition-all bg-surface-container-lowest text-secondary shadow-sm flex items-center justify-center gap-2" id="tabBtn1" onclick="switchAuditTab(1)" type="button">
+<span class="material-symbols-outlined text-[18px]">history_edu</span>
+<span>Operational Audit Log</span>
+<span class="font-label-status text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant uppercase">Retention: 3 Years</span>
+</button>
+<button class="flex-1 py-2 px-space-md rounded-lg font-headline-sm text-headline-sm transition-all text-on-surface-variant hover:text-on-surface flex items-center justify-center gap-2" id="tabBtn2" onclick="switchAuditTab(2)" type="button">
+<span class="material-symbols-outlined text-[18px]">shield</span>
+<span>Security Log</span>
+<span class="font-label-status text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant uppercase">Retention: 90 Days</span>
+</button>
+<button class="flex-1 py-2 px-space-md rounded-lg font-headline-sm text-headline-sm transition-all text-on-surface-variant hover:text-on-surface flex items-center justify-center gap-2" id="tabBtn3" onclick="switchAuditTab(3)" type="button">
+<span class="material-symbols-outlined text-[18px]">qr_code_scanner</span>
+<span>Picking Scan History</span>
+<span class="font-label-status text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant uppercase">Retention: 90 Days</span>
+</button>
+</div>
+<!-- Tab 1: Operational Audit Log -->
+<div class="block" id="tabContent1">
+<div class="overflow-x-auto rounded-lg bg-surface-container-low">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container text-on-surface-variant font-label-table-head text-label-table-head uppercase tracking-wider">
+<th class="py-3 px-space-md">Timestamp (UTC)</th>
+<th class="py-3 px-space-md">Actor</th>
+<th class="py-3 px-space-md">Action Code</th>
+<th class="py-3 px-space-md">Target Entity</th>
+<th class="py-3 px-space-md">Old / New Values</th>
+<th class="py-3 px-space-md">Commit Status</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface divide-y divide-transparent" id="operationalLogBody">
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="py-space-md px-space-md font-label-code text-body-xs">2023-10-24 14:22:09</td>
+<td class="py-space-md px-space-md font-medium text-body-sm">Ken (Delivery)</td>
+<td class="py-space-md px-space-md font-label-code text-label-code text-error">RECORD_EXCEPTION</td>
+<td class="py-space-md px-space-md font-label-code text-label-code">ORDER: LMS-1002</td>
+<td class="py-space-md px-space-md font-label-code text-body-xs text-on-surface-variant">state: IN_TRANSIT -&gt; DELIVERY_FAILED</td>
+<td class="py-space-md px-space-md"><span class="font-label-status text-[10px] px-2 py-0.5 rounded bg-surface-container-highest text-secondary uppercase">COMMITTED</span></td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="py-space-md px-space-md font-label-code text-body-xs">2023-10-24 13:40:11</td>
+<td class="py-space-md px-space-md font-medium text-body-sm">Alex (Admin)</td>
+<td class="py-space-md px-space-md font-label-code text-label-code text-secondary">DISPATCH_ASSIGN</td>
+<td class="py-space-md px-space-md font-label-code text-label-code">ORDER: LMS-1002</td>
+<td class="py-space-md px-space-md font-label-code text-body-xs text-on-surface-variant">assignee: NULL -&gt; Ken (Courier)</td>
+<td class="py-space-md px-space-md"><span class="font-label-status text-[10px] px-2 py-0.5 rounded bg-surface-container-highest text-secondary uppercase">COMMITTED</span></td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="py-space-md px-space-md font-label-code text-body-xs">2023-10-24 11:18:00</td>
+<td class="py-space-md px-space-md font-medium text-body-sm">Mei (Warehouse)</td>
+<td class="py-space-md px-space-md font-label-code text-label-code text-on-surface">BIN_INVENTORY_SYNC</td>
+<td class="py-space-md px-space-md font-label-code text-label-code">SKU: PB-200</td>
+<td class="py-space-md px-space-md font-label-code text-body-xs text-on-surface-variant">stock: 6 -&gt; 5</td>
+<td class="py-space-md px-space-md"><span class="font-label-status text-[10px] px-2 py-0.5 rounded bg-surface-container-highest text-secondary uppercase">COMMITTED</span></td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="py-space-md px-space-md font-label-code text-body-xs">2023-10-24 09:05:43</td>
+<td class="py-space-md px-space-md font-medium text-body-sm">Alex (Admin)</td>
+<td class="py-space-md px-space-md font-label-code text-label-code text-on-surface">THRESHOLD_UPDATE</td>
+<td class="py-space-md px-space-md font-label-code text-label-code">SKU: PA-100</td>
+<td class="py-space-md px-space-md font-label-code text-body-xs text-on-surface-variant">threshold: 2 -&gt; 3</td>
+<td class="py-space-md px-space-md"><span class="font-label-status text-[10px] px-2 py-0.5 rounded bg-surface-container-highest text-secondary uppercase">COMMITTED</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Tab 2: Security Log -->
+<div class="hidden" id="tabContent2">
+<div class="overflow-x-auto rounded-lg bg-surface-container-low">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container text-on-surface-variant font-label-table-head text-label-table-head uppercase tracking-wider">
+<th class="py-3 px-space-md">Event Timestamp</th>
+<th class="py-3 px-space-md">Event Type</th>
+<th class="py-3 px-space-md">Account Subject</th>
+<th class="py-3 px-space-md">IP Address</th>
+<th class="py-3 px-space-md">Device / Client Agent</th>
+<th class="py-3 px-space-md">Evaluation</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface divide-y divide-transparent">
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="py-space-md px-space-md font-label-code text-body-xs">2023-10-24 18:22:10</td>
+<td class="py-space-md px-space-md font-label-code text-label-code text-error">ACCOUNT_LOCKOUT</td>
+<td class="py-space-md px-space-md font-medium text-body-sm">Sarah Connor</td>
+<td class="py-space-md px-space-md font-label-code text-body-xs">198.51.100.44</td>
+<td class="py-space-md px-space-md font-body-xs text-on-surface-variant truncate max-w-xs">Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) Safari</td>
+<td class="py-space-md px-space-md"><span class="font-label-status text-[10px] px-2 py-0.5 rounded bg-error-container text-on-error-container uppercase">LOCKED_15MIN</span></td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="py-space-md px-space-md font-label-code text-body-xs">2023-10-24 18:22:08</td>
+<td class="py-space-md px-space-md font-label-code text-label-code text-error">AUTH_FAIL_5</td>
+<td class="py-space-md px-space-md font-medium text-body-sm">Sarah Connor</td>
+<td class="py-space-md px-space-md font-label-code text-body-xs">198.51.100.44</td>
+<td class="py-space-md px-space-md font-body-xs text-on-surface-variant truncate max-w-xs">Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) Safari</td>
+<td class="py-space-md px-space-md"><span class="font-label-status text-[10px] px-2 py-0.5 rounded bg-error-container text-on-error-container uppercase">DENIED</span></td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="py-space-md px-space-md font-label-code text-body-xs">2023-10-24 09:12:01</td>
+<td class="py-space-md px-space-md font-label-code text-label-code text-secondary">LOGIN_SUCCESS</td>
+<td class="py-space-md px-space-md font-medium text-body-sm">Ken Takahashi</td>
+<td class="py-space-md px-space-md font-label-code text-body-xs">172.56.21.89</td>
+<td class="py-space-md px-space-md font-body-xs text-on-surface-variant truncate max-w-xs">NexusDeliveryAndroid/4.2 Dalvik/2.1.0</td>
+<td class="py-space-md px-space-md"><span class="font-label-status text-[10px] px-2 py-0.5 rounded bg-surface-container-highest text-secondary uppercase">GRANTED</span></td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="py-space-md px-space-md font-label-code text-body-xs">2023-10-24 08:30:12</td>
+<td class="py-space-md px-space-md font-label-code text-label-code text-secondary">LOGIN_SUCCESS_MFA</td>
+<td class="py-space-md px-space-md font-medium text-body-sm">Alex Vance</td>
+<td class="py-space-md px-space-md font-label-code text-body-xs">10.0.4.12 (Internal VPN)</td>
+<td class="py-space-md px-space-md font-body-xs text-on-surface-variant truncate max-w-xs">Chrome 118.0.5993.88 (Linux x86_64)</td>
+<td class="py-space-md px-space-md"><span class="font-label-status text-[10px] px-2 py-0.5 rounded bg-surface-container-highest text-secondary uppercase">GRANTED</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Tab 3: Picking Scan History -->
+<div class="hidden" id="tabContent3">
+<div class="overflow-x-auto rounded-lg bg-surface-container-low">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container text-on-surface-variant font-label-table-head text-label-table-head uppercase tracking-wider">
+<th class="py-3 px-space-md">Scan Timestamp</th>
+<th class="py-3 px-space-md">Terminal / Picker</th>
+<th class="py-3 px-space-md">Barcode / Payload</th>
+<th class="py-3 px-space-md">Order Binding</th>
+<th class="py-3 px-space-md">Verification Result</th>
+<th class="py-3 px-space-md text-right">Ledger State</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface divide-y divide-transparent">
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="py-space-md px-space-md font-label-code text-body-xs">2023-10-24 10:14:22</td>
+<td class="py-space-md px-space-md font-medium text-body-sm">Terminal #4 (Mei)</td>
+<td class="py-space-md px-space-md font-label-code text-label-code">QR-NX-PB200-9921</td>
+<td class="py-space-md px-space-md font-label-code text-label-code">LMS-1002</td>
+<td class="py-space-md px-space-md">
+<span class="inline-flex items-center gap-1 font-label-status text-label-status uppercase text-secondary">
+<span class="material-symbols-outlined text-[14px]">check</span> ACCEPTED
+                </span>
+</td>
+<td class="py-space-md px-space-md text-right font-label-code text-[11px] text-on-surface-variant">BLOCK #88219</td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="py-space-md px-space-md font-label-code text-body-xs">2023-10-24 10:12:05</td>
+<td class="py-space-md px-space-md font-medium text-body-sm">Terminal #4 (Mei)</td>
+<td class="py-space-md px-space-md font-label-code text-label-code text-error">QR-NX-PA100-0012</td>
+<td class="py-space-md px-space-md font-label-code text-label-code">LMS-1002</td>
+<td class="py-space-md px-space-md">
+<span class="inline-flex items-center gap-1 font-label-status text-label-status uppercase text-error">
+<span class="material-symbols-outlined text-[14px]">close</span> REJECTED (MISMATCH)
+                </span>
+</td>
+<td class="py-space-md px-space-md text-right font-label-code text-[11px] text-on-surface-variant">BLOCK #88218</td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="py-space-md px-space-md font-label-code text-body-xs">2023-10-24 08:45:19</td>
+<td class="py-space-md px-space-md font-medium text-body-sm">Terminal #2 (Mei)</td>
+<td class="py-space-md px-space-md font-label-code text-label-code text-outline">QR-NX-PA100-7811</td>
+<td class="py-space-md px-space-md font-label-code text-label-code">LMS-1001</td>
+<td class="py-space-md px-space-md">
+<span class="inline-flex items-center gap-1 font-label-status text-label-status uppercase text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]">undo</span> REVERSAL / CANCEL
+                </span>
+</td>
+<td class="py-space-md px-space-md text-right font-label-code text-[11px] text-on-surface-variant">BLOCK #88204</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<!-- Modal 1: Approve Redelivery Confirmation Dialog -->
+<div class="fixed inset-0 z-50 hidden items-center justify-center bg-inverse-surface/60 p-4" id="redeliveryModal">
+<div class="w-full max-w-md bg-surface-container-lowest rounded-xl shadow-xl p-space-xl flex flex-col gap-space-md animate-in fade-in zoom-in-95 duration-150">
+<div class="flex items-center gap-space-sm text-secondary">
+<span class="material-symbols-outlined text-[24px]">restart_alt</span>
+<h3 class="font-headline-md text-headline-md text-on-surface">Confirm Redelivery</h3>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+        This action will transition order <strong class="text-on-surface font-label-code">LMS-1002</strong> from <code>DELIVERY_FAILED</code> to <code>READY_FOR_REDELIVERY</code>. A dispatch ticket will be sent to the staging queue.
+      </p>
+<div class="p-space-sm rounded bg-surface-container-low font-label-code text-body-xs text-on-surface">
+<div><strong>Item:</strong> 1x Product B (PB-200)</div>
+<div><strong>Actor Signature:</strong> Alex Vance (System Administrator)</div>
+</div>
+<div class="flex items-center justify-end gap-space-sm mt-space-sm">
+<button class="px-space-md py-2 rounded bg-surface-container hover:bg-surface-container-high text-on-surface transition-colors font-headline-sm text-headline-sm" onclick="closeRedeliveryModal()" type="button">
+          Cancel
+        </button>
+<button class="px-space-md py-2 rounded bg-primary text-on-primary hover:bg-tertiary-container transition-colors font-headline-sm text-headline-sm" onclick="confirmRedelivery()" type="button">
+          Confirm Transition
+        </button>
+</div>
+</div>
+</div>
+<!-- Modal 2: Reassign Delivery Worker Modal -->
+<div class="fixed inset-0 z-50 hidden items-center justify-center bg-inverse-surface/60 p-4" id="reassignModal">
+<div class="w-full max-w-lg bg-surface-container-lowest rounded-xl shadow-xl p-space-xl flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm text-secondary">
+<span class="material-symbols-outlined text-[24px]">swap_horiz</span>
+<h3 class="font-headline-md text-headline-md text-on-surface">Reassign Delivery Worker</h3>
+</div>
+<button class="text-on-surface-variant hover:text-on-surface" onclick="closeReassignModal()" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+        Select an active courier from the roster to take custody of order <strong class="text-on-surface font-label-code">LMS-1002</strong>. Previous custodian history will be appended to the operational ledger.
+      </p>
+<div class="flex flex-col gap-space-xs font-body-sm text-body-sm">
+<label class="font-label-table-head text-label-table-head uppercase text-on-surface-variant" for="selectCourier">Select Available Field Courier</label>
+<select class="w-full h-10 px-space-sm bg-surface-container-low text-on-surface rounded focus:outline-none focus:ring-1 focus:ring-secondary font-medium" id="selectCourier">
+<option value="Marcus Ray">Marcus Ray (Fleet Unit #7 - Idle)</option>
+<option value="Elena Rostova">Elena Rostova (Fleet Unit #2 - 1 Drop Remaining)</option>
+<option value="Ken Takahashi">Ken Takahashi (Current Assignee)</option>
+</select>
+</div>
+<div class="p-space-sm rounded bg-surface-container-low font-label-code text-body-xs text-on-surface-variant flex flex-col gap-1">
+<div><strong>Current Worker:</strong> Ken Takahashi</div>
+<div><strong>Logged Actor:</strong> Alex Vance (Lead Admin)</div>
+<div><strong>Timestamp:</strong> Generated at execution</div>
+</div>
+<div class="flex items-center justify-end gap-space-sm mt-space-sm">
+<button class="px-space-md py-2 rounded bg-surface-container hover:bg-surface-container-high text-on-surface transition-colors font-headline-sm text-headline-sm" onclick="closeReassignModal()" type="button">
+          Cancel
+        </button>
+<button class="px-space-md py-2 rounded bg-secondary text-on-secondary hover:bg-secondary-container transition-colors font-headline-sm text-headline-sm" onclick="confirmReassign()" type="button">
+          Confirm Reassignment
+        </button>
+</div>
+</div>
+</div>
+<!-- Modal 3: Temporary Password Modal -->
+<div class="fixed inset-0 z-50 hidden items-center justify-center bg-inverse-surface/60 p-4" id="tempPassModal">
+<div class="w-full max-w-md bg-surface-container-lowest rounded-xl shadow-xl p-space-xl flex flex-col gap-space-md">
+<div class="flex items-center gap-space-sm text-secondary">
+<span class="material-symbols-outlined text-[24px]">vpn_key</span>
+<h3 class="font-headline-md text-headline-md text-on-surface">Temporary Credential Generated</h3>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+        Generated single-use authorization token for <strong class="text-on-surface" id="tempPassTarget">User</strong>. Valid for 24 hours. The user must rotate credentials immediately upon login.
+      </p>
+<div class="p-space-md rounded bg-surface-container flex items-center justify-between">
+<span class="font-label-code text-headline-sm text-secondary tracking-widest font-bold" id="tempPassCode">NEX-9821-XKP4</span>
+<button class="px-2.5 py-1.5 rounded bg-surface-container-high hover:bg-surface-variant text-on-surface font-label-status text-label-status uppercase" onclick="copyTempPass()" type="button">
+          Copy
+        </button>
+</div>
+<div class="font-body-xs text-body-xs text-on-surface-variant">
+        * In compliance with security policy, this token will not be shown again and cannot be retrieved from storage.
+      </div>
+<div class="flex items-center justify-end mt-space-sm">
+<button class="px-space-md py-2 rounded bg-primary text-on-primary hover:bg-tertiary-container transition-colors font-headline-sm text-headline-sm" onclick="closeTempPassModal()" type="button">
+          Acknowledge &amp; Close
+        </button>
+</div>
+</div>
+</div>
+<!-- Modal 4: Change Role Modal -->
+<div class="fixed inset-0 z-50 hidden items-center justify-center bg-inverse-surface/60 p-4" id="roleModal">
+<div class="w-full max-w-md bg-surface-container-lowest rounded-xl shadow-xl p-space-xl flex flex-col gap-space-md">
+<div class="flex items-center gap-space-sm text-secondary">
+<span class="material-symbols-outlined text-[24px]">manage_accounts</span>
+<h3 class="font-headline-md text-headline-md text-on-surface">Change Role Authorization</h3>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+        Modify enterprise authorization matrix for <strong class="text-on-surface" id="roleTargetName">Target User</strong>.
+      </p>
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-table-head text-label-table-head uppercase text-on-surface-variant" for="selectNewRole">Select Assignment Role</label>
+<select class="w-full h-10 px-space-sm bg-surface-container-low text-on-surface rounded focus:outline-none focus:ring-1 focus:ring-secondary font-medium" id="selectNewRole">
+<option value="WAREHOUSE">Warehouse Specialist (Mei)</option>
+<option value="DELIVERY">Delivery Field Courier (Ken)</option>
+<option value="CLIENT">Client Portal Read-Only (Sarah)</option>
+<option value="ADMIN">System Administrator (Alex)</option>
+</select>
+</div>
+<div class="flex items-center justify-end gap-space-sm mt-space-sm">
+<button class="px-space-md py-2 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-headline-sm text-headline-sm" onclick="closeRoleModal()" type="button">
+          Cancel
+        </button>
+<button class="px-space-md py-2 rounded bg-secondary text-on-secondary hover:bg-secondary-container font-headline-sm text-headline-sm" onclick="confirmRoleChange()" type="button">
+          Update Role
+        </button>
+</div>
+</div>
+</div>
+</div>
+<script>
+  // Session countdown timer simulation
+  (function initSessionCountdown() {
+    let secondsLeft = 14 * 60 + 42;
+    const display = document.getElementById('sessionTimerDisplay');
+    setInterval(() => {
+      if (secondsLeft > 0) {
+        secondsLeft--;
+        const m = Math.floor(secondsLeft / 60);
+        const s = secondsLeft % 60;
+        if (display) {
+          display.textContent = `${m}m ${s < 10 ? '0' : ''}${s}s`;
+        }
+      }
+    }, 1000);
+  })();
+
+  // Toast Utility
+  function triggerToast(title, message, tone = 'secondary') {
+    const toast = document.getElementById('toastNotification');
+    const toastTitle = document.getElementById('toastTitle');
+    const toastMsg = document.getElementById('toastMsg');
+    const toastAccent = document.getElementById('toastAccent');
+
+    if (!toast || !toastTitle || !toastMsg || !toastAccent) return;
+
+    toastTitle.textContent = title;
+    toastMsg.textContent = message;
+
+    if (tone === 'error') {
+      toastAccent.className = 'w-1.5 h-10 rounded-full bg-error';
+    } else if (tone === 'secondary') {
+      toastAccent.className = 'w-1.5 h-10 rounded-full bg-secondary';
+    } else {
+      toastAccent.className = 'w-1.5 h-10 rounded-full bg-on-surface';
+    }
+
+    toast.classList.remove('translate-y-[-20px]', 'opacity-0', 'pointer-events-none');
+    toast.classList.add('translate-y-0', 'opacity-100');
+
+    clearTimeout(window._toastTimeout);
+    window._toastTimeout = setTimeout(hideToast, 4000);
+  }
+
+  function hideToast() {
+    const toast = document.getElementById('toastNotification');
+    if (toast) {
+      toast.classList.add('translate-y-[-20px]', 'opacity-0', 'pointer-events-none');
+      toast.classList.remove('translate-y-0', 'opacity-100');
+    }
+  }
+
+  // Delivery Exceptions Interactivity
+  function openRedeliveryModal() {
+    document.getElementById('redeliveryModal').classList.remove('hidden');
+    document.getElementById('redeliveryModal').classList.add('flex');
+  }
+
+  function closeRedeliveryModal() {
+    document.getElementById('redeliveryModal').classList.add('hidden');
+    document.getElementById('redeliveryModal').classList.remove('flex');
+  }
+
+  function confirmRedelivery() {
+    closeRedeliveryModal();
+    const badge = document.getElementById('orderStateBadge');
+    const btn = document.getElementById('btnApproveRedelivery');
+    const snippet = document.getElementById('orderAuditSnippet');
+
+    if (badge) {
+      badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-label-status font-label-status uppercase bg-surface-container-highest text-secondary';
+      badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> READY_FOR_REDELIVERY';
+    }
+    if (btn) {
+      btn.disabled = true;
+      btn.className = 'px-space-md py-1.5 rounded bg-surface-container text-outline font-headline-sm text-headline-sm cursor-not-allowed';
+      btn.innerHTML = '<span class="material-symbols-outlined text-[16px]">done</span> Redelivery Approved';
+    }
+    if (snippet) {
+      snippet.innerHTML = 'Alex approved redelivery at ' + new Date().toISOString().substring(11, 19) + ' UTC. Order shifted to staging queue.';
+    }
+
+    appendOperationalAuditRow('Alex (Admin)', 'APPROVE_REDELIVERY', 'ORDER: LMS-1002', 'state: DELIVERY_FAILED -> READY_FOR_REDELIVERY');
+    triggerToast('Redelivery Approved', 'LMS-1002 state transitioned to READY_FOR_REDELIVERY.', 'secondary');
+  }
+
+  function openReassignModal() {
+    document.getElementById('reassignModal').classList.remove('hidden');
+    document.getElementById('reassignModal').classList.add('flex');
+  }
+
+  function closeReassignModal() {
+    document.getElementById('reassignModal').classList.add('hidden');
+    document.getElementById('reassignModal').classList.remove('flex');
+  }
+
+  function confirmReassign() {
+    const courier = document.getElementById('selectCourier').value;
+    const oldAssignee = document.getElementById('orderAssignee').textContent;
+    document.getElementById('orderAssignee').textContent = `${courier} (Courier)`;
+    closeReassignModal();
+
+    const timestamp = new Date().toISOString().substring(11, 19) + ' UTC';
+    const snippet = document.getElementById('orderAuditSnippet');
+    if (snippet) {
+      snippet.innerHTML = `Reassigned from ${oldAssignee} to ${courier} by Alex at ${timestamp}.`;
+    }
+
+    appendOperationalAuditRow('Alex (Admin)', 'REASSIGN_WORKER', 'ORDER: LMS-1002', `assignee: ${oldAssignee} -> ${courier}`);
+    triggerToast('Courier Reassigned', `Custody of LMS-1002 assigned to ${courier}.`, 'secondary');
+  }
+
+  // Inventory Threshold Management
+  function saveProductThreshold(sku) {
+    const input = document.getElementById(`thresh-${sku.replace('-', '')}`);
+    const val = input ? input.value : '3';
+    appendOperationalAuditRow('Alex (Admin)', 'SET_THRESHOLD', `SKU: ${sku}`, `threshold: adjusted to ${val}`);
+    triggerToast('Safety Threshold Saved', `Low-stock alarm for ${sku} updated to ${val} units.`, 'secondary');
+  }
+
+  function toggleProductStatus(sku, isActive) {
+    const label = document.getElementById(`status-label-${sku}`);
+    if (label) {
+      label.textContent = isActive ? 'ACTIVE' : 'INACTIVE';
+      label.className = `ml-2 font-label-status text-label-status uppercase ${isActive ? 'text-secondary' : 'text-outline'}`;
+    }
+    appendOperationalAuditRow('Alex (Admin)', 'CATALOGUE_TOGGLE', `SKU: ${sku}`, `status: ${isActive ? 'ACTIVE' : 'INACTIVE'}`);
+    triggerToast('Catalogue Status Updated', `${sku} visibility set to ${isActive ? 'ACTIVE' : 'INACTIVE'}.`, 'secondary');
+  }
+
+  // User Management Actions
+  const userLockStates = { mei: false, ken: false, sarah: true };
+
+  function toggleUserLock(userId) {
+    userLockStates[userId] = !userLockStates[userId];
+    const isLocked = userLockStates[userId];
+    const statusEl = document.getElementById(`status-${userId}`);
+    const btnEl = document.getElementById(`lockbtn-${userId}`);
+    const failEl = document.getElementById(`fail-${userId}`);
+
+    if (isLocked) {
+      if (statusEl) {
+        statusEl.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-label-status font-label-status uppercase bg-error-container text-on-error-container';
+        statusEl.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-error"></span> LOCKED';
+      }
+      if (failEl) failEl.textContent = '5 / 5';
+      if (btnEl) btnEl.innerHTML = '<span class="material-symbols-outlined text-[18px] text-error">lock</span>';
+      triggerToast('User Locked', `Account ${userId} manually locked by Alex.`, 'error');
+      appendOperationalAuditRow('Alex (Admin)', 'MANUAL_LOCKOUT', `USER: ${userId}`, 'state: ACTIVE -> LOCKED');
+    } else {
+      if (statusEl) {
+        statusEl.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-label-status font-label-status uppercase bg-surface-container-highest text-secondary';
+        statusEl.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> ACTIVE';
+      }
+      if (failEl) failEl.textContent = '0 / 5';
+      if (btnEl) btnEl.innerHTML = '<span class="material-symbols-outlined text-[18px]">lock_open</span>';
+      triggerToast('Account Unlocked', `Account ${userId} restored. Failed attempt counter cleared.`, 'secondary');
+      appendOperationalAuditRow('Alex (Admin)', 'ADMIN_UNLOCK', `USER: ${userId}`, 'fail_counter: reset (0/5)');
+    }
+  }
+
+  function generateTempPassword(userName) {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let rand = 'NEX-';
+    for (let i = 0; i < 4; i++) rand += chars.charAt(Math.floor(Math.random() * chars.length));
+    rand += '-';
+    for (let i = 0; i < 4; i++) rand += chars.charAt(Math.floor(Math.random() * chars.length));
+
+    document.getElementById('tempPassTarget').textContent = userName;
+    document.getElementById('tempPassCode').textContent = rand;
+    document.getElementById('tempPassModal').classList.remove('hidden');
+    document.getElementById('tempPassModal').classList.add('flex');
+
+    appendOperationalAuditRow('Alex (Admin)', 'GENERATE_TEMP_CRED', `USER: ${userName}`, 'token: SINGLE_USE_24HR_EXPIRY');
+  }
+
+  function closeTempPassModal() {
+    document.getElementById('tempPassModal').classList.add('hidden');
+    document.getElementById('tempPassModal').classList.remove('flex');
+  }
+
+  function copyTempPass() {
+    const code = document.getElementById('tempPassCode').textContent;
+    navigator.clipboard.writeText(code);
+    triggerToast('Copied', 'Temporary credential copied to clipboard.', 'secondary');
+  }
+
+  function banUser(userName) {
+    if (confirm(`Ban account for ${userName}? Session tokens will be instantly revoked.`)) {
+      triggerToast('User Terminated', `${userName} has been banned from system access.`, 'error');
+      appendOperationalAuditRow('Alex (Admin)', 'ACCOUNT_BAN', `USER: ${userName}`, 'status: ACTIVE -> BANNED');
+    }
+  }
+
+  let currentRoleTarget = '';
+  function openRoleModal(userName, currentRole) {
+    currentRoleTarget = userName;
+    document.getElementById('roleTargetName').textContent = userName;
+    document.getElementById('selectNewRole').value = currentRole;
+    document.getElementById('roleModal').classList.remove('hidden');
+    document.getElementById('roleModal').classList.add('flex');
+  }
+
+  function closeRoleModal() {
+    document.getElementById('roleModal').classList.add('hidden');
+    document.getElementById('roleModal').classList.remove('flex');
+  }
+
+  function confirmRoleChange() {
+    const newRole = document.getElementById('selectNewRole').value;
+    closeRoleModal();
+    appendOperationalAuditRow('Alex (Admin)', 'ROLE_MUTATION', `USER: ${currentRoleTarget}`, `role: -> ${newRole}`);
+    triggerToast('Role Updated', `${currentRoleTarget} assigned role: ${newRole}.`, 'secondary');
+  }
+
+  // Audit Log Tab Switching
+  function switchAuditTab(tabIndex) {
+    const tabs = [1, 2, 3];
+    tabs.forEach(i => {
+      const content = document.getElementById(`tabContent${i}`);
+      const btn = document.getElementById(`tabBtn${i}`);
+      if (i === tabIndex) {
+        content.classList.remove('hidden');
+        content.classList.add('block');
+        btn.className = 'flex-1 py-2 px-space-md rounded-lg font-headline-sm text-headline-sm transition-all bg-surface-container-lowest text-secondary shadow-sm flex items-center justify-center gap-2';
+      } else {
+        content.classList.remove('block');
+        content.classList.add('hidden');
+        btn.className = 'flex-1 py-2 px-space-md rounded-lg font-headline-sm text-headline-sm transition-all text-on-surface-variant hover:text-on-surface flex items-center justify-center gap-2';
+      }
+    });
+  }
+
+  // Append-only audit logger utility (relational client-side simulator)
+  function appendOperationalAuditRow(actor, action, target, valDiff) {
+    const tbody = document.getElementById('operationalLogBody');
+    if (!tbody) return;
+
+    const row = document.createElement('tr');
+    row.className = 'hover:bg-surface-container-high transition-colors bg-surface-container-lowest animate-in fade-in duration-200';
+    const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+
+    row.innerHTML = `
+      <td class="py-space-md px-space-md font-label-code text-body-xs">${now}</td>
+      <td class="py-space-md px-space-md font-medium text-body-sm">${actor}</td>
+      <td class="py-space-md px-space-md font-label-code text-label-code text-secondary">${action}</td>
+      <td class="py-space-md px-space-md font-label-code text-label-code">${target}</td>
+      <td class="py-space-md px-space-md font-label-code text-body-xs text-on-surface-variant">${valDiff}</td>
+      <td class="py-space-md px-space-md"><span class="font-label-status text-[10px] px-2 py-0.5 rounded bg-surface-container-highest text-secondary uppercase">COMMITTED</span></td>
+    `;
+    tbody.insertBefore(row, tbody.firstChild);
+  }
+</script></main></div></body></html>

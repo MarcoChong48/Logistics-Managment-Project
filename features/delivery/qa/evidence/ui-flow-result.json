@@ -1,0 +1,6 @@
+{
+  "status": "passed",
+  "workflow": "UI login → claim list → collect package → start delivery → draw/upload signature → confirm delivered → read-only history",
+  "pageErrors": [],
+  "cameraHardware": "not tested"
+}

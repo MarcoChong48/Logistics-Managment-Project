@@ -1,0 +1,5 @@
+{
+  "status": "passed",
+  "filesCompared": 2,
+  "check": "Offline database and proof backup restored into a new folder with matching file hashes."
+}

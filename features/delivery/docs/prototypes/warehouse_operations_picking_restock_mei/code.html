@@ -1,0 +1,583 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_dashboard" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"on-error":"#ffffff","on-tertiary":"#ffffff","surface-variant":"#d3e4fe","secondary":"#0051d5","on-primary":"#ffffff","on-primary-container":"#7c839b","tertiary":"#000000","on-secondary":"#ffffff","surface-container-highest":"#d3e4fe","on-background":"#0b1c30","on-tertiary-fixed-variant":"#3c475a","surface-container-high":"#dce9ff","primary-fixed-dim":"#bec6e0","secondary-fixed":"#dbe1ff","tertiary-container":"#111c2d","on-surface-variant":"#45464d","secondary-container":"#316bf3","outline":"#76777d","outline-variant":"#c6c6cd","surface-container-low":"#eff4ff","primary":"#000000","tertiary-fixed":"#d8e3fb","inverse-surface":"#213145","on-tertiary-container":"#79849a","error-container":"#ffdad6","primary-container":"#131b2e","surface-container":"#e5eeff","inverse-primary":"#bec6e0","primary-fixed":"#dae2fd","surface-container-lowest":"#ffffff","tertiary-fixed-dim":"#bcc7de","secondary-fixed-dim":"#b4c5ff","on-primary-fixed":"#131b2e","on-secondary-container":"#fefcff","inverse-on-surface":"#eaf1ff","error":"#ba1a1a","on-tertiary-fixed":"#111c2d","on-primary-fixed-variant":"#3f465c","on-error-container":"#93000a","on-surface":"#0b1c30","on-secondary-fixed-variant":"#003ea8","surface":"#f8f9ff","surface-dim":"#cbdbf5","surface-bright":"#f8f9ff","surface-tint":"#565e74","background":"#f8f9ff","on-secondary-fixed":"#00174b"},borderRadius:{DEFAULT:"0.125rem",lg:"0.25rem",xl:"0.5rem",full:"0.75rem"},spacing:{gutter:"1rem","space-2xl":"3rem","gutter-desktop":"1.5rem","space-xl":"2rem","space-md":"1rem",margin:"1rem","space-sm":"0.5rem","space-lg":"1.5rem","space-xs":"0.25rem","margin-desktop":"2rem"},fontFamily:{"headline-xl":["Inter"],"label-table-head":["Inter"],"headline-md":["Inter"],"body-sm":["Inter"],"headline-lg":["Inter"],"label-status":["Inter"],"body-lg":["Inter"],"headline-sm":["Inter"],"body-md":["Inter"],"body-xs":["Inter"],"label-code":["JetBrains Mono"]},fontSize:{"headline-xl":["30px",{lineHeight:"38px",letterSpacing:"-0.02em",fontWeight:"700"}],"label-table-head":["11px",{lineHeight:"14px",letterSpacing:"0.05em",fontWeight:"600"}],"headline-md":["20px",{lineHeight:"28px",letterSpacing:"-0.01em",fontWeight:"600"}],"body-sm":["13px",{lineHeight:"18px",fontWeight:"400"}],"headline-lg":["24px",{lineHeight:"32px",letterSpacing:"-0.015em",fontWeight:"600"}],"label-status":["11px",{lineHeight:"14px",letterSpacing:"0.04em",fontWeight:"700"}],"body-lg":["16px",{lineHeight:"24px",fontWeight:"400"}],"headline-sm":["16px",{lineHeight:"24px",fontWeight:"600"}],"body-md":["14px",{lineHeight:"20px",fontWeight:"400"}],"body-xs":["12px",{lineHeight:"16px",fontWeight:"400"}],"label-code":["12px",{lineHeight:"16px",letterSpacing:"0.02em",fontWeight:"500"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><header class="fixed top-0 left-0 right-0 h-14 bg-primary-container text-on-primary z-50 shadow-[0_1px_8px_rgba(0,0,0,0.08)] flex items-center justify-between px-margin-desktop"><div class="flex items-center gap-space-lg"><div class="flex items-center gap-space-sm"><img alt="LMS Brand Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1XID8S36_nPbJl9JTZSeHXZlVu9bO52ehFG5vN1RadDJSJbb1-cUi7w5uBzF6HouEPHm214qtAZUDmg3UFcXx30kIw5K0rJcLlo-qrWNaMX3ohptDGI0o1_zRhYhv7gcqou8X3rDahnQ20ey4P9T0jLnT1H8dubaSiVXBYJcZwvQGQscARyTczTXpHcGr4MOI3LVmQ2NY7kZ7qqQ7IX7VVfzGkdh7egqzjC-tj6eCfJQq63mkDzcH0fS8XS"><span class="font-headline-sm text-headline-sm font-semibold tracking-tight text-on-primary hidden sm:inline">NEXUS LMS</span></div><span class="inline-flex items-center px-space-sm py-0.5 rounded text-label-status font-label-status uppercase bg-tertiary-container text-on-tertiary-container border border-outline-variant/30 tracking-wider">PROTOTYPE / DEMO ENVIRONMENT</span></div><nav class="hidden xl:flex items-center gap-space-xs bg-tertiary-container/80 p-1 rounded-xl" data-active-classes="bg-secondary-container text-on-secondary-container rounded-lg font-headline-sm"><a class="px-space-md py-1.5 text-on-primary-container text-body-sm font-body-sm transition-colors hover:text-on-primary" data-path="client-portal" href="#">Client Portal</a><a aria-current="page" class="px-space-md py-1.5 transition-colors bg-secondary-container text-on-secondary-container rounded-lg font-headline-sm" data-path="warehouse-operations" href="#">Warehouse Operations (Mei)</a><a class="px-space-md py-1.5 text-on-primary-container text-body-sm font-body-sm transition-colors hover:text-on-primary" data-path="delivery-field-app" href="#">Delivery Field App (Ken)</a><a class="px-space-md py-1.5 text-on-primary-container text-body-sm font-body-sm transition-colors hover:text-on-primary" data-path="system-administration" href="#">System Administration (Alex)</a></nav><div class="flex items-center gap-space-md"><button aria-label="Notifications" class="relative p-1.5 rounded-lg text-on-primary-container hover:text-on-primary hover:bg-tertiary-container transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-secondary"></span></button><div class="flex items-center gap-space-sm pl-space-sm border-l border-outline-variant/20"><div class="flex flex-col text-right hidden md:block"><span class="text-body-xs font-body-xs font-medium text-on-primary leading-none">Alex Vance</span><span class="text-[10px] font-label-status text-on-primary-container uppercase tracking-wider">Operations Lead</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><aside class="fixed left-0 top-14 bottom-0 w-64 bg-surface-container-low shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex flex-col py-space-md"><div class="px-space-md pb-space-sm mb-space-sm border-b border-outline-variant/30 flex items-center justify-between"><span class="text-label-table-head font-label-table-head uppercase tracking-wider text-on-surface-variant">Operational Console</span><span class="text-label-code font-label-code text-secondary font-medium">v4.2-rel</span></div><nav class="flex-1 px-space-sm flex flex-col gap-space-xs overflow-y-auto" data-active-classes="bg-secondary-container text-on-secondary-container font-headline-sm rounded-lg"><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors text-body-md font-body-md" data-path="overview-dashboard" href="#"><span class="material-symbols-outlined text-[20px]">grid_view</span><span class="">Overview Dashboard</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors text-body-md font-body-md" data-path="client-portal" href="#"><span class="material-symbols-outlined text-[20px]">domain</span><span class="">Client Portal</span></a><a aria-current="page" class="flex items-center gap-space-sm px-space-md py-2.5 transition-colors bg-secondary-container text-on-secondary-container font-headline-sm rounded-lg" data-path="warehouse-operations" href="#"><span class="material-symbols-outlined text-[20px]">warehouse</span><span class="">Warehouse (Mei)</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors text-body-md font-body-md" data-path="delivery-field-app" href="#"><span class="material-symbols-outlined text-[20px]">local_shipping</span><span class="">Delivery App (Ken)</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors text-body-md font-body-md" data-path="system-administration" href="#"><span class="material-symbols-outlined text-[20px]">tune</span><span class="">Administration (Alex)</span></a><div class="my-space-sm border-t border-outline-variant/30"></div><span class="px-space-md text-[10px] font-label-table-head uppercase tracking-wider text-on-surface-variant">Audit &amp; Logistics</span><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors text-body-md font-body-md" data-path="live-dispatch-tracking" href="#"><span class="material-symbols-outlined text-[20px]">radar</span><span class="">Live Dispatch</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors text-body-md font-body-md" data-path="inventory-catalog" href="#"><span class="material-symbols-outlined text-[20px]">inventory_2</span><span class="">Inventory Matrix</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors text-body-md font-body-md" data-path="audit-logs" href="#"><span class="material-symbols-outlined text-[20px]">history_edu</span><span class="">Audit Trails</span></a></nav><div class="p-space-md mt-auto border-t border-outline-variant/30 bg-surface-container"><div class="flex items-center justify-between text-body-xs font-body-xs text-on-surface-variant"><span class="">Sync Pipeline</span><span class="inline-flex items-center gap-1 text-secondary font-medium"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>Active</span></div><div class="mt-1 text-[11px] font-label-code text-on-surface-variant/80 truncate">node-east-us.lms-core.internal</div></div></aside><div class="pl-64"><main class="w-full pt-14 bg-surface min-h-screen px-gutter-desktop py-space-lg"><div class="flex flex-col w-full">
+<!-- Top Operational Banner & Stats -->
+<div class="flex flex-col gap-space-md mb-space-lg">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md bg-surface-container-lowest p-space-lg rounded-xl shadow-sm">
+<div class="flex items-center gap-space-md">
+<div class="relative">
+<div class="w-14 h-14 rounded-xl bg-primary-container text-on-primary flex items-center justify-center font-headline-md text-headline-md shadow-md">
+            M
+          </div>
+<span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
+<span class="material-symbols-outlined text-[12px]">done</span>
+</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-sm">
+<span class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight">Mei Lin</span>
+<span class="px-2 py-0.5 rounded text-label-status font-label-status uppercase bg-secondary-fixed text-on-secondary-fixed">
+              Warehouse Lead • Shift B
+            </span>
+</div>
+<div class="flex items-center gap-space-md text-body-sm font-body-sm text-on-surface-variant mt-0.5">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-secondary">badge</span> Terminal ID: WH-EAST-04
+            </span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-secondary">schedule</span> 06:00 - 14:30 EST
+            </span>
+<span class="font-label-code text-label-code text-secondary font-medium">Session: #OPS-9921-OK</span>
+</div>
+</div>
+</div>
+<!-- Quick Operational Metrics -->
+<div class="flex items-center gap-space-lg self-stretch sm:self-auto overflow-x-auto py-1">
+<div class="bg-surface-container-low px-space-md py-space-sm rounded-lg flex flex-col min-w-[120px]">
+<span class="text-label-table-head font-label-table-head uppercase text-on-surface-variant">Shift Target</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-headline-md text-headline-md text-on-surface font-bold">42</span>
+<span class="text-body-xs font-body-xs text-on-surface-variant">/ 50 orders</span>
+</div>
+</div>
+<div class="bg-surface-container-low px-space-md py-space-sm rounded-lg flex flex-col min-w-[120px]">
+<span class="text-label-table-head font-label-table-head uppercase text-on-surface-variant">Pick Rate</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-headline-md text-headline-md text-secondary font-bold">118</span>
+<span class="text-body-xs font-body-xs text-on-surface-variant">UPH (98.4%)</span>
+</div>
+</div>
+<div class="bg-surface-container-low px-space-md py-space-sm rounded-lg flex flex-col min-w-[120px]">
+<span class="text-label-table-head font-label-table-head uppercase text-on-surface-variant">Queue Depth</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-headline-md text-headline-md text-on-surface font-bold" id="queueDepthCounter">1</span>
+<span class="text-body-xs font-body-xs text-error font-medium">pending</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Navigation / Mode Switcher Tabs -->
+<div class="flex items-center justify-between border-b border-surface-container-high pb-space-xs"><div class="flex items-center gap-space-sm"><button class="px-space-md py-2 rounded-lg font-headline-sm text-headline-sm transition-all flex items-center gap-space-xs bg-primary text-on-primary shadow-sm" id="tabQueueBtn" onclick="switchMainTab('queue')"><span class="material-symbols-outlined text-[18px]">shopping_cart_checkout</span><span class="">Picking Tasks</span><span class="ml-1 px-1.5 py-0.5 rounded-full text-label-status font-label-status bg-secondary-container text-on-secondary-container" id="queueBadgeCount">1</span></button><button class="px-space-md py-2 rounded-lg font-headline-sm text-headline-sm transition-all flex items-center gap-space-xs text-on-surface-variant hover:bg-surface-container hover:text-on-surface" id="tabRestockBtn" onclick="switchMainTab('restock')"><span class="material-symbols-outlined text-[18px]">inventory</span><span class="">Stock Count / Restock Entry</span></button></div><div class="flex items-center gap-space-sm text-body-xs font-body-xs text-on-surface-variant bg-surface-container-low px-space-md py-1.5 rounded-lg"><span class="w-2 h-2 rounded-full bg-secondary"></span><span class="">Connected to LMS Backend</span></div></div>
+</div>
+<!-- VIEW 1: PICKING QUEUE & LOW STOCK WARNING -->
+<div class="flex flex-col gap-space-lg" id="pickingQueueSection">
+<!-- Low Stock Alert Banner -->
+<div class="bg-error-container text-on-error-container p-space-md rounded-xl shadow-sm flex items-start sm:items-center justify-between gap-space-md"><div class="flex items-center gap-space-md"><div class="w-10 h-10 rounded-lg bg-error text-on-error flex items-center justify-center shrink-0 shadow-sm"><span class="material-symbols-outlined text-[24px]">warning</span></div><div class="flex flex-col"><div class="flex items-center gap-space-sm"><span class="font-headline-sm text-headline-sm font-bold text-on-error-container">Low Stock Alert: Product B (SKU: PB-200)</span><span class="px-2 py-0.2 rounded text-label-status font-label-status uppercase bg-error text-on-error">Threshold Triggered</span></div><span class="text-body-sm font-body-sm text-on-error-container/90 mt-0.5">Low Stock Alert: <span class="font-bold">5 units</span> remaining (Admin threshold is 2 units). Restock intake entry available.</span></div></div><button class="shrink-0 bg-primary text-on-primary hover:bg-tertiary-container px-space-md py-2 rounded font-headline-sm text-headline-sm flex items-center gap-space-xs transition-colors" onclick="switchMainTab('restock'); prefillRestock('PB-200');"><span class="material-symbols-outlined text-[18px]">add_box</span><span class="">Restock Intake</span></button></div>
+<!-- Picking Queue Workspace -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm flex flex-col overflow-hidden">
+<div class="p-space-lg flex flex-col sm:flex-row sm:items-center justify-between gap-space-md border-b border-surface-container-high"><div><div class="flex items-center gap-space-sm"><h2 class="font-headline-lg text-headline-lg font-bold text-on-surface">Warehouse Operations — Picking &amp; Inventory Count (Mei Lin)</h2></div><p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Select an assigned order to open the Warehouse Picking Task Detail Console and execute barcode verification.</p></div><div class="flex items-center gap-space-sm"><div class="bg-surface-container-low px-space-md py-1.5 rounded-lg flex items-center gap-space-xs text-body-sm font-body-sm text-on-surface-variant"><span class="material-symbols-outlined text-[18px]">filter_list</span><span class="">Filter: Status = READY_FOR_PICKING</span></div></div></div>
+<!-- Orders Table -->
+<div class="w-full overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low text-on-surface-variant">
+<th class="py-3 px-space-lg text-label-table-head font-label-table-head uppercase tracking-wider">Order ID</th>
+<th class="py-3 px-space-md text-label-table-head font-label-table-head uppercase tracking-wider">Created</th>
+<th class="py-3 px-space-md text-label-table-head font-label-table-head uppercase tracking-wider">Items Breakdown</th>
+<th class="py-3 px-space-md text-label-table-head font-label-table-head uppercase tracking-wider">Priority</th>
+<th class="py-3 px-space-md text-label-table-head font-label-table-head uppercase tracking-wider">Operational Status</th>
+<th class="py-3 px-space-lg text-label-table-head font-label-table-head uppercase tracking-wider text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-high text-body-md font-body-md">
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-4 px-space-lg">
+<div class="flex items-center gap-space-sm">
+<span class="font-label-code text-label-code font-bold text-secondary">LMS-1001</span>
+<button class="text-on-surface-variant hover:text-on-surface p-1 rounded" onclick="navigator.clipboard.writeText('LMS-1001'); showToast('Order ID copied to clipboard', 'info');" title="Copy Order ID">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+</div>
+</td>
+<td class="py-4 px-space-md text-on-surface-variant font-body-sm text-body-sm">
+<span class="inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px]">timer</span> 14 mins ago
+                </span>
+</td>
+<td class="py-4 px-space-md font-body-md">
+<div class="flex flex-col">
+<span class="font-semibold text-on-surface">2 items total</span>
+<span class="text-body-xs font-body-xs text-on-surface-variant">Product A (PA-100) × 2</span>
+</div>
+</td>
+<td class="py-4 px-space-md">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-label-status font-label-status bg-surface-container text-on-surface-variant uppercase">
+                  Normal
+                </span>
+</td>
+<td class="py-4 px-space-md">
+<span class="inline-flex items-center gap-1.5 h-[22px] px-2 rounded text-label-status font-label-status uppercase bg-secondary-fixed text-on-secondary-fixed">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                  READY_FOR_PICKING
+                </span>
+</td>
+<td class="py-4 px-space-lg text-right">
+<button class="inline-flex items-center gap-space-xs bg-primary text-on-primary hover:bg-tertiary-container px-space-md py-2 rounded font-headline-sm text-headline-sm shadow-sm transition-all" onclick="openPickingTaskModal()">
+<span class="material-symbols-outlined text-[18px]">play_circle</span>
+<span class="">Start Picking (Open Task)</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Quick Summary Footer -->
+<div class="p-space-md bg-surface-container-low flex flex-col sm:flex-row items-center justify-between text-body-xs font-body-xs text-on-surface-variant"><span class="">Displaying 1 open task awaiting assignment for Warehouse Zone A</span><span class="inline-flex items-center gap-1.5 font-label-code text-label-code text-on-surface"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>Connected to LMS Backend</span></div>
+</div>
+</div>
+<!-- VIEW 2: STOCK COUNT & RESTOCK ENTRY (TAB) -->
+<div class="hidden flex-col gap-space-lg" id="restockSection">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-space-lg">
+<!-- Main Restock Form -->
+<div class="lg:col-span-2 bg-surface-container-lowest p-space-xl rounded-xl shadow-sm flex flex-col">
+<div class="flex items-center justify-between border-b border-surface-container-high pb-space-md mb-space-lg">
+<div>
+<h2 class="font-headline-lg text-headline-lg font-bold text-on-surface">Physical Count &amp; Restock Submission</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Submit immediate warehouse count or record arriving vendor batches.</p>
+</div>
+<span class="px-2.5 py-1 rounded text-label-status font-label-status uppercase bg-surface-container-high text-on-surface-variant">
+            Floor Worker Action
+          </span>
+</div>
+<form class="flex flex-col gap-space-md" id="stockCountForm" onsubmit="handleStockCountSubmit(event)">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<div>
+<label class="block text-label-table-head font-label-table-head uppercase text-on-surface-variant mb-1">
+                Select Product / SKU / QR Token
+              </label>
+<select class="w-full h-10 px-3 rounded bg-surface-container-lowest border border-outline-variant text-on-surface font-body-md text-body-md focus:border-secondary focus:outline-none" id="skuSelect"><option value="PA-100">Product A (Precision Sensor Node) | SKU: PA-100</option><option value="PB-200">Product B | SKU: PB-200 [LOW STOCK ALERT: 5 units remaining]</option></select>
+</div>
+<div>
+<label class="block text-label-table-head font-label-table-head uppercase text-on-surface-variant mb-1">
+                Operational Action Type
+              </label>
+<select class="w-full h-10 px-3 rounded bg-surface-container-lowest border border-outline-variant text-on-surface font-body-md text-body-md focus:border-secondary focus:outline-none" id="actionTypeSelect">
+<option value="RESTOCK">Inbound Restock Batch (Add to Floor)</option>
+<option value="PHYSICAL_AUDIT">Periodic Floor Cycle Count (Physical Variance)</option>
+<option value="DAMAGED">Damaged / Quarantine Write-Down</option>
+</select>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<div>
+<label class="block text-label-table-head font-label-table-head uppercase text-on-surface-variant mb-1">
+                Quantity Counted / Received
+              </label>
+<div class="flex items-center">
+<input class="w-full h-10 px-3 rounded bg-surface-container-lowest border border-outline-variant text-on-surface font-body-md text-body-md focus:border-secondary focus:outline-none" id="restockQuantityInput" max="1000" min="1" required="" type="number" value="25">
+</div>
+<span class="text-body-xs font-body-xs text-on-surface-variant mt-1 block">Specify integer count of physically inspected units.</span>
+</div>
+<div>
+<label class="block text-label-table-head font-label-table-head uppercase text-on-surface-variant mb-1">
+                Executing Warehouse Operator (Auto-Tagged)
+              </label>
+<div class="w-full h-10 px-3 rounded bg-surface-container-low flex items-center justify-between text-on-surface font-body-md text-body-md">
+<span class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-secondary">verified_user</span>
+<span class="">Mei Lin (Warehouse Lead)</span>
+</span>
+<span class="font-label-code text-label-code text-on-surface-variant">UID: #WH-MEI</span>
+</div>
+<span class="text-body-xs font-body-xs text-on-surface-variant mt-1 block">Permissions: Worker record-level logging enabled.</span>
+</div>
+</div>
+<div>
+<label class="block text-label-table-head font-label-table-head uppercase text-on-surface-variant mb-1">
+              Floor Notes / Location Bay
+            </label>
+<input class="w-full h-10 px-3 rounded bg-surface-container-lowest border border-outline-variant text-on-surface font-body-md text-body-md focus:border-secondary focus:outline-none" id="restockNotesInput" placeholder="e.g. Bay R-14B, Pallet #PLT-88, Inbound Truck manifest #TRK-209" type="text">
+</div>
+<!-- Note on admin controls -->
+<div class="p-space-md rounded-lg bg-surface-container-low text-on-surface-variant flex items-start gap-space-sm text-body-sm font-body-sm"><span class="material-symbols-outlined text-[20px] text-secondary shrink-0">info</span><div class=""><span class="font-semibold text-on-surface">Inventory Management Authority:</span> Admin sets threshold; Warehouse records physical count. All adjustments are logged with worker ID (Mei Lin) and precise timestamps.</div></div>
+<div class="flex items-center justify-end gap-space-md mt-space-sm">
+<button class="px-space-md py-2 rounded font-headline-sm text-headline-sm text-on-surface-variant hover:bg-surface-container-high transition-colors" type="reset">
+              Reset Form
+            </button>
+<button class="bg-primary text-on-primary hover:bg-tertiary-container px-space-lg py-2.5 rounded font-headline-sm text-headline-sm flex items-center gap-space-xs shadow-sm transition-all" type="submit">
+<span class="material-symbols-outlined text-[20px]">archive</span>
+<span class="">Submit Floor Count</span>
+</button>
+</div>
+</form>
+</div>
+<!-- Inventory Reference Card & Quick Stats -->
+<div class="flex flex-col gap-space-md">
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col">
+<span class="text-label-table-head font-label-table-head uppercase text-on-surface-variant mb-2">Location Bay Quick Status</span>
+<div class="space-y-space-md">
+<div class="p-space-md rounded-lg bg-surface-container-low flex items-center justify-between">
+<div>
+<span class="font-semibold text-on-surface block">Product A (PA-100)</span>
+<span class="text-body-xs font-body-xs text-on-surface-variant">Rack A-02 • Threshold: 10</span>
+</div>
+<span class="font-headline-md text-headline-md text-secondary font-bold">148 pcs</span>
+</div>
+<div class="p-space-md rounded-lg bg-error-container text-on-error-container flex items-center justify-between">
+<div>
+<span class="font-semibold block">Product B (PB-200)</span>
+<span class="text-body-xs font-body-xs text-on-error-container/80">Rack R-14B • Threshold: 2</span>
+</div>
+<div class="text-right">
+<span class="font-headline-md text-headline-md text-error font-bold">5 pcs</span>
+<span class="block text-[10px] font-label-status uppercase text-error font-bold">CRITICAL LOW</span>
+</div>
+</div>
+<div class="p-space-md rounded-lg bg-surface-container-low flex items-center justify-between">
+<div>
+<span class="font-semibold text-on-surface block">Product C (PC-300)</span>
+<span class="text-body-xs font-body-xs text-on-surface-variant">Rack C-09 • Threshold: 5</span>
+</div>
+<span class="font-headline-md text-headline-md text-on-surface font-bold">82 pcs</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col">
+<span class="text-label-table-head font-label-table-head uppercase text-on-surface-variant mb-1">Recent Submissions (Mei)</span>
+<ul class="divide-y divide-surface-container-high text-body-sm font-body-sm" id="recentSubmissionsList">
+<li class="py-2.5 flex items-center justify-between">
+<div>
+<span class="font-medium text-on-surface">PA-100 (+50 Restock)</span>
+<span class="block text-[11px] text-on-surface-variant font-label-code">08:14 AM • Bay A-02</span>
+</div>
+<span class="text-label-status font-label-status text-secondary uppercase">Logged</span>
+</li>
+<li class="py-2.5 flex items-center justify-between">
+<div>
+<span class="font-medium text-on-surface">PC-300 (Audit: 82 verified)</span>
+<span class="block text-[11px] text-on-surface-variant font-label-code">07:45 AM • Bay C-09</span>
+</div>
+<span class="text-label-status font-label-status text-secondary uppercase">Verified</span>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<!-- ACTIVE PICKING TASK MODAL / WORKSPACE (ORDER LMS-1001) -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-space-md hidden" id="pickingTaskModal"><div class="fixed inset-0 bg-inverse-surface/60 transition-opacity" onclick="closePickingTaskModal()"></div><div class="relative bg-surface-container-lowest rounded-xl shadow-2xl w-full max-w-5xl max-h-[942px] flex flex-col overflow-hidden z-10"><div class="bg-surface-container-lowest px-space-xl py-space-md border-b border-surface-container-high flex flex-col sm:flex-row sm:items-center justify-between gap-space-md"><div class="flex items-center gap-space-md"><div class="w-12 h-12 rounded-xl bg-secondary text-on-secondary flex items-center justify-center shadow-sm shrink-0"><span class="material-symbols-outlined text-[26px]">inventory_2</span></div><div><div class="flex items-center gap-space-sm flex-wrap"><h3 class="font-headline-lg text-headline-lg font-bold text-on-surface">Picking Task Detail — Order LMS-1001</h3><span class="inline-flex items-center gap-1.5 h-[22px] px-2 rounded text-label-status font-label-status uppercase bg-secondary-fixed text-on-secondary-fixed" id="orderStatusBadge"><span class="w-1.5 h-1.5 rounded-full bg-secondary" id="statusDot"></span><span id="orderStatusText" class="">Order Status: READY_FOR_PICKING</span></span><span class="inline-flex items-center gap-1 h-[22px] px-2 rounded text-label-status font-label-status uppercase bg-surface-container text-on-surface-variant font-bold"><span class="material-symbols-outlined text-[13px] text-secondary">check_circle</span>Payment: PAID</span></div><p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Assigned Warehouse Lead: Mei Lin • Terminal: WH-EAST-04 • Destination: Domestic Ground</p></div></div><div class="flex items-center gap-space-md"><div class="bg-surface-container-low px-space-md py-1.5 rounded-lg flex items-center gap-space-md"><div class="flex flex-col text-right"><span class="text-[10px] font-label-table-head uppercase text-on-surface-variant">Picking List QR</span><span class="font-label-code text-label-code font-bold text-on-surface">#PL-1001</span></div><button class="bg-surface-container-high hover:bg-surface-container-highest text-on-surface p-1.5 rounded transition-colors text-body-xs font-body-xs flex items-center gap-1" id="btnScanPickingList" onclick="simulateScanPickingListQR()" title="Simulate Hardware Scan of Sheet QR"><span class="material-symbols-outlined text-[16px]" id="pickingListScanIcon">qr_code_scanner</span><span id="pickingListScanText" class="">Verify QR</span></button></div><button aria-label="Close Modal" class="text-on-surface-variant hover:text-on-surface p-2 rounded-lg hover:bg-surface-container transition-colors" onclick="closePickingTaskModal()"><span class="material-symbols-outlined text-[22px]">close</span></button></div></div><div class="overflow-y-auto p-space-xl flex flex-col gap-space-lg flex-1"><div class="flex flex-col"><div class="flex items-center justify-between mb-space-xs"><span class="text-label-table-head font-label-table-head uppercase text-on-surface-variant">Required Products &amp; Quantities</span><span class="font-label-code text-label-code text-on-surface-variant">Total required items: 2 units</span></div><div class="border border-surface-container-high rounded-xl overflow-hidden shadow-sm"><table class="w-full text-left border-collapse"><thead><tr class="bg-surface-container-low text-on-surface-variant"><th class="py-2.5 px-space-md text-label-table-head font-label-table-head uppercase">Line</th><th class="py-2.5 px-space-md text-label-table-head font-label-table-head uppercase">Product Details</th><th class="py-2.5 px-space-md text-label-table-head font-label-table-head uppercase">SKU</th><th class="py-2.5 px-space-md text-label-table-head font-label-table-head uppercase">Barcode / QR ID</th><th class="py-2.5 px-space-md text-label-table-head font-label-table-head uppercase">Required</th><th class="py-2.5 px-space-md text-label-table-head font-label-table-head uppercase">Scanned</th><th class="py-2.5 px-space-md text-label-table-head font-label-table-head uppercase">Status</th></tr></thead><tbody class="divide-y divide-surface-container-high bg-surface-container-lowest text-body-md font-body-md"><tr><td class="py-3.5 px-space-md font-label-code text-label-code text-on-surface-variant">1</td><td class="py-3.5 px-space-md"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center text-on-surface font-semibold text-body-sm">A</div><div><span class="font-semibold text-on-surface block">Product A (Precision Sensor Node)</span><span class="text-body-xs font-body-xs text-on-surface-variant">Location: Bin Bay A-02</span></div></div></td><td class="py-3.5 px-space-md font-label-code text-label-code text-on-surface">PA-100</td><td class="py-3.5 px-space-md"><span class="inline-flex items-center gap-1 font-label-code text-label-code bg-surface-container-low px-2 py-0.5 rounded text-secondary font-bold"><span class="material-symbols-outlined text-[14px]">qr_code</span>QR-PA-100</span></td><td class="py-3.5 px-space-md font-bold text-on-surface">2 units</td><td class="py-3.5 px-space-md"><span class="font-headline-sm text-headline-sm font-bold text-secondary" id="scannedQtyVal">1</span><span class="text-body-xs font-body-xs text-on-surface-variant"> / 2 units</span></td><td class="py-3.5 px-space-md"><span class="inline-flex items-center gap-1 text-label-status font-label-status uppercase text-secondary font-bold" id="lineStatusBadge"><span class="w-1.5 h-1.5 rounded-full bg-secondary" id="lineStatusDot"></span><span id="lineStatusText" class="">In Progress (1 / 2)</span></span></td></tr></tbody></table></div></div><div class="bg-surface-container-lowest border border-surface-container-high p-space-md rounded-xl flex flex-col gap-2"><div class="flex items-center justify-between text-body-sm font-body-sm"><span class="font-semibold text-on-surface flex items-center gap-1.5"><span class="material-symbols-outlined text-secondary text-[18px]">checklist</span>Overall Fulfillment Progress</span><span class="font-label-code text-label-code font-bold text-secondary" id="progressSummaryText">1 / 2 items scanned (50%)</span></div><div class="w-full bg-surface-container-high h-2.5 rounded-full overflow-hidden"><div class="bg-secondary h-full rounded-full transition-all duration-300" id="progressBarFill" style="width: 50%;"></div></div><div class="flex items-center justify-between text-body-xs font-body-xs text-on-surface-variant"><span id="progressDetailNote" class="">Scan remaining 1 unit of Product A (PA-100) to complete picking checklist.</span><span class="font-medium" id="progressReadyState">Picking In Progress</span></div></div><div class="bg-surface-container-low p-space-lg rounded-xl shadow-sm flex flex-col gap-space-md"><div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm border-b border-surface-container-high pb-space-sm"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-secondary text-[22px]">barcode_scanner</span><div><span class="font-headline-sm text-headline-sm font-bold text-on-surface">Optical Scanning &amp; Simulated QR Controls</span><span class="text-body-xs font-body-xs text-on-surface-variant block">Hardware Scanner Emulation (Zebra TC52x Wireless)</span></div></div><div class="flex items-center gap-space-sm"><span class="text-label-status font-label-status uppercase text-on-surface-variant">Ready for scan</span><span class="w-2 h-2 rounded-full bg-secondary"></span></div></div><div class="hidden items-center justify-between p-space-md rounded-lg transition-all border" id="scannerAlertBanner"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px] shrink-0" id="scannerAlertIcon"></span><span class="font-body-md text-body-md font-semibold" id="scannerAlertMessage"></span></div><button class="text-current opacity-70 hover:opacity-100 p-1" onclick="dismissScannerAlert()"><span class="material-symbols-outlined text-[18px]">close</span></button></div><div class="grid grid-cols-1 sm:grid-cols-3 gap-space-sm"><button class="p-space-md bg-surface-container-lowest hover:bg-secondary hover:text-on-secondary text-left rounded-lg transition-all shadow-sm group flex flex-col justify-between border border-surface-container-high" onclick="triggerScan('CORRECT')"><div class="flex items-center justify-between w-full mb-2"><span class="text-label-table-head font-label-table-head uppercase text-on-surface-variant group-hover:text-on-secondary/80">Valid Product QR</span><span class="material-symbols-outlined text-[20px] text-secondary group-hover:text-on-secondary">check_circle</span></div><div><span class="font-headline-sm text-headline-sm font-bold block">Scan Product QR (PA-100)</span><span class="text-body-xs font-body-xs font-label-code opacity-90">Payload: QR-PA-100</span></div></button><button class="p-space-md bg-surface-container-lowest hover:bg-error hover:text-on-error text-left rounded-lg transition-all shadow-sm group flex flex-col justify-between border border-surface-container-high" onclick="triggerScan('WRONG')"><div class="flex items-center justify-between w-full mb-2"><span class="text-label-table-head font-label-table-head uppercase text-on-surface-variant group-hover:text-on-error/80">Mismatch Alert</span><span class="material-symbols-outlined text-[20px] text-error group-hover:text-on-error">cancel</span></div><div><span class="font-headline-sm text-headline-sm font-bold block">Simulate Wrong Product QR</span><span class="text-body-xs font-body-xs font-label-code opacity-90">Payload: QR-PB-200 / MISMATCH</span></div></button><button class="p-space-md bg-surface-container-lowest hover:bg-surface-container-highest text-left rounded-lg transition-all shadow-sm group flex flex-col justify-between border border-surface-container-high" onclick="triggerScan('OVERLIMIT')"><div class="flex items-center justify-between w-full mb-2"><span class="text-label-table-head font-label-table-head uppercase text-on-surface-variant">Quantity Exceeded</span><span class="material-symbols-outlined text-[20px] text-error">error</span></div><div><span class="font-headline-sm text-headline-sm font-bold text-on-surface block">Simulate Over-limit Scan</span><span class="text-body-xs font-body-xs font-label-code opacity-90 text-on-surface-variant">Test scan beyond 2 units</span></div></button></div></div><div class="flex flex-col"><div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-xs mb-space-xs"><div class="flex items-center gap-space-sm"><span class="text-label-table-head font-label-table-head uppercase text-on-surface-variant">In-Task Scan History &amp; Reversal</span><span class="px-2 py-0.2 rounded text-[10px] font-label-status uppercase bg-surface-container-high text-on-surface-variant">Session Log</span></div><div class="flex items-center gap-space-sm"><button class="bg-surface-container-lowest hover:bg-surface-container-high text-on-surface border border-outline-variant px-space-md py-1.5 rounded text-body-xs font-body-xs font-medium flex items-center gap-1 shadow-sm transition-all" id="btnReverseScan" onclick="triggerReverseScan()"><span class="material-symbols-outlined text-[16px]">undo</span><span class="">Reverse Last Accepted Scan</span></button></div></div><span class="text-body-xs font-body-xs text-on-surface-variant mb-space-xs italic">Note: Appends a correction event. Physical quantities cannot drop below zero. (Active only before packing confirmation)</span><div class="bg-surface-container-lowest border border-surface-container-high rounded-xl overflow-hidden shadow-sm"><div class="max-h-44 overflow-y-auto"><table class="w-full text-left border-collapse"><thead class="sticky top-0 bg-surface-container-low text-on-surface-variant text-label-table-head font-label-table-head uppercase"><tr><th class="py-2 px-space-md">Timestamp</th><th class="py-2 px-space-md">Barcode Scanned</th><th class="py-2 px-space-md">Result</th><th class="py-2 px-space-md">Operator Action</th></tr></thead><tbody class="divide-y divide-surface-container-high font-body-sm text-body-sm" id="scanLogsTableBody"><tr><td class="py-2.5 px-space-md font-label-code text-label-code text-on-surface-variant">08:26:12 EST</td><td class="py-2.5 px-space-md font-label-code text-label-code text-secondary font-bold">QR-PA-100</td><td class="py-2.5 px-space-md"><span class="inline-flex items-center gap-1 text-label-status font-label-status text-secondary uppercase"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> Accepted</span></td><td class="py-2.5 px-space-md text-on-surface">Accepted: PA-100 scanned (1 of 2 units recorded)</td></tr></tbody></table></div></div></div></div><div class="bg-surface-container-lowest px-space-xl py-space-md border-t border-surface-container-high flex flex-col sm:flex-row items-center justify-between gap-space-md"><div class="flex items-center gap-space-sm text-body-sm font-body-sm text-on-surface-variant"><span class="material-symbols-outlined text-[20px] text-secondary shrink-0">info</span><span id="footerConditionText" class="">Rule: Confirm Packing is disabled until every order line has exactly the required quantity.</span></div><div class="flex items-center gap-space-md"><button class="px-space-md py-2.5 rounded font-headline-sm text-headline-sm text-on-surface-variant hover:bg-surface-container transition-colors" onclick="closePickingTaskModal()">Save &amp; Exit Task</button><div class="relative group" id="packingBtnWrapper"><button class="bg-primary text-on-primary disabled:opacity-40 disabled:cursor-not-allowed hover:bg-tertiary-container px-space-xl py-2.5 rounded font-headline-sm text-headline-sm flex items-center gap-space-xs shadow-md transition-all" disabled="" id="btnConfirmPacking" onclick="openPackingConfirmationModal()"><span class="material-symbols-outlined text-[20px]">package_2</span><span id="confirmPackingBtnText" class="">Confirm Packing &amp; Mark Ready for Pickup</span></button><div class="absolute bottom-full right-0 mb-2 hidden group-hover:block whitespace-nowrap bg-primary-container text-on-primary px-3 py-1.5 rounded text-body-xs font-body-xs shadow-lg z-20" id="packingTooltip">Disabled: Scanned quantity (1/2) must reach required target (2/2) before confirmation.</div></div></div></div></div></div>
+<!-- CONFIRMATION MODAL: READY_FOR_PICKUP -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-space-md hidden" id="confirmPackingModal"><div class="fixed inset-0 bg-inverse-surface/60 transition-opacity" onclick="closePackingConfirmationModal()"></div><div class="relative bg-surface-container-lowest rounded-xl shadow-2xl w-full max-w-md p-space-xl z-10 flex flex-col"><div class="w-12 h-12 rounded-full bg-secondary-fixed text-secondary flex items-center justify-center mb-space-md"><span class="material-symbols-outlined text-[28px]">mark_email_read</span></div><h3 class="font-headline-lg text-headline-lg font-bold text-on-surface">Confirm Packing &amp; Seal Order?</h3><p class="font-body-md text-body-md text-on-surface-variant mt-2">This action will seal Order <strong class="text-on-surface font-label-code">LMS-1001</strong>, lock picked quantities (2 / 2 units Product A), and advance status to:</p><div class="my-space-md p-space-md rounded-lg bg-surface-container-low flex items-center justify-center"><span class="inline-flex items-center gap-1.5 h-[26px] px-3 rounded text-label-status font-label-status uppercase bg-secondary-container text-on-secondary-container font-bold"><span class="w-2 h-2 rounded-full bg-on-secondary-container"></span>READY_FOR_PICKUP</span></div><p class="font-body-xs text-body-xs text-on-surface-variant">Once confirmed, order is released for driver staging and picked quantities are permanently locked.</p><div class="flex items-center justify-end gap-space-md mt-space-lg"><button class="px-space-md py-2 rounded font-headline-sm text-headline-sm text-on-surface-variant hover:bg-surface-container transition-colors" onclick="closePackingConfirmationModal()">Cancel</button><button class="bg-primary text-on-primary hover:bg-tertiary-container px-space-lg py-2 rounded font-headline-sm text-headline-sm flex items-center gap-space-xs shadow-sm transition-all" onclick="commitPackingConfirmation()"><span class="material-symbols-outlined text-[18px]">done_all</span><span class="">Confirm &amp; Lock Quantities</span></button></div></div></div>
+<!-- FLOATING TOAST NOTIFICATION CONTAINER -->
+<div class="fixed top-16 right-6 z-50 flex flex-col gap-2 pointer-events-none" id="toastContainer"></div>
+<!-- INLINE JAVASCRIPT LOGIC & STATE HANDLING -->
+<script>
+    // State management for Order LMS-1001 Picking Task
+    const taskState = {
+      orderId: 'LMS-1001',
+      sku: 'PA-100',
+      qrCode: 'QR-PA-100',
+      requiredQty: 2,
+      scannedQty: 1, // initially 1 as requested in spec
+      isLocked: false,
+      status: 'READY_FOR_PICKING',
+      pickingListVerified: false
+    };
+
+    // Tab Switcher
+    function switchMainTab(tab) {
+      const queueSection = document.getElementById('pickingQueueSection');
+      const restockSection = document.getElementById('restockSection');
+      const queueBtn = document.getElementById('tabQueueBtn');
+      const restockBtn = document.getElementById('tabRestockBtn');
+
+      if (tab === 'queue') {
+        queueSection.classList.remove('hidden');
+        queueSection.classList.add('flex');
+        restockSection.classList.add('hidden');
+        restockSection.classList.remove('flex');
+
+        queueBtn.className = 'px-space-md py-2 rounded-lg font-headline-sm text-headline-sm transition-all flex items-center gap-space-xs bg-primary text-on-primary shadow-sm';
+        restockBtn.className = 'px-space-md py-2 rounded-lg font-headline-sm text-headline-sm transition-all flex items-center gap-space-xs text-on-surface-variant hover:bg-surface-container hover:text-on-surface';
+      } else {
+        restockSection.classList.remove('hidden');
+        restockSection.classList.add('flex');
+        queueSection.classList.add('hidden');
+        queueSection.classList.remove('flex');
+
+        restockBtn.className = 'px-space-md py-2 rounded-lg font-headline-sm text-headline-sm transition-all flex items-center gap-space-xs bg-primary text-on-primary shadow-sm';
+        queueBtn.className = 'px-space-md py-2 rounded-lg font-headline-sm text-headline-sm transition-all flex items-center gap-space-xs text-on-surface-variant hover:bg-surface-container hover:text-on-surface';
+      }
+    }
+
+    function prefillRestock(sku) {
+      const select = document.getElementById('skuSelect');
+      if (select) {
+        select.value = sku;
+      }
+    }
+
+    // Modal Control
+    function openPickingTaskModal() {
+      document.getElementById('pickingTaskModal').classList.remove('hidden');
+      updateTaskUI();
+    }
+
+    function closePickingTaskModal() {
+      document.getElementById('pickingTaskModal').classList.add('hidden');
+    }
+
+    // Simulate Scan Picking List QR
+    function simulateScanPickingListQR() {
+      taskState.pickingListVerified = true;
+      const btn = document.getElementById('btnScanPickingList');
+      const icon = document.getElementById('pickingListScanIcon');
+      const text = document.getElementById('pickingListScanText');
+
+      btn.className = 'bg-secondary-fixed text-on-secondary-fixed p-1.5 rounded transition-colors text-body-xs font-body-xs flex items-center gap-1 font-semibold';
+      icon.innerText = 'check_circle';
+      text.innerText = 'Verified #PL-1001';
+
+      showToast('Picking List QR #PL-1001 verified for Order LMS-1001', 'success');
+      appendScanLog('PL-1001', 'VERIFIED_MANIFEST', 'Picking sheet confirmed active by Mei');
+    }
+
+    // Interactive Barcode Scan Actions
+    function triggerScan(type) {
+      if (taskState.isLocked) {
+        showToast('Task is sealed and locked. No further scans allowed.', 'error');
+        return;
+      }
+
+      const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false }) + ' EST';
+
+      if (type === 'CORRECT') {
+        if (taskState.scannedQty >= taskState.requiredQty) {
+          triggerScan('OVERLIMIT');
+          return;
+        }
+
+        taskState.scannedQty += 1;
+        updateTaskUI();
+        setScannerAlert('success', `Valid item scanned: QR-PA-100. Count incremented to ${taskState.scannedQty}/${taskState.requiredQty}.`);
+        showToast(`QR-PA-100 verified! Product A (${taskState.scannedQty}/${taskState.requiredQty})`, 'success');
+        appendScanLog('QR-PA-100', 'ACCEPTED', `Scanned Unit ${taskState.scannedQty} recorded`);
+      } else if (type === 'WRONG') {
+        setScannerAlert('error', 'Incorrect product for this order (Payload: QR-MISMATCH-999). Quantity unchanged.');
+        showToast('Scan Rejected: Incorrect product for order LMS-1001', 'error');
+        appendScanLog('QR-MISMATCH-999', 'REJECTED_MISMATCH', 'Wrong item flagged by scanner');
+      } else if (type === 'OVERLIMIT') {
+        setScannerAlert('warning', 'Required quantity already reached (2/2). Cannot scan additional units.');
+        showToast('Scan Exceeded: Required quantity already reached', 'warning');
+        appendScanLog('QR-PA-100', 'REJECTED_OVERLIMIT', 'Surplus scan prevented');
+      }
+    }
+
+    function triggerReverseScan() {
+      if (taskState.isLocked) {
+        showToast('Cannot reverse scans on sealed packing order.', 'error');
+        return;
+      }
+
+      if (taskState.scannedQty <= 0) {
+        setScannerAlert('warning', 'Count is already at 0. Cannot reverse further.');
+        showToast('Correction denied: Scanned count is already 0', 'warning');
+        return;
+      }
+
+      taskState.scannedQty -= 1;
+      updateTaskUI();
+      setScannerAlert('info', `Accepted scan reversed. New count is ${taskState.scannedQty}/${taskState.requiredQty}.`);
+      showToast(`Scan reversed. New count: ${taskState.scannedQty}/2`, 'info');
+      appendScanLog('QR-PA-100', 'REVERSAL_EVENT', `Unit subtracted by Mei Lin (Count: ${taskState.scannedQty})`);
+    }
+
+    // Update UI elements based on taskState
+    function updateTaskUI() {
+      const scannedSpan = document.getElementById('scannedQtyVal');
+      const progressText = document.getElementById('progressText');
+      const progressFraction = document.getElementById('progressFraction');
+      const progressBarFill = document.getElementById('progressBarFill');
+      const btnConfirmPacking = document.getElementById('btnConfirmPacking');
+      const packingTooltip = document.getElementById('packingTooltip');
+      const footerCondition = document.getElementById('footerConditionText');
+      const btnReverse = document.getElementById('btnReverseScan');
+
+      const pct = Math.min(100, Math.round((taskState.scannedQty / taskState.requiredQty) * 100));
+      scannedSpan.innerText = taskState.scannedQty;
+      progressFraction.innerText = `${taskState.scannedQty}/${taskState.requiredQty}`;
+      progressBarFill.style.width = `${pct}%`;
+
+      if (pct === 100) {
+        progressText.innerText = 'Complete (100%)';
+        progressText.className = 'font-semibold text-secondary';
+        btnConfirmPacking.disabled = false;
+        packingTooltip.classList.add('hidden');
+        footerCondition.innerHTML = '<span class="text-secondary font-bold">Ready to seal:</span> All line items fully verified.';
+      } else {
+        progressText.innerText = `In Progress (${pct}%)`;
+        progressText.className = 'font-semibold text-secondary';
+        btnConfirmPacking.disabled = true;
+        packingTooltip.classList.remove('hidden');
+        packingTooltip.innerText = `Cannot confirm packing: Scanned quantity (${taskState.scannedQty}/2) has not reached required target (2/2).`;
+        footerCondition.innerText = 'Requirement: All order lines must be 100% scanned to enable packing seal.';
+      }
+
+      if (taskState.scannedQty === 0) {
+        btnReverse.disabled = true;
+        btnReverse.classList.add('opacity-50', 'cursor-not-allowed');
+      } else {
+        btnReverse.disabled = false;
+        btnReverse.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+    }
+
+    function setScannerAlert(type, message) {
+      const banner = document.getElementById('scannerAlertBanner');
+      const icon = document.getElementById('scannerAlertIcon');
+      const text = document.getElementById('scannerAlertMessage');
+
+      banner.classList.remove('hidden', 'flex', 'bg-error-container', 'text-on-error-container', 'bg-secondary-fixed', 'text-on-secondary-fixed', 'bg-surface-container', 'text-on-surface');
+
+      if (type === 'success') {
+        banner.classList.add('flex', 'bg-secondary-fixed', 'text-on-secondary-fixed');
+        icon.innerText = 'check_circle';
+      } else if (type === 'error') {
+        banner.classList.add('flex', 'bg-error-container', 'text-on-error-container');
+        icon.innerText = 'dangerous';
+      } else if (type === 'warning') {
+        banner.classList.add('flex', 'bg-error-container', 'text-on-error-container');
+        icon.innerText = 'report_problem';
+      } else {
+        banner.classList.add('flex', 'bg-surface-container-high', 'text-on-surface');
+        icon.innerText = 'info';
+      }
+
+      text.innerText = message;
+    }
+
+    function dismissScannerAlert() {
+      document.getElementById('scannerAlertBanner').classList.add('hidden');
+      document.getElementById('scannerAlertBanner').classList.remove('flex');
+    }
+
+    function appendScanLog(qrCode, result, action) {
+      const tbody = document.getElementById('scanLogsTableBody');
+      const row = document.createElement('tr');
+      const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false }) + ' EST';
+
+      let badgeClass = 'text-secondary';
+      if (result.includes('REJECTED')) badgeClass = 'text-error';
+      if (result.includes('REVERSAL')) badgeClass = 'text-on-surface-variant';
+
+      row.innerHTML = `
+        <td class="py-2.5 px-space-md font-label-code text-label-code text-on-surface-variant">${timestamp}</td>
+        <td class="py-2.5 px-space-md font-label-code text-label-code font-bold ${qrCode.includes('MISMATCH') ? 'text-error' : 'text-secondary'}">${qrCode}</td>
+        <td class="py-2.5 px-space-md">
+          <span class="inline-flex items-center gap-1 text-label-status font-label-status ${badgeClass} uppercase">
+            <span class="w-1.5 h-1.5 rounded-full ${result.includes('REJECTED') ? 'bg-error' : 'bg-secondary'}"></span> ${result}
+          </span>
+        </td>
+        <td class="py-2.5 px-space-md text-on-surface">${action}</td>
+      `;
+      tbody.prepend(row);
+    }
+
+    // Packing Confirmation Modal Logic
+    function openPackingConfirmationModal() {
+      if (taskState.scannedQty < taskState.requiredQty) return;
+      document.getElementById('confirmPackingModal').classList.remove('hidden');
+    }
+
+    function closePackingConfirmationModal() {
+      document.getElementById('confirmPackingModal').classList.add('hidden');
+    }
+
+    function commitPackingConfirmation() {
+      taskState.isLocked = true;
+      taskState.status = 'READY_FOR_PICKUP';
+
+      closePackingConfirmationModal();
+
+      // Update Order Status Badge in Modal
+      const statusBadge = document.getElementById('orderStatusBadge');
+      statusBadge.className = 'inline-flex items-center gap-1.5 h-[22px] px-2 rounded text-label-status font-label-status uppercase bg-secondary-container text-on-secondary-container';
+      statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-on-secondary-container"></span> READY_FOR_PICKUP';
+
+      // Disable Buttons inside task
+      document.getElementById('btnConfirmPacking').disabled = true;
+      document.getElementById('btnReverseScan').disabled = true;
+      document.getElementById('btnReverseScan').classList.add('opacity-40', 'cursor-not-allowed');
+
+      setScannerAlert('success', 'Order LMS-1001 confirmed READY_FOR_PICKUP. Line items locked for dispatch.');
+      showToast('Order LMS-1001 updated to READY_FOR_PICKUP', 'success');
+      appendScanLog('LOCK_SEAL', 'READY_FOR_PICKUP', 'Final packing confirmed by Mei Lin');
+
+      // Update Queue Counter in top metrics
+      const counter = document.getElementById('queueDepthCounter');
+      if (counter) counter.innerText = '0';
+
+      // Reflect in queue row after slight delay
+      setTimeout(() => {
+        closePickingTaskModal();
+        const row = document.getElementById('orderProductRow');
+        showToast('Picking task successfully archived to staging lane B-01', 'info');
+      }, 1800);
+    }
+
+    // Handle Restock Form Submission
+    function handleStockCountSubmit(e) {
+      e.preventDefault();
+      const sku = document.getElementById('skuSelect').value;
+      const type = document.getElementById('actionTypeSelect').value;
+      const qty = document.getElementById('restockQuantityInput').value;
+      const bay = document.getElementById('restockNotesInput').value || 'Standard Bay';
+
+      const list = document.getElementById('recentSubmissionsList');
+      const item = document.createElement('li');
+      const timeStr = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      item.className = 'py-2.5 flex items-center justify-between';
+      item.innerHTML = `
+        <div>
+          <span class="font-medium text-on-surface">${sku} (${type === 'RESTOCK' ? '+' : ''}${qty} ${type})</span>
+          <span class="block text-[11px] text-on-surface-variant font-label-code">${timeStr} • ${bay}</span>
+        </div>
+        <span class="text-label-status font-label-status text-secondary uppercase">Recorded</span>
+      `;
+      list.prepend(item);
+
+      showToast(`Floor count submitted for ${sku} (${qty} units recorded by Mei)`, 'success');
+      document.getElementById('stockCountForm').reset();
+      document.getElementById('skuSelect').value = sku;
+    }
+
+    // Toast Generator
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      
+      let borderCol = 'border-secondary';
+      let icon = 'info';
+      if (type === 'success') {
+        borderCol = 'border-secondary';
+        icon = 'check_circle';
+      } else if (type === 'error') {
+        borderCol = 'border-error';
+        icon = 'cancel';
+      } else if (type === 'warning') {
+        borderCol = 'border-outline';
+        icon = 'warning';
+      }
+
+      toast.className = `pointer-events-auto bg-surface-container-lowest text-on-surface px-space-md py-space-sm rounded-lg shadow-xl border-l-4 ${borderCol} flex items-center gap-space-sm transition-all duration-300 transform translate-x-full min-w-[280px] max-w-sm`;
+      toast.innerHTML = `
+        <span class="material-symbols-outlined text-[20px] text-on-surface shrink-0">${icon}</span>
+        <span class="font-body-sm text-body-sm flex-1">${message}</span>
+        <button onclick="this.parentElement.remove()" class="text-on-surface-variant hover:text-on-surface p-1">
+          <span class="material-symbols-outlined text-[16px]">close</span>
+        </button>
+      `;
+
+      container.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-x-full');
+      });
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-x-full');
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+  </script>
+</div></main></div>
+
+</body></html>

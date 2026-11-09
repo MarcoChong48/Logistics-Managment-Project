@@ -1,0 +1,7 @@
+{
+  "status": "passed",
+  "packages": 3,
+  "attempts": 3,
+  "returns": 2,
+  "check": "Confirmed package, attempt and return records survive a real server restart."
+}

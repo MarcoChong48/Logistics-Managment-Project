@@ -1,0 +1,28 @@
+import React from 'react';
+import Icon from '../shared/ui/Icon.jsx';
+
+const NAV = [
+  ['overview', 'Overview', 'grid'],
+  ['pickup', 'Warehouse pickup', 'scan'],
+  ['deliveries', 'My deliveries', 'truck'],
+  ['returns', 'Return handoffs', 'return'],
+  ['history', 'Attempt history', 'history'],
+  ['notifications', 'Notifications', 'bell'],
+  ['integrations', 'Decisions & integrations', 'layers'],
+];
+
+export default function WorkspaceShell({
+  workspace, page, navigate, menuOpen, setMenuOpen, busy, refreshing, refresh,
+  lastLoaded, notice, dismissNotice, onSignOut, children, overlays
+}) {
+  const stats = workspace.stats || {};
+  const unread = (workspace.notifications || []).filter(item => !item.read).length;
+  const pageTitle = NAV.find(item => item[0] === page)?.[1] || 'Integration sandbox';
+  const welcomeName = workspace.user?.displayName?.split(' ')[0] || 'there';
+
+  return <div className="application" data-testid="workspace-shell"><header className="topbar"><div className="topbar-left"><button className="icon-button mobile-menu" aria-label="Open navigation" onClick={() => setMenuOpen(!menuOpen)}><Icon name="menu" /></button><button className="brand" onClick={() => navigate('overview')} aria-label="Nexus home"><span className="brand-symbol"><Icon name="box" size={26} /></span>NEXUS<span className="brand-divider" /><span className="brand-context">DELIVERY</span></button></div><div className="topbar-right"><span className="demo-top-label">Place holder · Local demo</span><button className="topbar-bell" onClick={() => navigate('notifications')} aria-label={`${unread} unread notifications`}><Icon name="bell" size={20} />{unread > 0 && <i />}</button><span className="topbar-user">{workspace.user?.displayName}<small>Delivery worker</small></span><span className="avatar">{workspace.user?.displayName?.split(' ').map(part => part[0]).slice(0, 2).join('')}</span></div></header>{menuOpen && <button className="nav-scrim" aria-label="Close navigation" onClick={() => setMenuOpen(false)} />}<aside className={`sidebar ${menuOpen ? 'sidebar-open' : ''}`}><div className="sidebar-label">YOUR WORKSPACE</div><nav>{NAV.map(([id, title, icon]) => <button key={id} className={`nav-item ${page === id ? 'active' : ''}`} onClick={() => navigate(id)}><Icon name={icon} size={19} /><span>{title}</span>{id === 'notifications' && unread > 0 && <span className="nav-count">{unread}</span>}{id === 'returns' && stats.pendingReturns > 0 && <span className="nav-count">{stats.pendingReturns}</span>}</button>)}</nav><div className="sidebar-divider" /><div className="sidebar-label">TEAM INTEGRATION</div><button className={`nav-item ${page === 'sandbox' ? 'active' : ''}`} onClick={() => navigate('sandbox')}><Icon name="layers" size={19} /><span>Place holder sandbox</span></button><div className="sidebar-note"><Icon name="info" size={16} /><p>Sample data and other team modules are marked <strong>Place holder</strong>.</p></div><div className="sidebar-bottom"><div><span className="status-dot" /><strong>Local backend connected</strong><span>Data saved between restarts</span></div><button className="nav-item signout" disabled={!!busy} onClick={onSignOut}><Icon name="logout" size={18} />Sign out</button></div></aside><main className="main"><div className="page-heading"><div><div className="breadcrumb">WORKSPACE<span>/</span>{pageTitle.toUpperCase()}</div><h1>{page === 'overview' ? `Good to see you, ${welcomeName}.` : pageTitle}</h1><p>{page === 'overview' ? 'Every package has a next step. Here’s what’s on your desk.' : page === 'pickup' ? 'Claim a list, then scan each package you actually collect.' : page === 'deliveries' ? 'Your collected packages and the next permitted action.' : page === 'returns' ? 'Report the handoff. Warehouse confirms actual receipt.' : page === 'history' ? 'Separate records for each customer delivery attempt.' : page === 'notifications' ? 'Local event messages and cases that need a closer look.' : page === 'integrations' ? 'What runs here, what was chosen, and what the team connects next.' : 'Isolated controls for unfinished Warehouse, Client and Admin integrations.'}</p></div><button className="button button-secondary refresh-button" disabled={!!busy || refreshing} onClick={refresh}><Icon name="refresh" size={16} className={refreshing ? 'spinning' : ''} /><span>{refreshing ? 'Refreshing' : 'Refresh'}</span></button></div><div className="demo-ribbon"><Icon name="info" size={15} /><span><strong>Place holder · Sample data.</strong> Delivery actions are saved by the Java backend. Shared team modules use isolated demo adapters.</span><button onClick={() => navigate('integrations')}>View connections<Icon name="arrow" size={14} /></button></div>
+    {children}
+    <footer className="workspace-footer"><span><span className="status-dot" />Backend confirmed · Updated {lastLoaded?.toLocaleTimeString('en-HK', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Hong_Kong' })} HKT</span><span>Nexus Logistics · Delivery workspace</span></footer></main>{notice && <div className={`toast toast-${notice.tone}`} role={notice.tone === 'error' ? 'alert' : 'status'}><Icon name={notice.tone === 'error' ? 'alert' : 'check'} size={20} /><div><strong>{notice.title || (notice.tone === 'error' ? 'Action not confirmed' : 'Saved to backend')}</strong><p>{notice.message}</p>{notice.code && <code>{notice.code}</code>}</div><button className="icon-button" onClick={dismissNotice} aria-label="Dismiss message"><Icon name="close" size={17} /></button></div>}{busy && <div className="operation-indicator" role="status"><Icon name="refresh" size={15} className="spinning" />{busy}…</div>}
+    {overlays}
+  </div>;
+}
