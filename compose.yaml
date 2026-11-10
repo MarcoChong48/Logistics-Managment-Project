@@ -1,4 +1,4 @@
-
+# Local development ONLY. No Supabase credentials; do not deploy publicly.
 services:
   db:
     image: postgres:17
@@ -8,6 +8,8 @@ services:
       POSTGRES_PASSWORD: lms_local_dev_only
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      # Used ONLY during first initialization of an empty database volume.
+      - ./database/01_create_tables.sql:/docker-entrypoint-initdb.d/01_create_tables.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U lms -d lms"]
       interval: 5s
