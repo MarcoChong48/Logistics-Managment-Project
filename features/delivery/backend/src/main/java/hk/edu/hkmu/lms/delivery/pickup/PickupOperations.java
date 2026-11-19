@@ -72,7 +72,7 @@ public class PickupOperations {
         List<Map<String,Object>> products=state.items(text(p,"ORDER_ID"));
         for(Map<String,Object> product:products){
             String sku=text(product,"SKU");int quantity=number(product,"QUANTITY");
-            Map<String,Object> stock=requiredRow(db,"SELECT * FROM product_stock WHERE sku=?",sku);
+            Map<String,Object> stock=requiredRow(db,"SELECT * FROM product_stock WHERE sku=? FOR UPDATE",sku);
             Map<String,Object> allocation=requiredRow(db,"SELECT * FROM stock_allocation WHERE package_id=? AND sku=?",packageId,sku);
             if(number(allocation,"QUANTITY")!=quantity||number(stock,"RESERVED_STOCK")<quantity||number(stock,"PHYSICAL_STOCK")-number(stock,"UNAVAILABLE_STOCK")<quantity)
                 throw ApiException.conflict("Stock needs Warehouse reconciliation before this package can be collected.");

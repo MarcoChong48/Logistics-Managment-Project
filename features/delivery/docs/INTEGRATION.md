@@ -1,12 +1,16 @@
 # Delivery integration guide
 
-The public module contract is [API_CONTRACT.md](../API_CONTRACT.md). This guide explains replacement boundaries. A **Place holder** uses local demo data or a simulated external actor; it is not a completed remote integration.
+Use the [API contract](../API_CONTRACT.md) for fields and routes. **Decisions & integrations** gives Delivery users a summary of local decisions and handoffs. This guide gives developers the details. A **Place holder** supplies demo data or simulates an external actor during local testing.
 
 ## Runtime and identity
 
-The packaged React build is served by Spring Boot on port 8080. During development React uses 5173 and forwards `/api` to 8080. Keep browser API calls on the frontend's origin. Session cookies identify the worker; accepting `workerId` from a request as authentication is forbidden. Mutations require the current CSRF token/header supplied by `/api/session`.
+Spring Boot serves the HTML, CSS, JavaScript and JSON API on port 8080 by default. Keep browser API calls on the frontend's origin. Session cookies identify the worker; accepting `workerId` from a request as authentication is forbidden. Mutations require the current CSRF token/header supplied by `/api/session`.
 
-The authentication owner must replace local users with shared identities, roles, current account authorization, session expiry, password-change revocation and recovery. Demo `ken` and `mei` are both Delivery Workers. Demo sandbox access is permitted only in the demo profile and must be disabled in an integrated deployment.
+Spring Security manages Delivery login and account sessions. The session API and authenticated response headers expose the server time and idle deadline in epoch milliseconds. The workspace updates the visible countdown locally and checks the session with the server when the countdown reaches zero. Keep the server as the authority for session expiry.
+
+An authenticated worker can change their own password using the current password and CSRF token. The request expires the current session after a successful change. Other sessions for the same account are denied on their next API request. The authentication owner supplies shared account provisioning, role lifecycle, and account recovery. Preserve the password-change and session revocation behavior when connecting shared identity.
+
+Demo `ken` and `mei` are both Delivery Workers. **Test tools** and its routes are available only with demo mode enabled. Warehouse receipt, Client request and Admin approval in that page use simulated identities. The Delivery redesign introduces no Admin UI or API changes. Connect each role at the owner handoffs below.
 
 ## Owner handoffs
 
@@ -20,21 +24,21 @@ The authentication owner must replace local users with shared identities, roles,
 | Notification | Durable delivery of important Client events and read-state mapping. | A local event must survive delivery retry without repeating business effects. |
 | Storage/hosting | Protected durable proof storage, authorized retrieval, backup lifecycle, deletion jobs, HTTPS and operational monitoring. | Proof privacy and expiry, database/file consistency and safe failure recovery. |
 
-## Provisional database
+## Database profiles
 
-File-backed H2 is the Database **Place holder**. It allows a local demonstration to persist work between restarts. It neither adopts Database Draft v0.4 nor selects the final database product. Startup seeds only an empty store; a normal restart must not overwrite accepted work.
+The `demo` profile uses local H2. The `supabase` profile uses PostgreSQL with the [v0.4 migrations and Delivery extensions](DATABASE.md). It starts with demo seeding and automatic retention disabled. Shared transaction coordination with the Warehouse, Client and Admin modules remains a **Place holder**.
 
-`app.data-dir` defaults to `./data` and can be set with `LMS_DATA_DIR`. The H2 path is `${app.data-dir}/database`; the local proof directory is `${app.data-dir}/proofs`. The default listener is `127.0.0.1:8080`; `LMS_BIND_ADDRESS` and `PORT` configure the application properties, while the Windows launcher explicitly binds localhost and accepts its own `-Port` argument. Do not expose demo sandbox controls by changing the listener and assume production authorization is complete.
+The local proof directory is `${app.data-dir}/proofs`. Set `LMS_DATA_DIR` to change it. The default listener is `127.0.0.1:8080`. Use `LMS_BIND_ADDRESS` and `PORT` to configure the Java service, or use the Windows launcher with a local port.
 
-Contract settings use `app.photo-limit-bytes=5242880`, `app.stale-claim-minutes=30`, `app.review-failure-count=2`, `app.reminder-days=3`, `app.final-review-days=7` and an hourly `app.maintenance-delay-ms=3600000`. An inactivity session expires after 15 minutes. These are local configuration choices, not measured performance or a global team decision.
-
-Before replacement, map local package/order/list/cycle/attempt/proof/event IDs to shared IDs, migrate durable records and preserve authorship. Give every changed table an owner. Do not connect two independently maintained stock totals and treat both as authoritative. The Database and shared-service owners must decide where the single inventory transaction runs.
+Contract settings use `app.photo-limit-bytes=5242880`, `app.stale-claim-minutes=30`, `app.review-failure-count=2`, `app.reminder-days=3` and `app.final-review-days=7`. Delivery demo sessions expire after 15 minutes of inactivity.
 
 ## State and cycle rules
 
 Normal Delivery progression is `READY_FOR_PICKUP → SHIPPED → OUT_FOR_DELIVERY → DELIVERED`.
 
 Failure creates a separate attempt and leaves `DELIVERY_FAILED` with the actual Delivery holder. A return request records pending Warehouse handoff; it restores no warehouse quantity. Warehouse confirmation records receipt/condition. Redelivery requires a current Client instruction and Admin approval, then `READY_FOR_REDELIVERY → new individual pickup → SHIPPED → OUT_FOR_DELIVERY`.
+
+The reporting worker sees receipt status and `followUpStatus` on **Return handoffs**. The projection reads current backend records and applies only when the package's latest handoff has been received. After a failed attempt and receipt, the absence of a current valid instruction gives `AWAITING_CLIENT_INSTRUCTION`. A pending Client instruction gives `AWAITING_ADMIN_APPROVAL`. Saved redelivery eligibility, holds and cancellation surface as `READY_FOR_REDELIVERY`, `ON_HOLD` and `CANCELLED`. A hold takes precedence over pending instructions. Receipt condition and time come from the saved receipt. Keep earlier receipts as history when the package enters a new handoff.
 
 A pre-attempt return is a custody event, not a failed customer visit. The local contract requeues an intact receipt to `READY_FOR_PICKUP`, or `READY_FOR_REDELIVERY` for a still-eligible approved retry. Preserve the prior pickup. Damaged/missing goods stay held for Warehouse/Admin exception handling.
 
@@ -58,6 +62,6 @@ Cloud object storage is a **Place holder**. Its owner must provide private uploa
 
 ## Backup and restore contract
 
-For a manual local backup, stop the app and copy the complete local database plus private proof directory and non-secret configuration as one checkpoint. Record the checkpoint time. Restore both together into an isolated copy, start it, then verify selected orders, custody, reservations, attempts and proof references before using it. Work after the checkpoint is not present in that backup.
+For a manual H2 backup, stop the app and copy the complete local database, private proof directory and non-secret configuration as one checkpoint. For Supabase, coordinate a database backup with the Database owner and take a matching proof-directory backup. Record the checkpoint time. Restore both together into an isolated copy, start it, then verify selected orders, custody, reservations, attempts and proof references before using it. Work after the checkpoint is not present in that backup.
 
 Copy the complete `data` directory by default, or the directory chosen with `LMS_DATA_DIR`. Maintenance endpoints/commands, when present, must be confirmed against the delivered build. Do not copy an open database file and claim a verified consistent backup. Managed scheduled backups, hosted rehearsal and recovery alerts remain hosting **Place holder** work until configured and tested.

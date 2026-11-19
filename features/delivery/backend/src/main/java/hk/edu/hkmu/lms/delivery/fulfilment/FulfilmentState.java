@@ -26,7 +26,16 @@ public class FulfilmentState {
     }
     public boolean eligible(Map<String,Object> p){return "WAREHOUSE".equals(text(p,"CUSTODY"))&&text(p,"HOLD_REASON")==null&&flag(p,"PAYMENT_ACCEPTED")&&Set.of("READY_FOR_PICKUP","READY_FOR_REDELIVERY").contains(text(p,"ORDER_STATUS"))&&(!"READY_FOR_REDELIVERY".equals(text(p,"ORDER_STATUS"))||flag(p,"RETRY_APPROVED"))&&!pendingReturn(text(p,"ID"))&&!pendingCancellation(text(p,"ID"));}
     public Map<String,Object> packageRow(String id){return requiredRow(db,"SELECT p.*,o.order_status,o.order_reference,o.client_id,o.payment_accepted FROM delivery_package p JOIN delivery_order o ON p.order_id=o.id WHERE p.id=?",id);}
-    public List<Map<String,Object>> items(String orderId){return db.queryForList("SELECT i.*,s.product_name FROM order_item i JOIN product_stock s ON s.sku=i.sku WHERE i.order_id=? ORDER BY i.id",orderId);}
+    public List<Map<String,Object>> items(String orderId) {
+        // Stock and return counts use one total per SKU. Order items keep their separate prices.
+        return db.queryForList("""
+            SELECT i.sku, s.product_name, SUM(i.quantity) AS quantity
+            FROM order_item i JOIN product_stock s ON s.sku=i.sku
+            WHERE i.order_id=?
+            GROUP BY i.sku, s.product_name
+            ORDER BY MIN(i.id)
+            """, orderId);
+    }
     public boolean pendingReturn(String id){return db.queryForObject("SELECT COUNT(*) FROM return_receipt WHERE package_id=? AND receipt_status='AWAITING_WAREHOUSE'",Integer.class,id)>0;}
     public boolean pendingCancellation(String id){return db.queryForObject("SELECT COUNT(*) FROM client_instruction WHERE package_id=? AND instruction_type='CANCEL' AND instruction_status='PENDING'",Integer.class,id)>0;}
     public Map<String,Object> latestReturn(Map<String,Object> p){if(text(p,"LAST_RETURN_ID")==null)throw ApiException.conflict("A recorded Warehouse return is required.");return requiredRow(db,"SELECT * FROM return_receipt WHERE id=? AND package_id=?",text(p,"LAST_RETURN_ID"),text(p,"ID"));}

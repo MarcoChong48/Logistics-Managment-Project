@@ -1,16 +1,18 @@
 # Delivery app contract
 
-Implementation choice U-05 B: React browser app + Spring Boot JSON API. Java 21, Spring Boot 3.5.16, Maven. Local H2 file storage is a clearly marked Place holder for the Database owner's shared relational schema. Final package serves the built React files from Spring Boot.
+The Java 21 / Spring Boot 4.1.2 service hosts the HTML, CSS and native JavaScript files on the same origin as the JSON API. The demo uses local H2. The Supabase profile uses the PostgreSQL migrations described in the [database guide](docs/DATABASE.md).
 
 The user authorized a working local demo with simple English comments. External auth, Warehouse, Client, Admin, shared inventory/order database, notification transport, cloud storage and hosting must be named `Place holder`, with the future owner's work described. Real Delivery actions still commit through the Java backend, not front-end-only flags.
 
 ## Session and errors
 
-- `GET /api/session` -> `{authenticated, user: {id,displayName,role}|null, csrfToken, csrfHeader, mode:"demo"}`. A session cookie identifies the worker. Never accept a worker ID as authentication.
+- `GET /api/session` returns `{authenticated, user, csrfToken, csrfHeader, mode, sessionExpiresAt, serverTime}`. A session cookie identifies the worker. The `user` object includes `id`, `displayName` and `role`. For an anonymous session, `user`, `sessionExpiresAt` and `serverTime` are null. `mode` is `demo` or `integration`.
+- `sessionExpiresAt` and `serverTime` use Unix epoch milliseconds. Qualifying authenticated API activity returns the same values as `X-Session-Expires-At` and `X-Server-Time` response headers. The browser uses their difference for the live inactivity countdown. It checks session status at zero. Sessions use a 15-minute inactivity limit by default.
 - `POST /api/login` uses URL-encoded `username,password` plus CSRF header. Demo users `ken` / `mei` are separate Delivery workers, password `Delivery123!`. Success JSON, 401 on bad credentials.
 - `POST /api/logout` uses CSRF header.
+- `POST /api/change-password` requires an authenticated Delivery session, the current CSRF header and JSON `{currentPassword,newPassword,confirmPassword}`. The new password must differ from the current password, match the confirmation and contain 8 to 72 characters, including an uppercase A–Z, a lowercase a–z and a digit 0–9, within 72 UTF-8 bytes. On success the response is `{message:"Password changed. Sign in again."}` and the current session is invalidated. Other sessions for that account are denied on their next authenticated API request. A rejected change leaves the password in place.
 - Error JSON: `{code,message}` with an appropriate 400/401/403/404/409 status. UI shows the safe message.
-- All mutation requests have `requestId` (UUID). Repeating the same actor/action/key/payload returns the earlier successful result without repeating effects; key reuse with a different payload is rejected.
+- Workflow mutation requests use a `requestId` UUID. Repeating the same actor, action, key and payload returns the earlier successful result without repeating effects. Key reuse with a different payload is rejected.
 - Mutations return `{message}`; frontend reloads workspace after success. Never update a status locally before backend confirmation.
 
 ## Workspace
@@ -25,7 +27,7 @@ The user authorized a working local demo with simple English comments. External 
   "pickupLists":[{"id":"PL-1001","qrCode":"PL-1001","status":"OPEN","createdAt":"ISO timestamp","claimedBy":null,"claimedAt":null,"stale":false,"packages":[{"id":"PKG-1001","qrCode":"PKG-1001","orderReference":"LMS-1001","status":"READY_FOR_PICKUP","itemSummary":"2 Mugs, 1 Notebook","collectionOutcome":"PENDING","cannotCollectReason":null}]}],
   "tasks":[{"id":"PKG-1001","qrCode":"PKG-1001","orderReference":"LMS-1001","status":"SHIPPED","custody":"DELIVERY","recipientName":"Chan Mei","phone":"+852 6123 4567","address":"Hong Kong demo address","products":[{"sku":"MUG-01","name":"Travel mug","quantity":2}],"attemptCount":0,"activeAttemptId":null,"canStart":true,"canDeliver":false,"canFail":false,"canReturn":true}],
   "attempts":[{"id":"ATT-1","packageId":"PKG-1001","orderReference":"LMS-1001","workerName":"Ken Tanaka","startedAt":"ISO timestamp","endedAt":null,"outcome":"IN_PROGRESS","reason":null,"note":null,"proofs":[{"id":"PROOF-1","type":"SIGNATURE","createdAt":"ISO timestamp","url":"/api/proofs/PROOF-1"}]}],
-  "returns":[{"id":"RET-1","packageId":"PKG-1001","orderReference":"LMS-1001","reason":"Vehicle problem","status":"AWAITING_WAREHOUSE","createdAt":"ISO timestamp"}],
+  "returns":[{"id":"RET-1","packageId":"PKG-1001","orderReference":"LMS-1001","reason":"Vehicle problem","status":"AWAITING_WAREHOUSE","createdAt":"ISO timestamp","receivedAt":null,"condition":null,"awaitingInstruction":false,"followUpStatus":null}],
   "notifications":[{"id":"N-1","type":"DELIVERY_FAILED","message":"Local event saved; Place holder notification transport.","createdAt":"ISO timestamp","read":false}],
   "integrations":[{"id":"warehouse","name":"Warehouse","status":"PLACE_HOLDER","detail":"Place holder: Warehouse owner must provide packed lists and actual return receipts."}],
   "decisions":[{"id":"U-10","plan":"B","choice":"Stale claim review queue","reason":"Flag inactivity without moving custody.","status":"LOCAL_IMPLEMENTATION"}],
@@ -35,6 +37,8 @@ The user authorized a working local demo with simple English comments. External 
 ```
 
 `claimedBy` is a worker ID string or null. `tasks` only includes this worker's collected/active/return-pending packages. Contact/address is returned only while the worker actually handles an active delivery; Warehouse receipt and completed delivery revoke access. Pickup list rows never expose contact/address. History must not disclose other workers' private proof. Dashboard counts use authorized data. A `demoPackages` entry contains no recipient contact.
+
+Each return record includes the Warehouse receipt `status` and any receipt time and condition. `followUpStatus` is a read-only Delivery view of the latest received handoff. It is `AWAITING_CLIENT_INSTRUCTION`, `AWAITING_ADMIN_APPROVAL`, `READY_FOR_REDELIVERY`, `ON_HOLD`, `CANCELLED` or null. Older handoffs and pending Warehouse receipts keep their own receipt status and have a null projection. The client can use `awaitingInstruction` for older backend responses that omit the projection. Approval and pickup remain separate authorized operations.
 
 ## Delivery actions
 
@@ -48,9 +52,9 @@ The user authorized a working local demo with simple English comments. External 
 - `POST /api/packages/{packageId}/return` `{reason,requestId}`: holder reports return handoff pending Warehouse; supports SHIPPED before any attempt, or DELIVERY_FAILED. Does not restore stock or fake a failed attempt.
 - `GET /api/proofs/{proofId}`: enforce active assigned Delivery access; no access after completion/return, unless a future authorized Client owner adapter grants own-order access. Return private no-store image content.
 
-## Integration sandbox (demo profile only)
+## Test tools (demo profile only)
 
-These are explicit `Place holder` test controls, isolated from real Delivery work and disabled outside demo mode. Their backend events include simulated Warehouse/Client/Admin actors. They must not be confused with actual staff confirmation.
+**Test tools** exposes these labelled `Place holder` controls in the demo profile. The routes are restricted to demo mode and record simulated Warehouse, Client or Admin actors. Real role integrations use the contracts in the [integration guide](docs/INTEGRATION.md).
 
 - `POST /api/demo/packages/{packageId}/confirm-return` `{condition:"INTACT"|"DAMAGED",requestId}`. Only after a pending return. Warehouse simulated receipt restores actual physical quantities; intact allocated goods restore reserved quantities as well. Damaged goods remain unavailable/held. No automatic redelivery approval. For a pre-attempt intact return, re-enter READY_FOR_PICKUP or the already-approved READY_FOR_REDELIVERY, preserving cycle eligibility.
 - `POST /api/demo/packages/{packageId}/client-instruction` `{instruction:"REDELIVER"|"CANCEL",requestId}`. Only after receipt; version and bind to the latest return/address. A cancel instruction blocks redelivery.
@@ -60,7 +64,7 @@ These are explicit `Place holder` test controls, isolated from real Delivery wor
 ## Implementation boundaries
 
 - Use real durable local delivery data. On startup seed only when empty. Repeated startup must not reset user work.
-- Local H2 is a Database `Place holder`, not adoption of the member's draft schema. Keep event/cycle IDs and API contracts easy to replace by the Database owner.
+- The local demo uses H2. The Supabase profile uses the team v0.4 PostgreSQL migrations and Delivery extensions. Keep event and cycle IDs stable when the Database owner connects shared workflows.
 - A consistent local transaction handles pickup stock/order/custody/list changes. A shared row lock or equivalent is acceptable for a small module. Async notifications must not replace atomic stock updates.
 - Private local proof storage is the local fallback; U-09 B object storage connector and cloud credentials are a marked `Place holder`. Provide cleanup/orphan monitoring and minimal retained summary after one-year detailed proof/attempt expiry. Do not claim cloud configuration is complete.
 - U-12 B adds review/reminder queues (two failures, three/seven days configurable), not automatic cancellation, charges or redelivery.

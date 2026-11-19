@@ -5,6 +5,7 @@ import hk.edu.hkmu.lms.delivery.support.ApiException;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -23,6 +24,11 @@ class ApiErrors {
     ResponseEntity<?> input(Exception ex) { return ResponseEntity.badRequest().body(Map.of("code","INVALID_INPUT","message","Check the submitted fields and try again.")); }
     @ExceptionHandler(MaxUploadSizeExceededException.class) ResponseEntity<?> upload(Exception ex) {
         return ResponseEntity.badRequest().body(Map.of("code","FILE_TOO_LARGE","message","Choose an image smaller than 5 MB."));
+    }
+    @ExceptionHandler(ConcurrencyFailureException.class)
+    ResponseEntity<?> concurrentChange(ConcurrencyFailureException ex) {
+        return ResponseEntity.status(409).body(Map.of(
+            "code", "CONCURRENT_CHANGE", "message", "A related record changed. Refresh and try again."));
     }
     @ExceptionHandler(Exception.class) ResponseEntity<?> other(Exception ex) {
         // Log the exception type, not request bodies, passwords, contact data or proof bytes.

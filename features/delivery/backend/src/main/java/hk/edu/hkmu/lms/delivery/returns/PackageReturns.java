@@ -94,7 +94,7 @@ public class PackageReturns {
         // Decision U-08, B: A changed instruction supersedes the old version before any approval.
         db.update("UPDATE client_instruction SET instruction_status='SUPERSEDED' WHERE package_id=? AND instruction_status='PENDING'",packageId);
         db.update("INSERT INTO client_instruction(id,package_id,return_id,detail_id,version_no,instruction_type,instruction_status,created_at) VALUES(?,?,?,?,?,?,?,?)",newId("INS"),packageId,text(receipt,"ID"),text(p,"DETAIL_ID"),version,choice,"PENDING",now());
-        state.audit("DEMO_CLIENT","PLACE_HOLDER_INSTRUCTION",packageId,"Place holder client instruction simulation requested by "+actor+". Version "+version+": "+choice);
+        state.audit(text(p,"CLIENT_ID"),"PLACE_HOLDER_INSTRUCTION",packageId,"Place holder client instruction simulation requested by "+actor+". Version "+version+": "+choice);
         return "Place holder: current Client instruction simulated. Admin approval is still required.";
     }
 

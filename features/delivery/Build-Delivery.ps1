@@ -10,7 +10,6 @@ if (-not (Test-Path -LiteralPath (Join-Path $deliveryJavaHome 'bin\javac.exe')))
   throw 'A Java 21 JDK is needed to build. Set JAVA_HOME to its folder.'
 }
 $env:JAVA_HOME = $deliveryJavaHome
-if (-not (Get-Command npm.cmd -ErrorAction SilentlyContinue)) { throw 'Install Node.js 24 to build the React interface.' }
 
 $deliveryTools = Join-Path $PSScriptRoot '.tools'
 $deliveryMaven = Join-Path $deliveryTools 'apache-maven-3.9.11\bin\mvn.cmd'
@@ -26,14 +25,6 @@ if (-not (Test-Path -LiteralPath $deliveryMaven)) {
   Expand-Archive -LiteralPath $deliveryArchive -DestinationPath $deliveryTools
 }
 
-Push-Location (Join-Path $PSScriptRoot 'frontend')
-try {
-  & npm.cmd ci --cache ..\.cache\npm --no-audit --no-fund
-  if ($LASTEXITCODE -ne 0) { throw 'Frontend package download failed.' }
-  & npm.cmd run build
-  if ($LASTEXITCODE -ne 0) { throw 'Frontend build failed.' }
-} finally { Pop-Location }
-
 Push-Location (Join-Path $PSScriptRoot 'backend')
 try {
   # Run backend checks before creating the shared runnable file.
@@ -42,4 +33,3 @@ try {
 } finally { Pop-Location }
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'backend\target\delivery-app.jar') -Destination (Join-Path $PSScriptRoot 'delivery-app.jar') -Force
 Write-Host 'Build passed. Double-click Start Delivery App.cmd to run.' -ForegroundColor Green
-

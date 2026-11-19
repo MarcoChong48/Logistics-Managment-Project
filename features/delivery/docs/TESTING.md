@@ -1,8 +1,50 @@
 # Delivery verification
 
+## Shared-design update checklist
+
+Use a fresh isolated demo store for the workflow. Use a second isolated store for the password test, since the new password persists. Run the integration-mode check with the configured Supabase profile against a dedicated test database. The current results and historical checks are recorded below.
+
+| Check | Expected result |
+|---|---|
+| Open Overview, Pickup, My deliveries, Return handoffs, Attempt history, Notifications and Decisions & integrations on desktop and phone widths. | Shared navigation and page headings are visible. Work tables become readable cards on narrow screens. Keyboard navigation reaches the controls and dialogs return focus. |
+| Open Test tools in demo, then inspect the navigation and try its route in integration mode. | Demo shows labelled Place holder actions. Integration mode hides the menu entry and rejects demo operations. |
+| Claim by entering QR text, collect an individual package, report a pickup issue, then close the list. Try scanning with camera permission denied. | Existing pickup rules still apply. Other requires a note. The camera dialog explains manual entry when scanning is unavailable. |
+| Record an attempt with proof, then open Attempt history. | Authorized active proof can be previewed. Completed proof appears only as metadata, and text, outcome and proof filters find the right attempts. |
+| Report a return after a failed attempt and use the labelled Warehouse, Client and Admin demo controls one at a time. Open Return handoffs after each. | The saved statuses progress from Waiting for Warehouse receipt to Waiting for client, Waiting for Admin approval and Ready for redelivery. The damaged receipt case shows On hold. A new handoff leaves the earlier receipt in history. |
+| Watch idle countdown, refresh workspace data, then leave the session idle through expiry. For a disposable test instance, use a shorter `server.servlet.session.timeout`. | Countdown ticks and uses the server deadline after authenticated API activity. At idle timeout the browser returns to sign-in. |
+| In two sessions for the same demo account, submit a wrong current password or mismatched confirmation. Then change the password successfully. | Invalid changes are rejected. Success returns the first session to sign-in, the old password is rejected and the new password works. The second session loses access on its next API request. |
+
+## Shared-design verification on 19 November 2026
+
+- All 15 Maven tests passed on Java 21, including session/password rules, the current return-status projection and Java and JavaScript module boundaries.
+- All 19 HTTP checks passed with the Supabase profile connected to an isolated local PostgreSQL 17.6 database. The integration-mode check confirmed that Test tools is hidden, its direct link opens Overview and its API rejects the simulated action.
+- Chrome passed desktop and mobile layout checks, including all eight screens at 320 px. Browser workflows covered signature delivery, proof metadata after delivery, camera denial with manual QR entry, failed delivery, the four saved return stages, redelivery pickup eligibility and the unread filter.
+- The account browser check verified password changes and other-session revocation. A separate one-minute demo run verified the live countdown and idle return to sign-in. The normal application timeout is 15 minutes.
+
+From `features/delivery/qa`, run `npm ci` once. Point `DELIVERY_TEST_URL` at a fresh disposable demo, then run the checks below with Chrome installed. The account check temporarily changes and restores Ken's demo password. Set `DELIVERY_TEST_IDLE_EXPIRY=1` for that check only when the demo is configured with `--server.servlet.session.timeout=1m`.
+
+```sh
+npm test
+node ui-flow.cjs
+node return-flow.cjs
+node account-flow.cjs
+```
+
+These runs used isolated local databases and Chrome mobile emulation. The team's hosted Supabase project and a physical camera still need verification.
+
+## Delivery stack checks on 10 November 2026
+
+- Java 21 with Spring Boot 4.1.2 built the runnable JAR with a clean Maven build. All 13 Maven tests passed, including the Java and native JavaScript import checks and saved-request replay.
+- Both migrations applied in fresh local PostgreSQL 17.6 databases. The first migration produced 25 core tables. The app ran under a dedicated non-owner database login, and the simulated browser roles had no access to the private schemas.
+- All 19 PostgreSQL HTTP API checks passed. The pickup fixture included two order items with the same SKU. The test also verified that attempt and stock movement records reached the core tables.
+- Desktop and mobile Chrome viewport checks passed. The browser completed pickup, a successful signature delivery, a failed attempt, a return handoff and simulated approval for redelivery. The unread filter and manual QR fallback passed. The browser loaded the bundled decoder with camera access denied.
+- A copy of a saved H2 demo opened with the upgraded app. Demo login, completed delivery history and private proof files were available.
+
+These runs used isolated local databases. The team Supabase project and real camera hardware still need environment-specific verification.
+
 ## Source reorganization checks on 9 November 2026
 
-The repository layout was verified with a fresh React production build and a new Spring Boot JAR. All 10 existing backend behavior tests and the new Java package boundary test passed. The Vite build also checked the frontend imports.
+The previous repository layout was verified with a fresh React production build and a new Spring Boot JAR. All 10 existing backend behavior tests and the new Java package boundary test passed. The Vite build also checked the frontend imports.
 
 The new JAR passed all 19 HTTP API checks against isolated demo data. Chrome desktop and mobile viewport checks passed. On a separate fresh demo store, the browser completed login, list claim, package collection, delivery start, signature upload, delivery confirmation and read-only history. The restart and backup evidence below dates from the earlier package.
 
@@ -80,7 +122,7 @@ All nineteen items below passed in the linked run. HTTP traces and timings are i
 
 ## Reproduce the checks
 
-Run the backend tests from `features/delivery/backend` with `mvn test`. From `features/delivery`, `Build-Delivery.ps1` builds the interface, runs backend tests and packages the JAR. The backend test fixture resets only its in-memory H2 database. GitHub Actions reads its workflow from the repository root.
+Run the backend tests from `features/delivery/backend` with `mvn test`. From `features/delivery`, `Build-Delivery.ps1` bundles the static interface, runs backend and architecture tests, and packages the JAR. The backend test fixture resets only its in-memory H2 database. GitHub Actions reads its workflow from the repository root.
 
 The QA scripts need Node.js, their locked dependencies (`npm --prefix qa ci`) and installed Chrome for browser/image checks. Run these commands from `features/delivery` with an isolated demo server running.
 

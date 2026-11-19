@@ -38,17 +38,20 @@ public class DeliveryAttempts {
     private final FulfilmentState state;
     private final Path proofDirectory;
     private final int proofLimit;
+    private final boolean maintenanceEnabled;
 
     public DeliveryAttempts(JdbcTemplate db, Clock clock, DeliveryTransactions transactions,
                             FulfilmentState state,
                             @Value("${app.data-dir:./data}") String dataDir,
-                            @Value("${app.photo-limit-bytes:5242880}") int proofLimit) {
+                            @Value("${app.photo-limit-bytes:5242880}") int proofLimit,
+                            @Value("${app.maintenance-enabled:true}") boolean maintenanceEnabled) {
         this.db = db;
         this.clock = clock;
         this.transactions = transactions;
         this.state = state;
         this.proofDirectory = Path.of(dataDir).toAbsolutePath().normalize().resolve("proofs");
         this.proofLimit = proofLimit;
+        this.maintenanceEnabled = maintenanceEnabled;
     }
 
     public Map<String, Object> start(String actor, String packageId, Map<String, Object> body) {
@@ -194,6 +197,7 @@ public class DeliveryAttempts {
     @Scheduled(fixedDelayString="${app.maintenance-delay-ms:3600000}",initialDelayString="${app.maintenance-delay-ms:3600000}")
     @Transactional
     public void maintenance(){
+        if (!maintenanceEnabled) return;
         lock(db);int removedProofs=0,removedAttempts=0,orphans=0;String error=null;
         Instant yearAgo=clock.instant().minus(Duration.ofDays(365));
         // Decision U-09, B: Keep a minimal three-year summary, never an expired proof or private note.
@@ -220,7 +224,13 @@ public class DeliveryAttempts {
         db.update("DELETE FROM security_event WHERE occurred_at<?",clock.instant().minus(Duration.ofDays(90)).toString());
         db.update("DELETE FROM audit_event WHERE created_at<?",clock.instant().minus(Duration.ofDays(365*3L)).toString());
         db.update("DELETE FROM notification_outbox WHERE created_at<?",clock.instant().minus(Duration.ofDays(365*3L)).toString());
-        db.update("MERGE INTO maintenance_status(id,last_run_at,removed_proofs,removed_attempts,orphan_count,last_error) KEY(id) VALUES(?,?,?,?,?,?)","proof-retention",now(),removedProofs,removedAttempts,orphans,error);
+        String lastRun = now();
+        int updated = db.update("UPDATE maintenance_status SET last_run_at=?,removed_proofs=?,removed_attempts=?,orphan_count=?,last_error=? WHERE id=?",
+            lastRun, removedProofs, removedAttempts, orphans, error, "proof-retention");
+        if (updated == 0) {
+            db.update("INSERT INTO maintenance_status(id,last_run_at,removed_proofs,removed_attempts,orphan_count,last_error) VALUES(?,?,?,?,?,?)",
+                "proof-retention", lastRun, removedProofs, removedAttempts, orphans, error);
+        }
     }
 
     private String now() {

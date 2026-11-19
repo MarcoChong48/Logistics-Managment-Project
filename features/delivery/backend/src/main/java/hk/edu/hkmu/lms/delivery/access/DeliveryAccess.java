@@ -24,6 +24,6 @@ public class DeliveryAccess {
     public Map<String,Object> user(String actor) {
         Map<String,Object> account=requiredRow(db,"SELECT * FROM app_account WHERE id=?",actor);
         if(!"ACTIVE".equals(text(account,"ACCOUNT_STATUS"))||!"DELIVERY".equals(text(account,"ROLE")))throw ApiException.forbidden();
-        return fields("id",actor,"displayName",text(account,"DISPLAY_NAME"),"role","DELIVERY");
+        return fields("id",actor,"username",text(account,"USERNAME"),"displayName",text(account,"DISPLAY_NAME"),"role","DELIVERY");
     }
 }

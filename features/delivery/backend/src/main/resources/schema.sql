@@ -2,6 +2,7 @@
 CREATE TABLE IF NOT EXISTS mutation_lock (id INT PRIMARY KEY);
 MERGE INTO mutation_lock (id) KEY(id) VALUES (1);
 CREATE TABLE IF NOT EXISTS app_account (id VARCHAR(40) PRIMARY KEY, display_name VARCHAR(120) NOT NULL, password_hash VARCHAR(100) NOT NULL, role VARCHAR(30) NOT NULL, account_status VARCHAR(30) NOT NULL, failed_count INT DEFAULT 0 NOT NULL, lock_until VARCHAR(40));
+ALTER TABLE app_account ADD COLUMN IF NOT EXISTS username VARCHAR(40) GENERATED ALWAYS AS (id);
 CREATE TABLE IF NOT EXISTS product_stock (sku VARCHAR(60) PRIMARY KEY, product_name VARCHAR(150) NOT NULL, physical_stock INT NOT NULL CHECK(physical_stock>=0), reserved_stock INT NOT NULL CHECK(reserved_stock>=0), unavailable_stock INT NOT NULL CHECK(unavailable_stock>=0), low_threshold INT NOT NULL);
 CREATE TABLE IF NOT EXISTS delivery_order (id VARCHAR(60) PRIMARY KEY, order_reference VARCHAR(60) UNIQUE NOT NULL, client_id VARCHAR(60) NOT NULL, order_status VARCHAR(40) NOT NULL, payment_accepted BOOLEAN NOT NULL, created_at VARCHAR(40) NOT NULL);
 CREATE TABLE IF NOT EXISTS delivery_detail (id VARCHAR(60) PRIMARY KEY, order_id VARCHAR(60) NOT NULL REFERENCES delivery_order(id), version_no INT NOT NULL, recipient_name VARCHAR(120) NOT NULL, phone VARCHAR(80) NOT NULL, address_text VARCHAR(600) NOT NULL, UNIQUE(order_id,version_no));

@@ -76,8 +76,26 @@ public class DeliveryWorkspace {
                 proofs.add(fields("id",text(proof,"ID"),"type",text(proof,"PROOF_TYPE"),"createdAt",text(proof,"CREATED_AT"),"url",mayView?"/api/proofs/"+text(proof,"ID"):null));
             attempts.add(fields("id",text(attempt,"ID"),"packageId",text(attempt,"PACKAGE_ID"),"orderReference",text(attempt,"ORDER_REFERENCE"),"workerName",text(attempt,"DISPLAY_NAME"),"startedAt",text(attempt,"STARTED_AT"),"endedAt",text(attempt,"ENDED_AT"),"outcome",text(attempt,"OUTCOME"),"reason",text(attempt,"REASON"),"note",text(attempt,"INTERNAL_NOTE"),"proofs",proofs));
         }
-        for(Map<String,Object> receipt:db.queryForList("SELECT r.*,o.order_reference FROM return_receipt r JOIN delivery_package p ON p.id=r.package_id JOIN delivery_order o ON o.id=p.order_id WHERE r.reported_by=? ORDER BY r.created_at DESC LIMIT 200",actor))
-            returns.add(fields("id",text(receipt,"ID"),"packageId",text(receipt,"PACKAGE_ID"),"orderReference",text(receipt,"ORDER_REFERENCE"),"reason",text(receipt,"REASON"),"status",text(receipt,"RECEIPT_STATUS"),"createdAt",text(receipt,"CREATED_AT"),"receivedAt",text(receipt,"RECEIVED_AT"),"awaitingInstruction","RECEIVED".equals(text(receipt,"RECEIPT_STATUS"))&&rowCount(db,"SELECT COUNT(*) FROM client_instruction WHERE return_id=? AND instruction_status IN ('PENDING','APPROVED')",text(receipt,"ID"))==0,"condition",text(receipt,"RECEIPT_CONDITION")));
+        for (Map<String,Object> receipt : db.queryForList("""
+                SELECT r.*, o.order_reference, o.order_status, p.last_return_id, p.hold_reason, p.failed_return,
+                    (SELECT instruction_status FROM client_instruction
+                     WHERE return_id=r.id AND instruction_status IN ('PENDING', 'APPROVED')
+                     ORDER BY version_no DESC LIMIT 1) AS latest_instruction_status
+                FROM return_receipt r
+                JOIN delivery_package p ON p.id=r.package_id
+                JOIN delivery_order o ON o.id=p.order_id
+                WHERE r.reported_by=?
+                ORDER BY r.created_at DESC LIMIT 200
+                """, actor)) {
+            String receiptStatus = text(receipt, "RECEIPT_STATUS");
+            String instructionStatus = text(receipt, "LATEST_INSTRUCTION_STATUS");
+            returns.add(fields("id", text(receipt, "ID"), "packageId", text(receipt, "PACKAGE_ID"),
+                "orderReference", text(receipt, "ORDER_REFERENCE"), "reason", text(receipt, "REASON"),
+                "status", receiptStatus, "createdAt", text(receipt, "CREATED_AT"),
+                "receivedAt", text(receipt, "RECEIVED_AT"), "condition", text(receipt, "RECEIPT_CONDITION"),
+                "awaitingInstruction", "RECEIVED".equals(receiptStatus) && instructionStatus == null,
+                "followUpStatus", returnFollowUp(receipt, instructionStatus)));
+        }
         for(Map<String,Object> event:db.queryForList("SELECT * FROM notification_outbox WHERE actor_id=? ORDER BY created_at DESC LIMIT 100",actor))
             notifications.add(fields("id",text(event,"ID"),"type",text(event,"EVENT_TYPE"),"message",text(event,"SAFE_MESSAGE"),"createdAt",text(event,"CREATED_AT"),"read",flag(event,"IS_READ")));
         if(access.demoEnabled())for(Map<String,Object> base:db.queryForList("SELECT id FROM delivery_package ORDER BY id")){
@@ -101,6 +119,20 @@ public class DeliveryWorkspace {
             "demoPackages",demoPackages,"reviews",reviews(actor),"reviewQueue",reviews(actor),"retainedSummaries",summaries,
             "storageHealth",fields("privateLocalStorage",true,"cloudConnector","Place holder","lastCleanupAt",maintenance==null?null:text(maintenance,"LAST_RUN_AT"),"lastError",maintenance==null?null:text(maintenance,"LAST_ERROR")));
     }
+    private String returnFollowUp(Map<String,Object> receipt, String instructionStatus) {
+        String receiptId = text(receipt, "ID");
+        // A later receipt belongs to a new handoff. Keep earlier receipts as history.
+        if (!"RECEIVED".equals(text(receipt, "RECEIPT_STATUS")) || !receiptId.equals(text(receipt, "LAST_RETURN_ID"))) {
+            return null;
+        }
+        String orderStatus = text(receipt, "ORDER_STATUS");
+        if ("CANCELLED".equals(orderStatus) || "READY_FOR_REDELIVERY".equals(orderStatus)) return orderStatus;
+        if (text(receipt, "HOLD_REASON") != null) return "ON_HOLD";
+        if (!"DELIVERY_FAILED".equals(orderStatus) || !flag(receipt, "FAILED_RETURN")) return null;
+
+        if (instructionStatus == null) return "AWAITING_CLIENT_INSTRUCTION";
+        return "PENDING".equals(instructionStatus) ? "AWAITING_ADMIN_APPROVAL" : null;
+    }
     private int attemptCount(String pkg){return rowCount(db,"SELECT COUNT(*) FROM delivery_attempt WHERE package_id=?",pkg)+rowCount(db,"SELECT COUNT(*) FROM retained_summary WHERE package_id=?",pkg);}
     private boolean stale(Map<String,Object> list){String activity=text(list,"LAST_ACTIVITY_AT");return "CLAIMED".equals(text(list,"LIST_STATUS"))&&activity!=null&&!clock.instant().isBefore(Instant.parse(activity).plus(Duration.ofMinutes(staleMinutes)));}
     private List<Map<String,Object>> reviews(String actor){
@@ -120,8 +152,8 @@ public class DeliveryWorkspace {
         return result;
     }
     private List<Map<String,Object>> integrations(){return List.of(
-        fields("id","auth","name","Shared authentication","status","PLACE_HOLDER","detail","Place holder: Auth owner replaces local demo accounts with the shared account lifecycle and sessions."),
-        fields("id","database","name","Database / inventory","status","PLACE_HOLDER","detail","Place holder: Database owner replaces provisional H2 tables and preserves transactional stock, custody and cycle rules."),
+        fields("id","auth","name","Shared authentication","status","PLACE_HOLDER","detail","Place holder: Spring Security manages Delivery login. The account owner connects shared provisioning, password reset and role lifecycle."),
+        fields("id","database","name","Database / inventory","status","PLACE_HOLDER","detail","Place holder: The Supabase PostgreSQL profile uses the v0.4 draft and Delivery extensions. The Database owner coordinates shared stock, custody and transaction rules."),
         fields("id","warehouse","name","Warehouse","status","PLACE_HOLDER","detail","Place holder: Warehouse owner provides packed lists, actual return quantities, condition evidence and repair clearance."),
         fields("id","client","name","Client","status","PLACE_HOLDER","detail","Place holder: Client owner supplies versioned instructions, delivery-detail snapshots and own-order proof authorization."),
         fields("id","admin","name","Admin","status","PLACE_HOLDER","detail","Place holder: Admin owner supplies approved redelivery/cancellation, shortage decisions and supervised recovery."),
@@ -130,7 +162,7 @@ public class DeliveryWorkspace {
         fields("id","hosting","name","Hosting / recovery","status","PLACE_HOLDER","detail","Place holder: Hosting owner supplies HTTPS, rehearsal deployment, managed backups and service alerts. This app is local only."));}
     private List<Map<String,Object>> decisions(){
         List<Map<String,Object>> result=new ArrayList<>();
-        String[][] choices={{"U-01","Deployment / recovery hooks","Cloud hosting and automated backups remain Place holder integrations."},{"U-02","Repeatable broader acceptance","Configurable test data and timing boundaries; no benchmark pass is claimed."},{"U-03","API contracts and automated checks","Feature work can be reviewed and tested before integration."},{"U-04","Presentation evidence","Use the real local build and actual test evidence; recording remains team work."},{"U-05","Spring Boot JSON API + React","One runnable local app; shared framework and Database contracts remain Place holder."},{"U-06","Discrepancy cases and unavailable stock","Damaged returns keep their actual physical count and cannot become sellable."},{"U-07","Full re-verification gate","Place holder: Warehouse owner supplies packing revisions and clearance after approved repair."},{"U-08","Versioned client instructions","Place holder: Client/Auth owners supply recovery codes and short support authorization."},{"U-09","Private proof adapter and retention monitoring","Local private storage works; cloud connector remains Place holder."},{"U-10","Supervised stale-claim recovery","Flag inactivity without moving custody. Close old lists before releasing uncollected entries."},{"U-11","Current access and handover boundaries","No responsibility change can invent physical possession."},{"U-12","Review and response reminder queues","No automatic retry, cancellation, fee or final no-response closure."},{"U-13","Versioned delivery-detail input","Place holder: Client address book stays outside Delivery."},{"U-14","Delivery dashboard and saved-filter support","Only authorized data reaches the browser."},{"U-15","Refund outcome boundary","Place holder: Admin/payment owners recheck and reconcile refunds. Cancellation stays final."},{"U-16","Embedded payment boundary","Place holder: Client/payment owner supplies accepted payment eligibility; no card data enters Delivery."}};
+        String[][] choices={{"U-01","Deployment / recovery hooks","Cloud hosting and automated backups remain Place holder integrations."},{"U-02","Repeatable broader acceptance","Configurable test data and timing boundaries; no benchmark pass is claimed."},{"U-03","API contracts and automated checks","Feature work can be reviewed and tested before integration."},{"U-04","Presentation evidence","Use the real local build and actual test evidence; recording remains team work."},{"U-05","Spring Boot JSON API + native browser modules","Java 21 and Spring Boot 4.1.2 serve HTML, CSS and JavaScript. Supabase PostgreSQL stores draft-based Delivery data."},{"U-06","Discrepancy cases and unavailable stock","Damaged returns keep their actual physical count and cannot become sellable."},{"U-07","Full re-verification gate","Place holder: Warehouse owner supplies packing revisions and clearance after approved repair."},{"U-08","Versioned client instructions","Place holder: Client/Auth owners supply recovery codes and short support authorization."},{"U-09","Private proof adapter and retention monitoring","Local private storage works; cloud connector remains Place holder."},{"U-10","Supervised stale-claim recovery","Flag inactivity without moving custody. Close old lists before releasing uncollected entries."},{"U-11","Current access and handover boundaries","No responsibility change can invent physical possession."},{"U-12","Review and response reminder queues","No automatic retry, cancellation, fee or final no-response closure."},{"U-13","Versioned delivery-detail input","Place holder: Client address book stays outside Delivery."},{"U-14","Delivery dashboard and saved-filter support","Only authorized data reaches the browser."},{"U-15","Refund outcome boundary","Place holder: Admin/payment owners recheck and reconcile refunds. Cancellation stays final."},{"U-16","Embedded payment boundary","Place holder: Client/payment owner supplies accepted payment eligibility; no card data enters Delivery."}};
         Set<String> external=Set.of("U-01","U-04","U-07","U-08","U-11","U-13","U-15","U-16");
         for(String[] choice:choices)result.add(fields("id",choice[0],"plan","B","choice",choice[1],"reason",choice[2],"status",external.contains(choice[0])?"PLACE_HOLDER":Set.of("U-02","U-03","U-09").contains(choice[0])?"PARTIAL_PLACE_HOLDER":"LOCAL_IMPLEMENTATION"));
         return result;

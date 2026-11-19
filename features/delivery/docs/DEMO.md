@@ -1,37 +1,43 @@
 # Local delivery walkthrough
 
-This script describes the intended seeded workflow. Check the running interface for exact list/package IDs. Use fictional data only. The app must save real local Delivery changes through Java; a **Place holder** sandbox button simulates a different role and must be announced as such during a demonstration.
+This walkthrough uses local demo data. Check the running interface for the seeded list and package IDs. Use fictional data only. Delivery work is saved through the Java backend. **Test tools** appears in demo mode and identifies actions that simulate other roles as **Place holder**.
 
 ## Preparation
 
-1. Build and launch the app from `features/delivery`, then open `http://localhost:8080`. You can also use the development interface on 5173 with the backend on 8080. [Build and launch instructions](../README.md)
+1. Build and launch the app from `features/delivery`, then open `http://localhost:8080`. [Build and launch instructions](../README.md)
 2. Sign in as `ken` with `Delivery123!`.
-3. Open the pickup workspace. The contract uses example list `PL-1001` and package `PKG-1001`; select an actual open seeded list if the build uses different IDs.
-4. Explain that the list and packed orders are **Place holder** Warehouse data. They do not demonstrate payment or packing by another real module.
+3. Use **Overview** to check the work waiting for you, then open **Pickup**. The examples use list `PL-1001` and package `PKG-1001`. Use the actual IDs shown in your demo.
+4. Explain that the list and packed orders use **Place holder** Warehouse data. Open **Decisions & integrations** for the team decisions and external handoffs.
 
 The local store persists. Use a fresh separate demo data directory for an independent run if supported by the package; do not reset another person's saved work.
 
 ## Normal delivery
 
-1. Scan or manually enter a pickup-list QR and claim it. Show that claiming assigns one collector but does not mean the packages were collected.
-2. Scan one package QR from that list. Wait for backend acceptance and the workspace refresh. The package becomes SHIPPED; its actual holder and pickup event are saved.
+1. In **Pickup**, scan the list QR with the camera or enter it manually, then select **Claim list**. This assigns the collector. Collect each package separately.
+2. Scan or enter one package QR from that list. Wait for backend acceptance and the workspace refresh. The package becomes Shipped. The backend saves its actual holder and the pickup event.
 3. Try the same pickup again. It must not create another stock/custody effect.
-4. Select Start Delivery for that package. Only this order becomes OUT_FOR_DELIVERY and a new attempt begins.
-5. Capture a signature or choose a real JPEG/PNG proof image. Wait for a successful private upload.
-6. Confirm Delivered. The backend requires valid proof belonging to this attempt. Show the completed outcome; contacts/private proof should no longer be available through active-handler access after completion.
+4. Open **My deliveries** and select **Start delivery** for that package. Confirm the action. That order becomes Out for delivery and a new attempt begins.
+5. Open **Record outcome**, capture a signature or choose a JPEG/PNG proof image, then save it. Wait for the private upload to succeed.
+6. Confirm delivery with proof from this attempt. Open **Attempt history** to find the completed outcome and proof metadata. Contact and image access end when the active attempt closes.
 
 ## Failure, return and approved redelivery
 
 Use another eligible package so the successful order remains complete.
 
-1. Claim its list, collect the individual package and Start Delivery.
-2. Record a failure such as Client not home. Other requires an explanation. Show a separate failed attempt; failure leaves the package with its actual holder and does not restore stock.
-3. Request return. Explain that this records a handoff pending Warehouse confirmation, not a receipt.
-4. Open the integration sandbox and identify the next control aloud: **Place holder — simulated Warehouse receipt**. Confirm an intact return. Show that actual Warehouse receipt is the point at which local physical/reserved quantities and custody are restored.
-5. Identify **Place holder — simulated Client instruction**. Submit a new REDELIVER instruction for this return. This substitutes for the future authenticated Client workflow.
-6. Identify **Place holder — simulated Admin approval**. Approve redelivery. This substitutes for the future Admin authorization and freezes the instruction/delivery-detail version. Approval creates eligibility; it does not give a worker physical possession.
-7. Find the newly created eligible list/cycle. Claim it and scan the same package again. This second legitimate pickup must succeed; the earlier cycle remains in history.
-8. Start Delivery again and record another outcome. Confirm that attempt one was preserved and attempt two is separate.
+1. Claim its list, collect the individual package and select **Start delivery**.
+2. Open **Record outcome** and record a failure such as **Client not home**. Add an explanation for **Other**. The failed attempt stays in history, custody stays with the holder and stock quantities stay the same.
+3. In **Return handoffs**, report the return and check for **Waiting for Warehouse receipt**. Select **Refresh status** to load changes saved by another session.
+4. In **Test tools**, use the **Place holder** Warehouse action **Receive intact** for the package. This simulates the receipt that restores custody and physical and reserved stock. In **Return handoffs**, check for **Waiting for client**.
+5. In **Test tools**, use the **Place holder** Client action **Request redelivery**. In **Return handoffs**, check for **Waiting for Admin approval**.
+6. In **Test tools**, use the **Place holder** Admin action **Approve redelivery**. Approval freezes the instruction and delivery-detail version. In **Return handoffs**, check for **Ready for redelivery**. Warehouse retains custody until collection.
+7. In **Pickup**, claim the new eligible list and collect the same package again. The earlier pickup remains in history.
+8. Start delivery again and record another outcome. In **Attempt history**, check for two separate attempts. Review any new local events in **Notifications**.
+
+## Session and password
+
+1. Watch **Session ends in** in the top bar. It counts down in real time. Refreshing workspace data updates it using the server's current deadline.
+2. On a separate demo store, select **Change password**. Enter the current password and the new password twice. Use a different password with at least eight characters, including an uppercase letter, a lowercase letter and a digit.
+3. Submit the change. Sign in again with the new password. Any other browser session for this account must reauthenticate on its next API request. The demo database keeps the changed password.
 
 ## Useful negative demonstrations
 
@@ -40,10 +46,10 @@ Use another eligible package so the successful order remains complete.
 - Report a Vehicle full issue before collection: no failed customer visit should appear.
 - Return a SHIPPED package before Start Delivery: preserve the pickup/return history without inventing an attempt.
 - Log in as `mei` in a separate browser session: another worker cannot collect Ken's claimed list or view his private proof.
-- Use the damaged-return sandbox option: the package stays held; it cannot silently become sellable or eligible for redelivery.
+- Use **Receive damaged** in **Test tools**: the package stays held; it cannot silently become sellable or eligible for redelivery.
 
 ## What to say about external parts
 
-"This is a local Delivery module. The Java backend saves the Delivery workflow. Warehouse receipt, Client instruction and Admin approval controls are Place holder simulations. The relevant owners must replace them with authenticated shared-role actions and the final database. Cloud deployment, notification delivery and provider refunds are not demonstrated here."
+"This is the Delivery module running in demo mode. The Java backend saves the Delivery workflow. Test tools uses Place holder simulations of Warehouse receipt, Client instruction and Admin approval. Those teams provide the real authenticated actions when we integrate."
 
-The walkthrough is a script, not a test report. Record what actually ran and any missing controls in [TESTING.md](TESTING.md).
+Record the results of the walkthrough in the [testing guide](TESTING.md).

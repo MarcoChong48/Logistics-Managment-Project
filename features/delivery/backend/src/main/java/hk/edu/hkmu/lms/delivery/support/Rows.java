@@ -1,5 +1,7 @@
 package hk.edu.hkmu.lms.delivery.support;
 
+import java.sql.Timestamp;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -32,6 +34,8 @@ public final class Rows {
 
     public static String text(Map<String, Object> row, String key) {
         Object value = row.get(key);
+        if (value instanceof Timestamp timestamp) return timestamp.toInstant().toString();
+        if (value instanceof OffsetDateTime dateTime) return dateTime.toInstant().toString();
         return value == null ? null : value.toString();
     }
 

@@ -1,6 +1,6 @@
 # Logistics Management System — detailed project record
 
-Last updated: 5 November 2026 (Asia/Hong_Kong).
+Last updated 10 November 2026 (Asia/Hong_Kong).
 
 Project reference for the Delivery source checkout. Relative links point to the feature documentation and its bundled references.
 
@@ -470,7 +470,7 @@ The existing comparison Word document and illustrated PDFs are earlier snapshots
 
 The user explicitly selected PROJECT_DETAILS enhanced B plans as the implementation direction, rather than every literal questionnaire B answer. English UI and simple English comments are confirmed. A working local demo is authorized; unfinished team connections must carry the exact label Place holder and explain the actual content/owner needed later. This authority applies to Delivery implementation, not evidence that all nine members approved all global policies.
 
-The source checkout keeps Delivery under `features/delivery`. It builds the Java 21/Spring Boot 3.5.16 JSON backend and React 19.3.1/Vite 8.3.6 frontend into a runnable JAR. The private H2 file schema, demo accounts, packed Warehouse data, simulated Warehouse/Client/Admin handoffs, shared notification/refund transport, private cloud storage and hosting connections are clearly documented Place holders. Original HTML prototypes are preserved. [Delivery source guide](../../README.md)
+The source checkout keeps Delivery under `features/delivery`. It builds the Java 21/Spring Boot 4.1.2 JSON backend and static HTML, CSS and native JavaScript into a runnable JAR. The Supabase PostgreSQL profile uses Database Draft v0.4 and documented Delivery extensions. The offline H2 profile, demo accounts and simulated Warehouse, Client and Admin actions support local demonstrations. Shared notification, refund and hosting connections remain documented Place holders. Signatures and photos are stored in a private local directory. Original HTML prototypes are preserved. [Delivery source guide](../../README.md)
 
 Actual local operations include exclusive list claim, atomic per-package pickup/stock/custody updates, current-holder checks, separate attempts, private photo/signature upload, return reporting, version-bound retry gates, stale/review queues, safe history, retention and repeat-request checks. [Decisions](../DECISIONS.md), [integration boundaries](../INTEGRATION.md) and [verification](../TESTING.md)
 
@@ -772,13 +772,13 @@ The 15–25-minute recorded project/process presentation is separate from the co
 
 ### U-05 Architecture and technology details
 
-Status: UNDECIDED beyond confirmed Java/Spring Boot, browser UI, relational storage, external-provider test integration and camera/manual QR direction. Payment provider/interface selection is separately undecided under U-16.
+Status: Delivery uses Spring Boot 4.1.2, Java 21, HTML, CSS, native JavaScript, Spring Security and Supabase PostgreSQL. Shared module contracts and deployment details remain open. Payment provider/interface selection remains under U-16.
 
 The Word's proposed starting design is a layered application: role UI, controllers, business services, repositories/ORM and relational database. Suggested responsibilities include authentication, order/state, inventory/reservation, payment adapter, picking, delivery/attempts, notifications and logging.
 
 Suggested domain objects include User, Product, Order, OrderItem, PaymentRecord, stock reservation/movement, PickingScanHistory, DeliveryAttempt, assignment history, Notification and audit/security records. This is a candidate model, not an agreed schema or set of independently deployed services.
 
-Choose concrete architecture, frontend framework, database product, shared component/API contracts, dependency versions, QR implementation, proof storage, configuration and installation approach. Payment-account access and integration setup remain to be completed after the provider/interface decision under U-16. No provider is selected here.
+Use the confirmed Delivery stack and agree on shared component/API contracts, the final schema, installation and deployment configuration. The Delivery checkout retains private local proof storage. Payment-account access and integration setup remain to be completed after the provider/interface decision under U-16. No provider is selected here.
 
 **Impact:** Affects how role screens reach business rules/data, how modules are integrated and tested, and how many builds/configurations the team must maintain.
 
@@ -787,7 +787,7 @@ Choose concrete architecture, frontend framework, database product, shared compo
 | A. One Spring Boot application with server-rendered pages and focused JavaScript — **Recommended** | Propose one deployable application and one relational database, with internal modules for authentication, orders, inventory, payments, Warehouse, Delivery and audit. Use controllers, services and repositories; a template engine such as Thymeleaf renders pages, with JavaScript for scanning and selected interactions. This limits build/deployment setup while keeping business rules in the backend. | Delivery scans a QR in the browser and submits a protected action. The service validates assignment/state and commits custody/stock changes. Manual entry invokes the same behaviour. |
 | B. Richer browser application with a Spring Boot JSON API | Keep one backend and one relational database, but add a separately built browser frontend, for example React or Vue, shared UI components and richer task navigation/state management. This supports more elaborate interactive screens and independent frontend work, but adds tooling, API contracts and coordinated authentication/error handling. | Warehouse filters tasks, switches between task views and sees confirmed progress without losing screen context. Pending/error states prevent an unconfirmed scan from appearing successful. A can also use focused asynchronous updates; a frontend framework is not required for that basic interaction. |
 
-**Recommendation:** A reuses the HTML design direction with less build/configuration work. B offers a richer interface when its benefit justifies the integration and verification effort, including for AI-generated code. Either plan still needs an agreed database product, migration process, shared contracts, dependency versions, QR library, protected proof storage and installation guide. Provider/hosting choices remain under U-16/U-01. These plans are not an agreed schema or a microservices decision.
+**Recommendation:** A reuses the HTML design direction with less build/configuration work. B offers a richer interface when its benefit justifies the integration and verification effort, including for AI-generated code. The current Delivery stack uses the existing API with browser modules and Supabase PostgreSQL. Shared migration ownership and cross-role contracts still need agreement. Provider/hosting choices remain under U-16/U-01. These plans are not an agreed schema or a microservices decision.
 
 Official feasibility references: [Spring MVC with server-rendered HTML](https://spring.io/guides/gs/serving-web-content/), [Spring JSON REST services](https://spring.io/guides/gs/rest-service/) and [logical modules within Spring Boot](https://docs.spring.io/spring-modulith/reference/fundamentals.html). These support the examples; effort comparisons are project design judgments. Logical modules do not require adopting Spring Modulith.
 

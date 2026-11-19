@@ -1,6 +1,6 @@
 # Logistics Management System — project context
 
-Last updated: 5 November 2026 (Asia/Hong_Kong).
+Last updated 10 November 2026 (Asia/Hong_Kong).
 
 Project reference for the Delivery source checkout. Relative links point to the feature documentation and its bundled references.
 
@@ -29,7 +29,7 @@ Keep the grand project separate from Assignment 1. The existing AssignmentFiles,
 - A member supplied the unapproved Database Draft v0.4 and two ERDs for review. They are discussion designs, not an implemented or approved schema; see [review findings](../database/LMS_Database_Draft_v0_4_Review.md).
 - Payment provider/interface decision: [UNDECIDED — see U-16](PROJECT_DETAILS.md#u-16-payment-provider-and-checkout-interface). Payment-account setup and integration have not started.
 - Backend direction: Java/Spring Boot. Frontend: role-based web interfaces. Database direction: relational.
-- Delivery-specific local choices: React, Spring Boot and Java 21; H2/private local proof files are Place holder fallbacks for shared Database/private cloud integration. Overall team contracts, database product and deployment remain open.
+- Delivery uses HTML, CSS and native JavaScript with Spring Boot 4.1.2 and Java 21. Supabase PostgreSQL is the selected database. Draft v0.4 is the logical baseline for the 25 core tables. Delivery adds records for workflow tracking. H2 remains available for demos. Signature and photo files remain private local files. Delivery uses Spring Security for username login and server sessions. Shared account lifecycle and integration contracts remain open.
 - The user selected the enhanced B direction from PROJECT_DETAILS for Delivery, English UI/simple English comments, and a working local demo with exact Place holder labels and future-owner notes. Do not substitute literal questionnaire B answers or claim nine-member approval.
 - Delivery app: [start and source guide](../../README.md), [U-01–U-16 decisions](../DECISIONS.md), [integration handoff](../INTEGRATION.md), [actual test evidence](../TESTING.md). No real cloud deployment, external payment/refund integration or hardware camera test is claimed.
 

@@ -12,8 +12,8 @@ import static org.assertj.core.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
@@ -29,8 +29,8 @@ import javax.imageio.ImageIO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.mock.web.MockMultipartFile;
@@ -50,7 +50,7 @@ class DeliveryServiceTest {
     @Autowired DemoSeed seed;
     @Autowired JdbcTemplate db;
     @Autowired MockMvc http;
-    @Autowired ObjectMapper json;
+    @Autowired JsonMapper json;
     static final Path FILES=Path.of("target","test-private-proofs").toAbsolutePath();
     @DynamicPropertySource static void config(DynamicPropertyRegistry registry){
         registry.add("spring.datasource.url",()->"jdbc:h2:mem:delivery-test;DB_CLOSE_DELAY=-1;DEFAULT_LOCK_TIMEOUT=10000");
@@ -88,6 +88,9 @@ class DeliveryServiceTest {
     private void expectStatus(int status,org.assertj.core.api.ThrowableAssert.ThrowingCallable work){assertThatThrownBy(work).isInstanceOfSatisfying(ApiException.class,ex->assertThat(ex.status()).isEqualTo(status));}
 
     @Test void claimDoesNotShipAndPickupIsAtomicIdempotentAndOwned(){
+        db.update("UPDATE order_item SET quantity=1 WHERE id='ITEM-1001-1'");
+        db.update("INSERT INTO order_item(id,order_id,sku,quantity) VALUES(?,?,?,?)",
+            "ITEM-1001-DUPLICATE-SKU", "ORD-1001", "MUG-01", 1);
         action("ken","CLAIM","","qrCode","PL-1001");
         assertThat(text("SELECT order_status FROM delivery_order WHERE id='ORD-1001'")).isEqualTo("READY_FOR_PICKUP");
         assertThat(number("SELECT physical_stock FROM product_stock WHERE sku='MUG-01'")).isEqualTo(40);
@@ -155,7 +158,15 @@ class DeliveryServiceTest {
         assertThat(number("SELECT physical_stock FROM product_stock WHERE sku='MUG-01'")).isEqualTo(40);
         assertThat(number("SELECT reserved_stock FROM product_stock WHERE sku='MUG-01'")).isEqualTo(3);
         expectStatus(409,()->action("ken","DEMO_DECISION","PKG-1001","decision","APPROVE_REDELIVERY"));
-        action("ken","DEMO_INSTRUCTION","PKG-1001","instruction","REDELIVER");action("ken","DEMO_DECISION","PKG-1001","decision","APPROVE_REDELIVERY");
+        assertThat(json.valueToTree(workspaceQuery.workspace("ken")).path("returns").path(0).path("followUpStatus").asText())
+            .isEqualTo("AWAITING_CLIENT_INSTRUCTION");
+        assertThat(json.valueToTree(workspaceQuery.workspace("mei")).path("returns").isEmpty()).isTrue();
+        action("ken","DEMO_INSTRUCTION","PKG-1001","instruction","REDELIVER");
+        assertThat(json.valueToTree(workspaceQuery.workspace("ken")).path("returns").path(0).path("followUpStatus").asText())
+            .isEqualTo("AWAITING_ADMIN_APPROVAL");
+        action("ken","DEMO_DECISION","PKG-1001","decision","APPROVE_REDELIVERY");
+        assertThat(json.valueToTree(workspaceQuery.workspace("ken")).path("returns").path(0).path("followUpStatus").asText())
+            .isEqualTo("READY_FOR_REDELIVERY");
         expectStatus(403,()->action("ken","START","PKG-1001"));
         String list=text("SELECT l.id FROM pickup_list l JOIN pickup_item i ON i.list_id=l.id WHERE i.package_id='PKG-1001' AND l.list_status='OPEN'");
         action("mei","CLAIM","","qrCode",list);action("mei","COLLECT",list,"packageQrCode","PKG-1001");action("mei","START","PKG-1001");
@@ -219,16 +230,110 @@ class DeliveryServiceTest {
         assertThat(workspaceQuery.workspace("ken").get("retainedSummaries").toString()).contains("detailExpired=true");
     }
 
+    @Test void requestSavedBeforeUpgradeCanBeRetried() {
+        Map<String, Object> request = body("reason", "Depot A/B \u5305\u88f9 \ud83d\udce6");
+        // This hash was generated with Jackson 2.21.4, the original Delivery version.
+        String legacyHash = "80289865109a912234a9131ab61f35e9df55aa624b02b8694dc3d07dfb712e4c";
+        db.update("INSERT INTO operation_result VALUES(?,?,?,?,?,?)",
+            "ken", "RETURN:PKG-1001", request.get("requestId"), legacyHash,
+            "{\"message\":\"Return reported earlier.\"}", Instant.now().toString());
+
+        assertThat(returns.report("ken", "PKG-1001", request))
+            .containsEntry("message", "Return reported earlier.");
+        assertThat(number("SELECT COUNT(*) FROM return_receipt")).isZero();
+        request.put("reason", "Different return reason");
+        expectStatus(409, () -> returns.report("ken", "PKG-1001", request));
+    }
+
     @Test void httpUsesSessionCsrfAndGenericCredentialErrors() throws Exception{
         http.perform(get("/api/delivery/workspace")).andExpect(status().isUnauthorized());
         http.perform(post("/api/pickup-lists/claim").contentType("application/json").content("{}" )).andExpect(status().isForbidden());
         var initial=http.perform(get("/api/session")).andExpect(status().isOk()).andReturn();
         JsonNode token=json.readTree(initial.getResponse().getContentAsString());MockHttpSession session=(MockHttpSession)initial.getRequest().getSession(false);
-        http.perform(post("/api/login").session(session).header(token.get("csrfHeader").asText(),token.get("csrfToken").asText()).param("username","ken").param("password","Delivery123!")).andExpect(status().isOk());
+        http.perform(post("/api/login").session(session).header(token.get("csrfHeader").asString(),token.get("csrfToken").asString()).param("username","ken").param("password","Delivery123!")).andExpect(status().isOk());
         http.perform(get("/api/delivery/workspace").session(session)).andExpect(status().isOk()).andExpect(jsonPath("$.user.id").value("ken"));
         http.perform(get("/api/session").session(session)).andExpect(jsonPath("$.authenticated").value(true));
         db.update("UPDATE app_account SET account_status='DEACTIVATED' WHERE id='ken'");
         http.perform(get("/api/delivery/workspace").session(session)).andExpect(status().isForbidden());
+    }
+
+    @Test void authenticatedApiReportsTheSessionInactivityDeadline() throws Exception {
+        var signedOut = http.perform(get("/api/session")).andExpect(status().isOk()).andReturn();
+        JsonNode anonymous = json.readTree(signedOut.getResponse().getContentAsString());
+        assertThat(anonymous.get("sessionExpiresAt").isNull()).isTrue();
+
+        var session = loginSession("Delivery123!", 200);
+        session.setMaxInactiveInterval(120);
+        var active = http.perform(get("/api/session").session(session))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.user.username").value("ken"))
+            .andReturn();
+        JsonNode data = json.readTree(active.getResponse().getContentAsString());
+        long expiresAt = data.get("sessionExpiresAt").asLong();
+        long serverTime = data.get("serverTime").asLong();
+        assertThat(expiresAt - serverTime).isEqualTo(120_000);
+        assertThat(active.getResponse().getHeader("X-Session-Expires-At")).isEqualTo(Long.toString(expiresAt));
+
+        var workspace = http.perform(get("/api/delivery/workspace").session(session))
+            .andExpect(status().isOk()).andReturn().getResponse();
+        assertThat(Long.parseLong(workspace.getHeader("X-Session-Expires-At"))
+            - Long.parseLong(workspace.getHeader("X-Server-Time"))).isEqualTo(120_000);
+    }
+
+    @Test void changePasswordVerifiesCurrentPasswordAndExpiresOtherSessions() throws Exception {
+        String oldPassword = "Delivery123!";
+        String newPassword = "Delivery2026包裹";
+        var current = loginSession(oldPassword, 200);
+        var other = loginSession(oldPassword, 200);
+        var session = http.perform(get("/api/session").session(current)).andReturn();
+        JsonNode csrf = json.readTree(session.getResponse().getContentAsString());
+        String csrfHeader = csrf.get("csrfHeader").asString();
+        String csrfValue = csrf.get("csrfToken").asString();
+
+        http.perform(post("/api/change-password").session(current).contentType("application/json")
+            .content(passwordChange(oldPassword, newPassword, newPassword))).andExpect(status().isForbidden());
+
+        http.perform(post("/api/change-password").session(current).header(csrfHeader, csrfValue)
+            .contentType("application/json").content(passwordChange("wrong password", newPassword, newPassword)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value("Your current password is incorrect."));
+        assertThat(number("SELECT COUNT(*) FROM security_event WHERE event_type='PASSWORD_CHANGE' AND event_result='FAILED'"))
+            .isEqualTo(1);
+
+        String tooManyBytes = "NewP9" + "測".repeat(23);
+        http.perform(post("/api/change-password").session(current).header(csrfHeader, csrfValue)
+            .contentType("application/json").content(passwordChange(oldPassword, tooManyBytes, tooManyBytes)))
+            .andExpect(status().isBadRequest());
+        http.perform(post("/api/change-password").session(current).header(csrfHeader, csrfValue)
+            .contentType("application/json").content(passwordChange(oldPassword, newPassword, "Different9")))
+            .andExpect(status().isBadRequest());
+
+        http.perform(post("/api/change-password").session(current).header(csrfHeader, csrfValue)
+            .contentType("application/json").content(passwordChange(oldPassword, newPassword, newPassword)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.message").value("Password changed. Sign in again."));
+        assertThat(current.isInvalid()).isTrue();
+        assertThat(number("SELECT COUNT(*) FROM security_event WHERE event_type='PASSWORD_CHANGE' AND event_result='SUCCESS'"))
+            .isEqualTo(1);
+        http.perform(get("/api/delivery/workspace").session(other)).andExpect(status().isUnauthorized());
+        assertThat(other.isInvalid()).isTrue();
+
+        loginSession(oldPassword, 401);
+        http.perform(get("/api/delivery/workspace").session(loginSession(newPassword, 200)))
+            .andExpect(status().isOk());
+    }
+
+    private MockHttpSession loginSession(String password, int expectedStatus) throws Exception {
+        var initial = http.perform(get("/api/session")).andExpect(status().isOk()).andReturn();
+        JsonNode csrf = json.readTree(initial.getResponse().getContentAsString());
+        var session = (MockHttpSession) initial.getRequest().getSession(false);
+        http.perform(post("/api/login").session(session).header(csrf.get("csrfHeader").asString(), csrf.get("csrfToken").asString())
+            .param("username", "ken").param("password", password)).andExpect(status().is(expectedStatus));
+        return session;
+    }
+
+    private String passwordChange(String current, String next, String confirm) {
+        return json.writeValueAsString(Map.of("currentPassword", current, "newPassword", next, "confirmPassword", confirm));
     }
 
     private static MockMultipartFile signature() throws Exception {

@@ -1,4 +1,4 @@
-param([int]$Port = 8080)
+param([int]$Port = 8080, [ValidateSet('demo', 'supabase')][string]$Profile = 'demo')
 $ErrorActionPreference = 'Stop'
 Set-Location -LiteralPath $PSScriptRoot
 
@@ -23,11 +23,12 @@ if (-not (Test-Path -LiteralPath $deliveryJar)) {
 # The demo binds to this computer. Cloud hosting is a Place holder.
 Write-Host ''
 Write-Host "Delivery app: http://localhost:$Port" -ForegroundColor Cyan
-Write-Host 'Demo account: ken / Delivery123!'
-Write-Host 'Second worker: mei / Delivery123!'
-Write-Host 'Place holder: demo users and shared team data must be replaced before integration.'
+if ($Profile -eq 'demo') {
+  Write-Host 'Demo account: ken / Delivery123!'
+  Write-Host 'Second worker: mei / Delivery123!'
+  Write-Host 'Place holder: demo users and shared team data must be replaced before integration.'
+}
 Write-Host 'Keep this window open. Press Ctrl+C to stop the app.'
 Write-Host ''
-& $deliveryJava '-jar' $deliveryJar "--server.port=$Port" '--server.address=127.0.0.1' '--spring.profiles.active=demo'
+& $deliveryJava '-jar' $deliveryJar "--server.port=$Port" '--server.address=127.0.0.1' "--spring.profiles.active=$Profile"
 if ($LASTEXITCODE -ne 0) { throw 'The Delivery app stopped with an error. Check the message above.' }
-
