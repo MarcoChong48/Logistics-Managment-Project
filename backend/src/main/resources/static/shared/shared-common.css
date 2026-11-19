@@ -1,0 +1,2360 @@
+/* ==========================================================================
+   LMS shared style sheet: shared-common.css (version 2.2, the ledger look in charcoal and orange)
+   One style sheet for every page of the Logistics Management System.
+   Copy this text unchanged. Do not add, remove or change a rule.
+
+   Sections
+     1. Named values (colours, fonts, corners, shadows, motion)
+     2. Page basics
+     3. Icons
+     4. Page frame (side menu, top bar, work area)
+     5. Page header
+     6. Buttons and links
+     7. Fields
+     8. Cards, filter bar and layout helpers
+     9. Tables and pager
+    10. Status badges and flags
+    11. Actions menu
+    12. Tabs
+    13. Windows
+    14. Messages and notes
+    15. Number box, fact list and timeline
+    16. Pages without the frame (login and similar)
+    17. More parts (steps, summary, notices, scan box, capture box, progress)
+    18. Small windows (only for a frame marked as adaptive)
+    19. Printing a label
+    20. People who switched animations off
+   ========================================================================== */
+
+/* ===== SECTION 1: NAMED VALUES ===== */
+/* Every colour is written here once. All other rules use the names. */
+:root {
+  color-scheme: light;
+
+  /* 1.1 Page and surfaces */
+  --colour-page: #f1f1ef;
+  --colour-surface: #ffffff;
+  --colour-sunken: #f7f7f5;
+  --colour-hover: #e9e9e6;
+
+  /* 1.2 Lines. The two ledger rules: one between rows, one under column
+     titles and as the double rule under a total. */
+  --colour-line: #dbdbd6;
+  --colour-line-strong: #c4c4bd;
+  --colour-control-line: #7a7a73;
+  --colour-rule: #d9d9d3;
+  --colour-rule-strong: #a3a39a;
+
+  /* 1.3 Text */
+  --colour-text: #1f1f1d;
+  --colour-text-muted: #55554f;
+  --colour-placeholder: #65655e;
+  --colour-on-fill: #ffffff;
+
+  /* 1.4 Side menu (the charcoal rail) and top bar */
+  --colour-menu: #262624;
+  --colour-menu-line: #383835;
+  --colour-menu-text: #ecebe6;
+  --colour-menu-label: #aeada4;
+  --colour-menu-hover: #31312e;
+  --colour-menu-active: #f1f1ef;
+  --colour-menu-active-text: #1f1f1d;
+  --colour-menu-name: #ffffff;
+  --colour-menu-focus: #f7c39b;
+  --colour-counter: #ecebe6;
+  --colour-counter-text: #262624;
+  --colour-top-bar: #f8f8f6;
+  --colour-top-bar-line: #dbdbd6;
+
+  /* 1.5 Things that can be pressed */
+  --colour-primary: #a84200;
+  --colour-primary-hover: #8a3600;
+  --colour-link: #a84200;
+  --colour-focus: #a84200;
+  --colour-selection: #f6dccb;
+
+  /* 1.6 Dangerous actions and errors */
+  --colour-danger: #b42318;
+  --colour-danger-hover: #981c13;
+  --colour-danger-line: #cf7a70;
+  --colour-danger-surface: #fdf1ef;
+
+  /* 1.7 Controls that are switched off */
+  --colour-disabled-surface: #e6e6e2;
+  --colour-disabled-text: #6f6f68;
+
+  /* 1.8 The six status families */
+  --colour-status-waiting-surface: #fdf0d0;
+  --colour-status-waiting-text: #7a4b00;
+  --colour-status-warehouse-surface: #e2eefd;
+  --colour-status-warehouse-text: #154c9c;
+  --colour-status-road-surface: #ece6fb;
+  --colour-status-road-text: #4b2fa8;
+  --colour-status-done-surface: #ddf3e2;
+  --colour-status-done-text: #17603a;
+  --colour-status-problem-surface: #fce1dd;
+  --colour-status-problem-text: #9a2418;
+  --colour-status-closed-surface: #eeebe6;
+  --colour-status-closed-text: #4f4a42;
+
+  /* 1.9 The dark layer behind an open window */
+  --colour-overlay: rgba(31, 31, 29, 0.45);
+
+  /* 1.10 Fonts */
+  --font-normal: Bahnschrift, "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font-fixed: "Cascadia Mono", ui-monospace, Consolas, "Courier New", monospace;
+
+  /* 1.11 Corners and shadows */
+  --radius-control: 9px;
+  --radius-card: 14px;
+  --radius-popup: 10px;
+  --radius-small: 6px;
+  --radius-pill: 999px;
+  /* Panels lie flat on the page, edged by a 1 px line. Only what floats
+     above the page (a menu, a window) casts a shadow. */
+  --shadow-card: none;
+  --shadow-popup: 0 2px 6px rgba(31, 31, 29, 0.10), 0 12px 28px rgba(31, 31, 29, 0.16);
+  --shadow-window: 0 8px 24px rgba(31, 31, 29, 0.18), 0 24px 56px rgba(31, 31, 29, 0.22);
+
+  /* 1.12 Motion: how long each movement takes */
+  --motion-colour: 120ms;
+  --motion-menu: 120ms;
+  --motion-tab: 150ms;
+  --motion-window: 160ms;
+  --motion-message: 200ms;
+}
+
+/* ===== SECTION 2: PAGE BASICS ===== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scrollbar-color: #b4b4ac var(--colour-page);
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-normal);
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--colour-text);
+  background: var(--colour-page);
+  /* Digits have one width everywhere, so columns of figures line up. */
+  font-variant-numeric: tabular-nums;
+}
+
+/* The browser's own surfaces follow the palette too. */
+::selection {
+  background: var(--colour-selection);
+  color: var(--colour-text);
+}
+
+input,
+textarea {
+  caret-color: var(--colour-primary);
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+ol,
+dl,
+dd,
+figure {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+button,
+input,
+select,
+textarea {
+  margin: 0;
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: var(--colour-link);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  color: var(--colour-primary-hover);
+  text-decoration-thickness: 2px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--colour-focus);
+  outline-offset: 2px;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.shared-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.shared-muted {
+  color: var(--colour-text-muted);
+}
+
+.shared-nowrap {
+  white-space: nowrap;
+}
+
+.shared-strong {
+  font-weight: 600;
+}
+
+.shared-fixed-text {
+  font-family: var(--font-fixed);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+/* ===== SECTION 3: ICONS ===== */
+.shared-icon-sprite {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.shared-icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ===== SECTION 4: PAGE FRAME ===== */
+.shared-page-frame {
+  display: grid;
+  grid-template-columns: 212px minmax(0, 1fr);
+  grid-template-rows: 52px minmax(0, 1fr);
+  min-width: 1000px;
+  min-height: 100vh;
+}
+
+.shared-page-frame-side-menu {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  position: sticky;
+  top: 0;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  height: 100vh;
+  padding: 0 0 16px 10px;
+  overflow-y: auto;
+  background: var(--colour-menu);
+  color: var(--colour-menu-text);
+  scrollbar-color: #4f4f4b transparent;
+  /* On the dark rail the keyboard outline is pale. */
+  --colour-focus: var(--colour-menu-focus);
+}
+
+/* A link in the rail that is not an entry (the menu footer of a small window). */
+.shared-page-frame-side-menu a:not(.shared-page-frame-menu-item) {
+  color: var(--colour-menu-name);
+}
+
+.shared-page-frame-name {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  height: 52px;
+  margin-right: 10px;
+  padding: 0 10px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--colour-menu-name);
+}
+
+.shared-page-frame-menu-label {
+  flex: none;
+  padding: 16px 10px 4px;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  color: var(--colour-menu-label);
+}
+
+.shared-page-frame-menu-item {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  margin-right: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius-control);
+  color: var(--colour-menu-text);
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color var(--motion-colour), color var(--motion-colour);
+}
+
+.shared-page-frame-menu-item:hover {
+  background: var(--colour-menu-hover);
+  color: var(--colour-menu-name);
+}
+
+.shared-page-frame-menu-text {
+  flex: 1;
+  min-width: 0;
+}
+
+/* The current entry is an index tab cut from the page: it has the colour
+   of the work area and joins it at the right edge of the rail. */
+.shared-page-frame-menu-item-active,
+.shared-page-frame-menu-item-active:hover {
+  margin-right: 0;
+  padding-right: 20px;
+  border-radius: var(--radius-control) 0 0 var(--radius-control);
+  background: var(--colour-menu-active);
+  color: var(--colour-menu-active-text);
+  font-weight: 600;
+}
+
+.shared-page-frame-menu-item-active .shared-page-frame-menu-count {
+  background: var(--colour-menu);
+  color: var(--colour-menu-name);
+}
+
+.shared-page-frame-menu-count {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  background: var(--colour-counter);
+  color: var(--colour-counter-text);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A menu entry whose page does not exist yet. It cannot be pressed. */
+.shared-page-frame-menu-item-disabled,
+.shared-page-frame-menu-item-disabled:hover {
+  background: transparent;
+  color: var(--colour-menu-label);
+  font-weight: 400;
+  cursor: default;
+}
+
+.shared-page-frame-menu-stage {
+  flex: none;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--colour-menu-label);
+}
+
+.shared-page-frame-top-bar {
+  grid-column: 2;
+  grid-row: 1;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 52px;
+  padding: 0 24px;
+  background: var(--colour-top-bar);
+  border-bottom: 1px solid var(--colour-top-bar-line);
+}
+
+.shared-page-frame-spacer {
+  flex: 1;
+}
+
+.shared-page-frame-countdown {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--colour-text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.shared-page-frame-user {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Menu entries drawn on the parts page stand on a strip of the rail colour. */
+.shared-menu-sample {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 0 10px 10px;
+  border-radius: var(--radius-control);
+  background: var(--colour-menu);
+  color: var(--colour-menu-text);
+  --colour-focus: var(--colour-menu-focus);
+}
+
+/* The three parts below are used only by an adaptive frame in a small window. */
+.shared-page-frame .shared-page-frame-menu-button,
+.shared-page-frame .shared-page-frame-menu-close,
+.shared-page-frame .shared-page-frame-menu-footer {
+  display: none;
+}
+
+.shared-page-frame-main {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  max-width: 1328px;
+  padding: 24px;
+}
+
+/* The work area is where the skip link sends the keyboard. It is not a
+   control, so it shows no outline when it has the keyboard. */
+.shared-page-frame-main:focus {
+  outline: none;
+}
+
+/* The link "Skip to main content" is the first thing that the Tab key
+   reaches on a page with the frame. It cannot be seen until it has the
+   keyboard. Then it appears at the top left, above the top bar. */
+.shared-skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 50;
+  padding: 6px 12px;
+  border: 1px solid var(--colour-line-strong);
+  border-radius: var(--radius-control);
+  background: var(--colour-surface);
+  box-shadow: var(--shadow-popup);
+  font-weight: 600;
+}
+
+.shared-skip-link:not(:focus) {
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* The top bar stays at the top while the page scrolls. When the keyboard
+   moves to a control that is out of sight, the page stops 64 px from the
+   top (the 52 px top bar and 12 px of space), so the top bar never covers
+   that control. */
+html {
+  scroll-padding-top: 64px;
+}
+
+/* ===== SECTION 5: PAGE HEADER ===== */
+.shared-page-header {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.shared-page-header-text {
+  min-width: 0;
+}
+
+.shared-page-back {
+  display: inline-block;
+  margin-bottom: 4px;
+}
+
+.shared-page-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.shared-page-subtitle {
+  margin-top: 2px;
+  color: var(--colour-text-muted);
+}
+
+.shared-page-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.shared-section-title {
+  margin-top: 8px;
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 600;
+}
+
+/* ===== SECTION 6: BUTTONS AND LINKS ===== */
+.shared-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--colour-control-line);
+  border-radius: var(--radius-control);
+  background: var(--colour-surface);
+  color: var(--colour-text);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background-color var(--motion-colour), border-color var(--motion-colour), color var(--motion-colour);
+}
+
+.shared-button:hover {
+  background: var(--colour-hover);
+  color: var(--colour-text);
+}
+
+/* A button answers a press: it sits 1 px lower while it is held. */
+.shared-button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.shared-button .shared-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.shared-button-primary {
+  border-color: var(--colour-primary);
+  background: var(--colour-primary);
+  color: var(--colour-on-fill);
+}
+
+.shared-button-primary:hover {
+  border-color: var(--colour-primary-hover);
+  background: var(--colour-primary-hover);
+  color: var(--colour-on-fill);
+}
+
+.shared-button-danger {
+  border-color: var(--colour-danger-line);
+  color: var(--colour-danger);
+}
+
+.shared-button-danger:hover {
+  background: var(--colour-danger-surface);
+  color: var(--colour-danger);
+}
+
+.shared-button-danger-filled {
+  border-color: var(--colour-danger);
+  background: var(--colour-danger);
+  color: var(--colour-on-fill);
+}
+
+.shared-button-danger-filled:hover {
+  border-color: var(--colour-danger-hover);
+  background: var(--colour-danger-hover);
+  color: var(--colour-on-fill);
+}
+
+.shared-button-quiet {
+  height: auto;
+  padding: 0 2px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--colour-link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.shared-button-quiet:hover {
+  background: transparent;
+  color: var(--colour-primary-hover);
+}
+
+.shared-button-small {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 13px;
+}
+
+.shared-button-wide {
+  width: 100%;
+}
+
+.shared-button:disabled,
+.shared-button:disabled:hover {
+  border-color: var(--colour-line);
+  background: var(--colour-disabled-surface);
+  color: var(--colour-disabled-text);
+  cursor: not-allowed;
+}
+
+.shared-button-quiet:disabled,
+.shared-button-quiet:disabled:hover {
+  border-color: transparent;
+  background: transparent;
+  text-decoration: none;
+}
+
+/* ===== SECTION 7: FIELDS ===== */
+.shared-input,
+.shared-textarea {
+  width: 100%;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--colour-control-line);
+  border-radius: var(--radius-control);
+  background: var(--colour-surface);
+  color: var(--colour-text);
+  transition: border-color var(--motion-colour);
+}
+
+.shared-textarea {
+  display: block;
+  height: auto;
+  min-height: 72px;
+  padding: 8px 10px;
+  line-height: 20px;
+  resize: vertical;
+}
+
+.shared-input::placeholder,
+.shared-textarea::placeholder {
+  color: var(--colour-placeholder);
+  opacity: 1;
+}
+
+.shared-input-short {
+  width: 96px;
+}
+
+.shared-input-medium {
+  width: 200px;
+}
+
+.shared-input-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 250px;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--colour-control-line);
+  border-radius: var(--radius-control);
+  background: var(--colour-surface);
+  color: var(--colour-text-muted);
+}
+
+.shared-input-search input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--colour-text);
+}
+
+.shared-input-search input::placeholder {
+  color: var(--colour-placeholder);
+  opacity: 1;
+}
+
+.shared-input-search:focus-within,
+.shared-select:focus-within {
+  outline: 2px solid var(--colour-focus);
+  outline-offset: 2px;
+}
+
+.shared-select {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  border: 1px solid var(--colour-control-line);
+  border-radius: var(--radius-control);
+  background: var(--colour-surface);
+}
+
+.shared-select select {
+  height: 100%;
+  padding: 0 34px 0 10px;
+  border: 0;
+  border-radius: inherit;
+  outline: 0;
+  background: transparent;
+  color: var(--colour-text);
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.shared-select .shared-icon {
+  position: absolute;
+  right: 10px;
+  width: 16px;
+  height: 16px;
+  color: var(--colour-text-muted);
+  pointer-events: none;
+}
+
+.shared-select-wide {
+  display: flex;
+  width: 100%;
+}
+
+.shared-select-wide select {
+  width: 100%;
+}
+
+.shared-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  cursor: pointer;
+}
+
+.shared-checkbox input {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--colour-primary);
+}
+
+.shared-file-input {
+  width: 100%;
+  font-size: 14px;
+}
+
+.shared-file-input::file-selector-button {
+  height: 34px;
+  margin-right: 12px;
+  padding: 0 12px;
+  border: 1px solid var(--colour-control-line);
+  border-radius: var(--radius-control);
+  background: var(--colour-surface);
+  color: var(--colour-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.shared-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shared-field + .shared-field {
+  margin-top: 16px;
+}
+
+.shared-field-label {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+}
+
+.shared-field-optional {
+  font-weight: 400;
+  color: var(--colour-text-muted);
+}
+
+.shared-field-help {
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--colour-text-muted);
+}
+
+.shared-field-error {
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--colour-danger);
+}
+
+.shared-input-invalid,
+.shared-select-invalid {
+  border-color: var(--colour-danger);
+}
+
+.shared-input:disabled,
+.shared-textarea:disabled {
+  border-color: var(--colour-line);
+  background: var(--colour-disabled-surface);
+  color: var(--colour-disabled-text);
+  cursor: not-allowed;
+}
+
+/* ===== SECTION 8: CARDS, FILTER BAR AND LAYOUT HELPERS ===== */
+.shared-card {
+  overflow: hidden;
+  border: 1px solid var(--colour-line);
+  border-radius: var(--radius-card);
+  background: var(--colour-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.shared-card-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--colour-line);
+}
+
+.shared-card-title {
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 600;
+}
+
+.shared-card-count {
+  margin-left: 6px;
+  font-weight: 400;
+  color: var(--colour-text-muted);
+}
+
+.shared-card-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.shared-card-body {
+  padding: 16px;
+}
+
+.shared-card-body > * + * {
+  margin-top: 12px;
+}
+
+.shared-card-strip {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--colour-line);
+}
+
+.shared-card-part-title {
+  padding: 12px 16px 8px;
+  border-top: 1px solid var(--colour-line);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  color: var(--colour-text-muted);
+}
+
+.shared-filter-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--colour-line);
+}
+
+.shared-filter-bar .shared-input {
+  width: 160px;
+}
+
+.shared-filter-bar .shared-input-short {
+  width: 96px;
+}
+
+.shared-filter-bar .shared-input-medium {
+  width: 200px;
+}
+
+.shared-filter-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.shared-filter-label .shared-input {
+  width: 190px;
+  font-weight: 400;
+}
+
+.shared-filter-buttons {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* A date range: its two fields stay together when the filter bar wraps. */
+.shared-filter-range {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.shared-filter-end {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.shared-grid-two {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.admin-order-payment-refund-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));
+}
+
+.shared-grid-three {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.shared-button-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ===== SECTION 9: TABLES AND PAGER ===== */
+.shared-table-scroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-padding-inline-start: var(--shared-table-pinned-width, 0px);
+}
+
+/* A list that scrolls sideways keeps the name of each row in view. The
+   script adds shared-table-scroll-overflow while the table is wider than
+   its card; the first column then stays at the left behind a margin rule. */
+.shared-table-scroll-overflow > .shared-table > thead > tr > th:first-child,
+.shared-table-scroll-overflow > .shared-table > tbody > tr > th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  box-shadow: inset -1px 0 var(--colour-rule-strong);
+}
+
+.shared-table-scroll-overflow > .shared-table > thead > tr > th:first-child {
+  background: var(--colour-sunken);
+}
+
+.shared-table-scroll-overflow > .shared-table > tbody > tr > th:first-child {
+  background: var(--shared-row-background, var(--colour-surface));
+}
+
+.shared-table-scroll:focus-visible {
+  outline-offset: -2px;
+}
+
+.shared-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.shared-table th,
+.shared-table td {
+  padding: 0 12px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.shared-table thead th {
+  height: 36px;
+  border-bottom: 1px solid var(--colour-rule-strong);
+  background: var(--colour-sunken);
+  color: var(--colour-text-muted);
+  font-size: 12.5px;
+  line-height: 18px;
+  font-weight: 600;
+}
+
+.shared-table tbody th,
+.shared-table tbody td {
+  height: 46px;
+  border-bottom: 1px solid var(--colour-rule);
+  font-weight: 400;
+}
+
+.shared-table tbody th {
+  font-weight: 600;
+}
+
+/* A grey remark inside the bold first cell is not bold. */
+.shared-table tbody th .shared-muted {
+  font-weight: 400;
+}
+
+.shared-table tbody tr:last-child th,
+.shared-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* The total row of a money table: a rule above it and a double rule
+   below it, as a ledger closes a sum. */
+.shared-table tfoot th,
+.shared-table tfoot td {
+  height: 46px;
+  border-top: 1px solid var(--colour-rule-strong);
+  border-bottom: 3px double var(--colour-rule-strong);
+  font-weight: 600;
+}
+
+/* Clear card ground under the double rule keeps it apart from the edge
+   of the card. */
+.shared-table-scroll:has(> .shared-table > tfoot) {
+  padding-bottom: 12px;
+}
+
+.shared-table tbody tr {
+  --shared-row-background: var(--colour-surface);
+  transition: background-color var(--motion-colour);
+}
+
+.shared-table tbody tr:hover {
+  --shared-row-background: var(--colour-sunken);
+  background: var(--shared-row-background);
+}
+
+.shared-table .shared-table-number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.shared-table .shared-table-time {
+  font-variant-numeric: tabular-nums;
+}
+
+.shared-table .shared-table-actions {
+  text-align: right;
+}
+
+.shared-table .shared-table-wrap {
+  min-width: 160px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  white-space: normal;
+}
+
+.shared-table-work tbody th,
+.shared-table-work tbody td {
+  height: auto;
+  padding: 12px;
+  vertical-align: top;
+  white-space: normal;
+}
+
+.admin-order-detail-read-only-table tbody th,
+.admin-order-detail-read-only-table tbody td {
+  overflow-wrap: anywhere;
+}
+
+.shared-cell-main {
+  display: block;
+}
+
+.shared-cell-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 12.5px;
+  line-height: 18px;
+  font-weight: 400;
+  color: var(--colour-text-muted);
+}
+
+.shared-cell-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.shared-cell-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.shared-cell-note {
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--colour-text-muted);
+}
+
+.shared-value-line {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.shared-value-line + .shared-value-line {
+  margin-top: 2px;
+}
+
+.shared-value-line .shared-cell-note {
+  flex: none;
+  width: 28px;
+}
+
+.shared-cell-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.shared-table-empty {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--colour-text-muted);
+}
+
+.shared-pager {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--colour-line);
+  color: var(--colour-text-muted);
+}
+
+.shared-pager-buttons {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.shared-pager-current {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  border: 2px solid var(--colour-primary);
+  border-radius: var(--radius-control);
+  background: var(--colour-selection);
+  color: var(--colour-primary);
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== SECTION 10: STATUS BADGES AND FLAGS ===== */
+.shared-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px 0 8px;
+  border-radius: var(--radius-pill);
+  font-size: 12.5px;
+  line-height: 18px;
+  font-weight: 600;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.shared-status-badge::before {
+  content: "";
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.shared-flag {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: var(--radius-small);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.shared-status-badge-waiting,
+.shared-flag-waiting {
+  background: var(--colour-status-waiting-surface);
+  color: var(--colour-status-waiting-text);
+}
+
+.shared-status-badge-warehouse,
+.shared-flag-warehouse {
+  background: var(--colour-status-warehouse-surface);
+  color: var(--colour-status-warehouse-text);
+}
+
+.shared-status-badge-road,
+.shared-flag-road {
+  background: var(--colour-status-road-surface);
+  color: var(--colour-status-road-text);
+}
+
+.shared-status-badge-done,
+.shared-flag-done {
+  background: var(--colour-status-done-surface);
+  color: var(--colour-status-done-text);
+}
+
+.shared-status-badge-problem,
+.shared-flag-problem {
+  background: var(--colour-status-problem-surface);
+  color: var(--colour-status-problem-text);
+}
+
+.shared-status-badge-closed,
+.shared-flag-closed {
+  background: var(--colour-status-closed-surface);
+  color: var(--colour-status-closed-text);
+}
+
+/* ===== SECTION 11: ACTIONS MENU ===== */
+.shared-menu {
+  display: inline-block;
+}
+
+/* The menu is never higher than the window. If its lines do not fit,
+   they scroll inside the menu. */
+.shared-menu-list {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  min-width: 180px;
+  max-height: calc(100vh - 16px);
+  padding: 4px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--colour-line-strong);
+  border-radius: var(--radius-popup);
+  background: var(--colour-surface);
+  color: var(--colour-text);
+  box-shadow: var(--shadow-popup);
+}
+
+.shared-menu-list:popover-open {
+  display: flex;
+  flex-direction: column;
+  animation: shared-menu-in var(--motion-menu) ease-out;
+}
+
+/* A menu that is drawn open inside the page, used only on the parts page. */
+.shared-menu-list-shown {
+  position: static;
+  display: inline-flex;
+  flex-direction: column;
+}
+
+.shared-menu-item {
+  flex: none;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--radius-small);
+  background: transparent;
+  color: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  white-space: nowrap;
+  transition: background-color var(--motion-colour);
+}
+
+.shared-menu-item:hover {
+  background: var(--colour-hover);
+}
+
+.shared-menu-item-danger {
+  color: var(--colour-danger);
+}
+
+.shared-menu-divider {
+  flex: none;
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--colour-line);
+}
+
+@keyframes shared-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== SECTION 12: TABS ===== */
+.shared-tab-list {
+  position: relative;
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--colour-line);
+}
+
+.shared-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 16px;
+  border: 0;
+  background: transparent;
+  color: var(--colour-text-muted);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: color var(--motion-colour);
+}
+
+.shared-tab:hover {
+  color: var(--colour-text);
+}
+
+.shared-tab-active {
+  color: var(--colour-text);
+  box-shadow: inset 0 -2px 0 var(--colour-primary);
+}
+
+.shared-tab-note {
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--colour-text-muted);
+}
+
+/* When the script has measured the tabs, one bar moves between them. */
+.shared-tab-list-moving .shared-tab-active {
+  box-shadow: none;
+}
+
+.shared-tab-list-moving::after {
+  content: "";
+  position: absolute;
+  left: var(--shared-tab-bar-left, 0px);
+  bottom: 0;
+  width: var(--shared-tab-bar-width, 0px);
+  height: 2px;
+  background: var(--colour-primary);
+  transition: left var(--motion-tab) ease-out, width var(--motion-tab) ease-out;
+}
+
+.shared-tab-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ===== SECTION 13: WINDOWS ===== */
+.shared-dialog {
+  width: 480px;
+  max-width: calc(100vw - 48px);
+  max-height: calc(100vh - 48px);
+  padding: 0;
+  border: 1px solid var(--colour-line-strong);
+  border-radius: var(--radius-card);
+  background: var(--colour-surface);
+  color: var(--colour-text);
+  box-shadow: var(--shadow-window);
+}
+
+.shared-dialog[open] {
+  display: flex;
+  flex-direction: column;
+  animation: shared-dialog-in var(--motion-window) ease-out;
+}
+
+.shared-dialog::backdrop {
+  background: var(--colour-overlay);
+  animation: shared-fade-in var(--motion-window) ease-out;
+}
+
+.shared-dialog-wide {
+  width: 560px;
+}
+
+/* A window that is drawn inside the page, used only on the parts page. */
+.shared-dialog-shown {
+  display: flex;
+  flex-direction: column;
+}
+
+.shared-dialog-title {
+  flex: none;
+  padding: 16px 20px 0;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+}
+
+/* A long window body scrolls inside the window. Scrolling stops at its
+   end and does not move the page behind the window. */
+.shared-dialog-body {
+  flex: 1;
+  min-height: 0;
+  padding: 12px 20px 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.shared-dialog-body > * + * {
+  margin-top: 12px;
+}
+
+.shared-dialog-body > .shared-field + .shared-field {
+  margin-top: 16px;
+}
+
+.shared-dialog-footer {
+  flex: none;
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 20px 16px;
+}
+
+.shared-secret-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--colour-line);
+  border-radius: var(--radius-control);
+  background: var(--colour-sunken);
+}
+
+.shared-secret-text {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-fixed);
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  user-select: all;
+}
+
+.shared-label-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 220px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 16px;
+  border: 1px solid var(--colour-line-strong);
+  border-radius: var(--radius-small);
+  background: var(--colour-surface);
+  text-align: center;
+}
+
+.shared-label-picture {
+  display: block;
+  width: 148px;
+  height: 148px;
+  fill: currentColor;
+}
+
+@keyframes shared-dialog-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shared-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ===== SECTION 14: MESSAGES AND NOTES ===== */
+.shared-message-area {
+  position: fixed;
+  top: 68px;
+  right: 16px;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  pointer-events: none;
+}
+
+/* Message boxes drawn inside the page, used only on the parts page. */
+.shared-message-area-shown {
+  position: static;
+}
+
+/* These drawn boxes are there when the page opens, so they do not move in. */
+.shared-message-area-shown .shared-message-box {
+  animation: none;
+}
+
+.shared-message-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px 12px 12px;
+  border: 1px solid var(--colour-line-strong);
+  border-radius: var(--radius-popup);
+  background: var(--colour-surface);
+  box-shadow: var(--shadow-popup);
+  pointer-events: auto;
+  animation: shared-message-in var(--motion-message) ease-out;
+}
+
+.shared-message-box .shared-icon {
+  margin-top: 1px;
+}
+
+/* A message box takes the pale ground and the line of its family. */
+.shared-message-box-success {
+  border-color: var(--colour-status-done-text);
+  background: var(--colour-status-done-surface);
+}
+
+.shared-message-box-success .shared-icon {
+  color: var(--colour-status-done-text);
+}
+
+.shared-message-box-error {
+  border-color: var(--colour-status-problem-text);
+  background: var(--colour-status-problem-surface);
+}
+
+.shared-message-box-error .shared-icon {
+  color: var(--colour-status-problem-text);
+}
+
+.shared-message-box-information {
+  border-color: var(--colour-line-strong);
+}
+
+.shared-message-box-information .shared-icon {
+  color: var(--colour-text-muted);
+}
+
+.shared-message-box-leaving {
+  animation: shared-message-out var(--motion-message) ease-in forwards;
+}
+
+@keyframes shared-message-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shared-message-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.shared-inline-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--colour-line);
+  border-radius: var(--radius-control);
+  background: var(--colour-sunken);
+  color: var(--colour-text);
+}
+
+.shared-inline-message .shared-icon {
+  margin-top: 1px;
+}
+
+.shared-inline-message-error {
+  border-color: transparent;
+  background: var(--colour-status-problem-surface);
+  color: var(--colour-status-problem-text);
+}
+
+.shared-inline-message-success {
+  border-color: transparent;
+  background: var(--colour-status-done-surface);
+  color: var(--colour-status-done-text);
+}
+
+/* A message place: an empty box where the script puts an inline message.
+   It takes no room while it is empty. */
+.shared-message-place:empty {
+  margin-top: 0;
+}
+
+/* A note is a quiet annotation line, never a box inside a card. Inside a
+   card body it stands on a ruled line. */
+.shared-note {
+  color: var(--colour-text-muted);
+  font-size: 12.5px;
+  line-height: 18px;
+}
+
+.shared-card-body > .shared-note {
+  padding-top: 8px;
+  border-top: 1px solid var(--colour-rule);
+}
+
+/* ===== SECTION 15: NUMBER BOX, FACT LIST AND TIMELINE ===== */
+.shared-number-box {
+  padding: 16px;
+}
+
+/* The box that holds the work to do is where the day starts: an orange rule
+   across its top, inside the rounded corners. */
+.shared-number-box-work {
+  box-shadow: inset 0 3px 0 var(--colour-primary);
+}
+
+.shared-number-box-title {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  color: var(--colour-text-muted);
+}
+
+/* A total closes with a double rule, as in a ledger. */
+.shared-number-box-value {
+  width: max-content;
+  min-width: 32px;
+  margin-top: 4px;
+  padding: 0 4px 2px 0;
+  border-bottom: 3px double var(--colour-rule-strong);
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 600;
+}
+
+.shared-number-box-hint {
+  margin-top: 6px;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--colour-text-muted);
+}
+
+.shared-number-box-group {
+  margin-top: 16px;
+  padding-bottom: 4px;
+  font-size: 12.5px;
+  line-height: 18px;
+  font-weight: 600;
+  color: var(--colour-text-muted);
+}
+
+.shared-number-line {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 34px;
+  padding: 5px 0;
+  border-top: 1px solid var(--colour-line);
+  color: var(--colour-text);
+  text-decoration: none;
+  transition: background-color var(--motion-colour);
+}
+
+.shared-number-line:hover {
+  background: var(--colour-sunken);
+  color: var(--colour-text);
+}
+
+.shared-number-line-name {
+  flex: 1;
+  min-width: 0;
+  color: var(--colour-link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* A status badge that names a count link keeps its colours and shape, and
+   its words take the link underline, so the line reads as a link. */
+.shared-number-line-name .shared-status-badge {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+/* A second line under the name of a number line is not underlined. */
+.shared-number-line-name .shared-cell-sub {
+  display: inline-block;
+  width: 100%;
+}
+
+.shared-number-line-count {
+  flex: none;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.shared-number-line-count-zero {
+  font-weight: 400;
+  color: var(--colour-text-muted);
+}
+
+.shared-fact-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px 24px;
+}
+
+.shared-fact {
+  min-width: 0;
+}
+
+.shared-fact-label {
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--colour-text-muted);
+}
+
+.shared-fact-value {
+  margin-top: 2px;
+}
+
+/* The two facts a dangerous decision turns on (Payment, Outcome), set as
+   one ruled entry above the needed tick and the reason. */
+.shared-decision-facts {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--colour-danger-line);
+  border-radius: var(--radius-small);
+  background: var(--colour-sunken);
+}
+
+.shared-decision-facts .shared-fact {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+}
+
+.shared-decision-facts .shared-fact-value {
+  margin-top: 0;
+}
+
+/* The entries of one day, oldest first. The list itself draws nothing;
+   each entry draws its own rule. */
+.shared-timeline {
+  margin: 0;
+  padding: 0;
+}
+
+/* Each entry is one ruled posting line. */
+.shared-timeline-entry {
+  display: flex;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--colour-rule);
+}
+
+.shared-timeline-time {
+  flex: none;
+  width: 130px;
+  color: var(--colour-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.shared-timeline-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.shared-timeline-actor {
+  color: var(--colour-text-muted);
+}
+
+/* A day book: the entries of one day stand under their date. */
+.shared-timeline-day + .shared-timeline-day {
+  margin-top: 16px;
+}
+
+.shared-timeline-date {
+  margin-bottom: 4px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--colour-rule);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+}
+
+.shared-timeline-day .shared-timeline-time {
+  width: 48px;
+}
+
+/* ===== SECTION 16: PAGES WITHOUT THE FRAME ===== */
+.shared-centre-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px 16px;
+}
+
+.shared-centre-name {
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--colour-menu);
+}
+
+.shared-centre-sub {
+  margin-top: 2px;
+  color: var(--colour-text-muted);
+  text-align: center;
+}
+
+.shared-centre-card {
+  width: 380px;
+  max-width: 100%;
+  margin-top: 16px;
+  padding: 24px;
+}
+
+.shared-centre-card-wide {
+  width: 420px;
+}
+
+.shared-centre-card > * + * {
+  margin-top: 12px;
+}
+
+.shared-centre-card > .shared-field + .shared-field {
+  margin-top: 16px;
+}
+
+.shared-centre-card > .shared-button-wide {
+  margin-top: 20px;
+}
+
+.shared-centre-title {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+}
+
+.shared-centre-links {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.shared-link-list > li + li {
+  margin-top: 6px;
+}
+
+/* ===== SECTION 17: MORE PARTS ===== */
+/* 17.1 Progress steps: the way of an order, one step under the other */
+.shared-step-list {
+  display: block;
+}
+
+.shared-step {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  padding-bottom: 16px;
+}
+
+.shared-step:last-child {
+  padding-bottom: 0;
+}
+
+.shared-step::before {
+  content: "";
+  position: absolute;
+  left: 9px;
+  top: 22px;
+  bottom: -2px;
+  width: 2px;
+  background: var(--colour-line-strong);
+}
+
+.shared-step:last-child::before {
+  display: none;
+}
+
+.shared-step-mark {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--colour-line-strong);
+  border-radius: 50%;
+  background: var(--colour-surface);
+  color: var(--colour-on-fill);
+}
+
+.shared-step-mark .shared-icon {
+  width: 12px;
+  height: 12px;
+  stroke-width: 2.4;
+}
+
+.shared-step-text {
+  min-width: 0;
+}
+
+.shared-step-title {
+  font-weight: 500;
+  color: var(--colour-text-muted);
+}
+
+.shared-step-note {
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--colour-text-muted);
+}
+
+.shared-step-done::before {
+  background: var(--colour-primary);
+}
+
+.shared-step-done .shared-step-mark {
+  border-color: var(--colour-primary);
+  background: var(--colour-primary);
+}
+
+.shared-step-done .shared-step-title {
+  color: var(--colour-text);
+}
+
+.shared-step-current .shared-step-mark {
+  border-color: var(--colour-primary);
+}
+
+.shared-step-current .shared-step-title {
+  color: var(--colour-text);
+  font-weight: 600;
+}
+
+.shared-step-problem .shared-step-mark {
+  border-color: var(--colour-danger);
+  background: var(--colour-danger);
+}
+
+.shared-step-problem .shared-step-title {
+  color: var(--colour-danger);
+  font-weight: 600;
+}
+
+/* 17.2 Summary: lines of name and amount with a total */
+.shared-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.shared-summary-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.shared-summary-row > :last-child {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.shared-summary-total {
+  padding-top: 12px;
+  padding-bottom: 4px;
+  border-top: 1px solid var(--colour-rule-strong);
+  border-bottom: 3px double var(--colour-rule-strong);
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+}
+
+/* 17.3 Notice list: messages for the person who is logged in */
+.shared-notice-list {
+  display: block;
+}
+
+.shared-notice {
+  display: flex;
+  gap: 12px;
+  padding: 12px 16px;
+}
+
+.shared-notice + .shared-notice {
+  border-top: 1px solid var(--colour-line);
+}
+
+.shared-notice-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.shared-notice-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-weight: 400;
+}
+
+.shared-notice-unread .shared-notice-title {
+  font-weight: 600;
+}
+
+.shared-notice-body {
+  margin-top: 2px;
+  color: var(--colour-text-muted);
+}
+
+.shared-notice-time {
+  flex: none;
+  font-size: 12.5px;
+  line-height: 20px;
+  color: var(--colour-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 17.4 Scan box and capture box */
+.shared-scan-box {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px;
+  border: 1px dashed var(--colour-control-line);
+  border-radius: var(--radius-control);
+  background: var(--colour-sunken);
+}
+
+.shared-scan-box .shared-input {
+  flex: 1;
+  width: auto;
+  min-width: 160px;
+}
+
+.shared-capture-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 160px;
+  padding: 16px;
+  border: 1px dashed var(--colour-control-line);
+  border-radius: var(--radius-control);
+  background: var(--colour-sunken);
+  color: var(--colour-text-muted);
+  text-align: center;
+}
+
+/* 17.5 Progress bar: always with its words next to it */
+.shared-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.shared-progress-bar {
+  flex: 1;
+  min-width: 80px;
+  height: 8px;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--colour-line);
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.shared-progress-bar::-webkit-progress-bar {
+  background: var(--colour-line);
+}
+
+.shared-progress-bar::-webkit-progress-value {
+  background: var(--colour-primary);
+}
+
+.shared-progress-bar::-moz-progress-bar {
+  background: var(--colour-primary);
+}
+
+.shared-progress-text {
+  flex: none;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--colour-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== SECTION 18: SMALL WINDOWS ===== */
+/* These rules work only when the frame also has the class
+   shared-page-frame-adaptive. A frame without it stays 1000 px wide. */
+@media (max-width: 899px) {
+  .shared-page-frame-adaptive {
+    grid-template-columns: minmax(0, 1fr);
+    min-width: 0;
+  }
+
+  .shared-page-frame-adaptive .shared-page-frame-side-menu {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 40;
+    display: none;
+    width: 260px;
+    height: auto;
+    box-shadow: var(--shadow-window);
+  }
+
+  .shared-page-frame-adaptive.shared-page-frame-menu-open .shared-page-frame-side-menu {
+    display: flex;
+  }
+
+  .shared-page-frame-adaptive .shared-page-frame-top-bar,
+  .shared-page-frame-adaptive .shared-page-frame-main {
+    grid-column: 1;
+  }
+
+  .shared-page-frame-adaptive .shared-page-frame-top-bar {
+    gap: 8px;
+    padding: 0 16px;
+  }
+
+  .shared-page-frame-adaptive .shared-page-frame-main {
+    padding: 16px;
+  }
+
+  .shared-page-frame-adaptive .shared-page-frame-menu-button,
+  .shared-page-frame-adaptive .shared-page-frame-menu-close {
+    display: inline-flex;
+  }
+
+  .shared-page-frame-adaptive .shared-page-frame-top-bar .shared-page-frame-user,
+  .shared-page-frame-adaptive .shared-page-frame-top-link,
+  .shared-page-frame-adaptive .shared-page-frame-countdown-words {
+    display: none;
+  }
+
+  .shared-page-frame-adaptive .shared-page-frame-menu-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: auto;
+    padding: 16px 10px 0;
+    border-top: 1px solid var(--colour-menu-line);
+  }
+
+  /* A work table becomes a list of cards: one row, one card. */
+  .shared-page-frame-adaptive .shared-table-work thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .shared-page-frame-adaptive .shared-table-work tbody tr {
+    display: block;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--colour-line);
+  }
+
+  .shared-page-frame-adaptive .shared-table-work tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .shared-page-frame-adaptive .shared-table-work tbody th,
+  .shared-page-frame-adaptive .shared-table-work tbody td {
+    display: block;
+    padding: 0;
+    border-bottom: 0;
+    text-align: left;
+  }
+
+  .shared-page-frame-adaptive .shared-table-work tbody td {
+    margin-top: 8px;
+  }
+
+  .shared-page-frame-adaptive .shared-table-work tbody [data-title]::before {
+    content: attr(data-title);
+    display: block;
+    font-size: 12.5px;
+    line-height: 18px;
+    font-weight: 600;
+    color: var(--colour-text-muted);
+  }
+
+  .shared-page-frame-adaptive .shared-table-work .shared-cell-buttons {
+    justify-content: flex-start;
+  }
+
+  .shared-page-frame-adaptive .shared-page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .shared-page-frame-adaptive .shared-page-header-actions {
+    justify-content: flex-start;
+    margin-left: 0;
+  }
+
+  .shared-page-frame-adaptive .shared-input-search {
+    width: 100%;
+  }
+
+  .shared-page-frame-adaptive .shared-timeline-entry {
+    flex-wrap: wrap;
+  }
+
+  .shared-page-frame-adaptive ~ .shared-message-area {
+    top: 60px;
+    right: 8px;
+    left: 8px;
+    width: auto;
+    max-width: none;
+  }
+}
+
+/* ===== SECTION 19: PRINTING A LABEL ===== */
+/* The script puts the class shared-print-only-label on the html element
+   just before it prints a label, and removes it afterwards. */
+@media print {
+  .shared-print-only-label * {
+    visibility: hidden;
+  }
+
+  .shared-print-only-label .shared-label-box,
+  .shared-print-only-label .shared-label-box * {
+    visibility: visible;
+  }
+
+  .shared-print-only-label .shared-label-box {
+    position: fixed;
+    top: 0;
+    left: 0;
+    margin: 0;
+  }
+
+  .shared-print-only-label .shared-dialog::backdrop {
+    background: transparent;
+  }
+}
+
+/* ===== SECTION 20: PEOPLE WHO SWITCHED ANIMATIONS OFF ===== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
+  }
+
+  /* The dark layer behind an open window is not reached by the rule
+     above, so it has its own rule. */
+  .shared-dialog::backdrop {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+  }
+}

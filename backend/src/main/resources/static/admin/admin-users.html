@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Users - LMS Admin</title>
+  <link rel="stylesheet" href="/shared/shared-common.css">
+  <script src="/shared/shared-common.js?v=2" defer></script>
+  <script src="/admin/admin-common.js?v=2" defer></script>
+  <script src="/admin/admin-users.js?v=2" defer></script>
+</head>
+<body>
+  <!-- Page frame: adminBuildPageFrame places this work area inside the frame. -->
+  <main hidden>
+    <div class="shared-page-header">
+      <div class="shared-page-header-text">
+        <h1 class="shared-page-title">Users</h1>
+        <p class="shared-page-subtitle" id="adminSearchUserTotalRowCountText" aria-live="polite"></p>
+      </div>
+      <div class="shared-page-header-actions">
+        <button type="button" class="shared-button">
+          <svg class="shared-icon" aria-hidden="true"><use href="#icon-download"/></svg> Download CSV
+        </button>
+        <button type="button" class="shared-button shared-button-primary" id="adminCreateUserOpenButton"
+          data-open-dialog="adminCreateUserDialog">
+          <svg class="shared-icon" aria-hidden="true"><use href="#icon-plus"/></svg> Create user
+        </button>
+      </div>
+    </div>
+
+    <section class="shared-card">
+      <!-- Filter bar -->
+      <form class="shared-filter-bar">
+        <label class="shared-input-search">
+          <svg class="shared-icon" aria-hidden="true"><use href="#icon-search"/></svg>
+          <input type="search" id="adminSearchUserKeywordInput" placeholder="Search username"
+            aria-label="Search username">
+        </label>
+        <span class="shared-select">
+          <select id="adminSearchUserRoleSelect" aria-label="Role">
+            <option value="">All roles</option>
+            <option value="CLIENT">Client</option>
+            <option value="WAREHOUSE_WORKER">Warehouse Worker</option>
+            <option value="DELIVERY_WORKER">Delivery Worker</option>
+            <option value="ADMIN">Admin</option>
+          </select>
+          <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+        </span>
+        <span class="shared-select">
+          <select id="adminSearchUserAccountStatusSelect" aria-label="Status">
+            <option value="">All statuses</option>
+            <option value="ACTIVE">Active</option>
+            <option value="INACTIVE">Deactivated</option>
+            <option value="BANNED">Banned</option>
+            <option value="LOCKED_NOW">Locked now</option>
+          </select>
+          <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+        </span>
+        <span class="shared-filter-buttons">
+          <button type="submit" class="shared-button" id="adminSearchUserSubmitButton">Search</button>
+          <button type="button" class="shared-button shared-button-quiet" id="adminSearchUserClearButton">Clear</button>
+        </span>
+      </form>
+
+      <!-- Table -->
+      <div class="shared-table-scroll" role="region" aria-label="Users table" hidden>
+        <table class="shared-table" id="adminSearchUserResultTable">
+          <thead>
+            <tr>
+              <th scope="col">Username</th>
+              <th scope="col">Role</th>
+              <th scope="col">Status</th>
+              <th scope="col" class="shared-table-time">Last login</th>
+              <th scope="col" class="shared-table-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="adminSearchUserResultTableBody"></tbody>
+        </table>
+      </div>
+      <p class="shared-table-empty" id="adminSearchUserEmptyMessage" hidden>No rows found.
+        <button type="button" class="shared-button shared-button-quiet">Clear filters</button>
+      </p>
+
+      <!-- Pager -->
+      <div class="shared-pager" id="adminSearchUserPager" hidden></div>
+    </section>
+  </main>
+
+  <!-- Pop-up windows -->
+  <dialog class="shared-dialog" id="adminCreateUserDialog" aria-labelledby="adminCreateUserDialogTitle">
+    <h2 class="shared-dialog-title" id="adminCreateUserDialogTitle">Create user</h2>
+    <div class="shared-dialog-body">
+      <div class="shared-message-place" id="adminCreateUserMessage" aria-live="polite"></div>
+      <label class="shared-field">
+        <span class="shared-field-label">Username</span>
+        <input class="shared-input" id="adminCreateUserUsernameInput" type="text">
+        <span class="shared-field-help">4 to 30 characters: letters, digits and underscore.</span>
+      </label>
+      <label class="shared-field">
+        <span class="shared-field-label">Role</span>
+        <span class="shared-select shared-select-wide">
+          <select id="adminCreateUserRoleSelect" aria-label="Role">
+            <option value="CLIENT">Client</option>
+            <option value="WAREHOUSE_WORKER">Warehouse Worker</option>
+            <option value="DELIVERY_WORKER">Delivery Worker</option>
+            <option value="ADMIN">Admin</option>
+          </select>
+          <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+        </span>
+      </label>
+      <div id="adminCreateUserDeliveryProfilePanel" hidden>
+        <p class="shared-note">The four fields below are used only for a Delivery Worker.</p>
+        <label class="shared-field">
+          <span class="shared-field-label">Employee number<span class="shared-field-optional"> (optional)</span></span>
+          <input class="shared-input" id="adminCreateUserEmployeeNumberInput" type="text">
+        </label>
+        <label class="shared-field">
+          <span class="shared-field-label">Vehicle type<span class="shared-field-optional"> (optional)</span></span>
+          <input class="shared-input" id="adminCreateUserVehicleTypeInput" type="text">
+        </label>
+        <label class="shared-field">
+          <span class="shared-field-label">Vehicle plate<span class="shared-field-optional"> (optional)</span></span>
+          <input class="shared-input" id="adminCreateUserVehiclePlateInput" type="text">
+        </label>
+        <label class="shared-field">
+          <span class="shared-field-label">Equipment note<span class="shared-field-optional"> (optional)</span></span>
+          <textarea class="shared-textarea" id="adminCreateUserEquipmentNoteInput"></textarea>
+        </label>
+      </div>
+    </div>
+    <div class="shared-dialog-footer">
+      <button type="button" class="shared-button" id="adminCreateUserCancelButton" data-close-dialog>Cancel</button>
+      <button type="button" class="shared-button shared-button-primary" id="adminCreateUserConfirmButton" data-confirm>
+        Create user
+      </button>
+    </div>
+  </dialog>
+
+  <dialog class="shared-dialog" id="adminShowTemporaryPasswordDialog"
+    aria-labelledby="adminShowTemporaryPasswordDialogTitle">
+    <h2 class="shared-dialog-title" id="adminShowTemporaryPasswordDialogTitle">
+      Temporary password for <span id="adminShowTemporaryPasswordUsernameText"></span>
+    </h2>
+    <div class="shared-dialog-body">
+      <p>Give this password to the user. The user must change it at the first login.</p>
+      <div class="shared-secret-box">
+        <span class="shared-secret-text" id="adminShowTemporaryPasswordValueText"></span>
+        <button type="button" class="shared-button shared-button-small" id="adminShowTemporaryPasswordCopyButton"
+          data-copy="adminShowTemporaryPasswordValueText" data-copy-place="adminShowTemporaryPasswordCopyMessage"
+          data-copy-failed="Could not copy. Select the password and copy it by hand.">Copy</button>
+      </div>
+      <div class="shared-message-place" id="adminShowTemporaryPasswordCopyMessage" aria-live="polite"></div>
+      <p class="shared-muted">
+        Valid until <time class="shared-nowrap" id="adminShowTemporaryPasswordExpiryTimeText"></time>.
+        It is shown only once.
+      </p>
+    </div>
+    <div class="shared-dialog-footer">
+      <button type="button" class="shared-button shared-button-primary" id="adminShowTemporaryPasswordCloseButton"
+        data-close-dialog>Close</button>
+    </div>
+  </dialog>
+
+  <dialog class="shared-dialog shared-dialog-wide" id="adminViewUserDialog" aria-labelledby="adminViewUserDialogTitle">
+    <h2 class="shared-dialog-title" id="adminViewUserDialogTitle">User</h2>
+    <div class="shared-dialog-body">
+      <div class="shared-message-place" aria-live="polite"></div>
+      <dl class="shared-fact-list">
+        <div class="shared-fact">
+          <dt class="shared-fact-label">Username</dt>
+          <dd class="shared-fact-value" id="adminViewUserUsernameText"></dd>
+        </div>
+        <div class="shared-fact">
+          <dt class="shared-fact-label">Role</dt>
+          <dd class="shared-fact-value" id="adminViewUserRoleText"></dd>
+        </div>
+        <div class="shared-fact">
+          <dt class="shared-fact-label">Status</dt>
+          <dd class="shared-fact-value"><span class="shared-status-badge" id="adminViewUserAccountStatusBadge"></span></dd>
+        </div>
+        <div class="shared-fact">
+          <dt class="shared-fact-label">Created</dt>
+          <dd class="shared-fact-value" id="adminViewUserCreatedTimeText"></dd>
+        </div>
+        <div class="shared-fact">
+          <dt class="shared-fact-label">Last login</dt>
+          <dd class="shared-fact-value"></dd>
+        </div>
+        <div class="shared-fact">
+          <dt class="shared-fact-label">Wrong password tries</dt>
+          <dd class="shared-fact-value"></dd>
+        </div>
+        <div class="shared-fact">
+          <dt class="shared-fact-label">Temporary password</dt>
+          <dd class="shared-fact-value" id="adminViewUserTemporaryPasswordExpiryTimeText"></dd>
+        </div>
+      </dl>
+      <div id="adminEditDeliveryWorkerProfilePanel" hidden>
+        <p class="shared-strong">Delivery Worker profile</p>
+        <label class="shared-field">
+          <span class="shared-field-label">Employee number<span class="shared-field-optional"> (optional)</span></span>
+          <input class="shared-input" id="adminEditDeliveryWorkerProfileEmployeeNumberInput" type="text">
+        </label>
+        <label class="shared-field">
+          <span class="shared-field-label">Vehicle type<span class="shared-field-optional"> (optional)</span></span>
+          <input class="shared-input" id="adminEditDeliveryWorkerProfileVehicleTypeInput" type="text">
+        </label>
+        <label class="shared-field">
+          <span class="shared-field-label">Vehicle plate<span class="shared-field-optional"> (optional)</span></span>
+          <input class="shared-input" id="adminEditDeliveryWorkerProfileVehiclePlateInput" type="text">
+        </label>
+        <label class="shared-field">
+          <span class="shared-field-label">Equipment note<span class="shared-field-optional"> (optional)</span></span>
+          <textarea class="shared-textarea" id="adminEditDeliveryWorkerProfileEquipmentNoteInput"></textarea>
+        </label>
+      </div>
+    </div>
+    <div class="shared-dialog-footer">
+      <button type="button" class="shared-button" id="adminViewUserCloseButton" data-close-dialog>Close</button>
+      <button type="button" class="shared-button shared-button-primary" id="adminEditDeliveryWorkerProfileSaveButton"
+        data-confirm hidden>Save profile</button>
+    </div>
+  </dialog>
+
+  <dialog class="shared-dialog" id="adminChangeUserRoleDialog" aria-labelledby="adminChangeUserRoleDialogTitle">
+    <h2 class="shared-dialog-title" id="adminChangeUserRoleDialogTitle">
+      Change role of <span id="adminChangeUserRoleUsernameText"></span>
+    </h2>
+    <div class="shared-dialog-body">
+      <div class="shared-message-place" aria-live="polite"></div>
+      <dl class="shared-fact-list">
+        <div class="shared-fact">
+          <dt class="shared-fact-label">Current role</dt>
+          <dd class="shared-fact-value" id="adminChangeUserRoleCurrentRoleText"></dd>
+        </div>
+      </dl>
+      <label class="shared-field">
+        <span class="shared-field-label">New role</span>
+        <span class="shared-select shared-select-wide">
+          <select id="adminChangeUserRoleNewRoleSelect" aria-label="New role"></select>
+          <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+        </span>
+      </label>
+      <label class="shared-field">
+        <span class="shared-field-label">Reason</span>
+        <textarea class="shared-textarea" id="adminChangeUserRoleReasonInput" data-reason></textarea>
+        <span class="shared-field-help">At least 5 characters.</span>
+      </label>
+      <p class="shared-note" id="adminPreviewUserImpactPanel"></p>
+    </div>
+    <div class="shared-dialog-footer">
+      <button type="button" class="shared-button" id="adminChangeUserRoleCancelButton" data-close-dialog>Cancel</button>
+      <button type="button" class="shared-button shared-button-primary" id="adminChangeUserRoleConfirmButton"
+        data-confirm disabled>Change role</button>
+    </div>
+  </dialog>
+
+  <dialog class="shared-dialog" id="adminResetPasswordDialog" aria-labelledby="adminResetPasswordDialogTitle">
+    <h2 class="shared-dialog-title" id="adminResetPasswordDialogTitle">
+      Reset password of <span id="adminResetPasswordUsernameText"></span>
+    </h2>
+    <div class="shared-dialog-body">
+      <div class="shared-message-place" aria-live="polite"></div>
+      <p>The user gets a new temporary password and must change it at the next login. A lock on the account is removed.</p>
+      <label class="shared-checkbox">
+        <input type="checkbox" id="adminResetPasswordIdentityIsConfirmedCheckbox" data-required-tick>
+        <span>I have checked who this person is</span>
+      </label>
+      <label class="shared-field">
+        <span class="shared-field-label">How was the person checked?</span>
+        <input class="shared-input" id="adminResetPasswordIdentityCheckMethodInput" type="text" data-reason>
+        <span class="shared-field-help">At least 5 characters, for example: staff card shown in person.</span>
+      </label>
+    </div>
+    <div class="shared-dialog-footer">
+      <button type="button" class="shared-button" id="adminResetPasswordCancelButton" data-close-dialog>Cancel</button>
+      <button type="button" class="shared-button shared-button-primary" id="adminResetPasswordConfirmButton"
+        data-confirm disabled>Reset password</button>
+    </div>
+  </dialog>
+</body>
+</html>

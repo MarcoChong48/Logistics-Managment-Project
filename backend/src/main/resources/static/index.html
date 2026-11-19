@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LMS</title>
+  <script src="/shared/shared-common.js?v=1" defer></script>
+</head>
+<body>
+  <!-- Page frame: send the browser to the first page for this session. -->
+  <a href="/shared/shared-login.html">Log in</a>
+  <script>
+    // What it does: Read the session after the shared script is ready.
+    // Input: None.
+    // Output: Navigation to the login page or the signed-in destination returned by the server.
+    document.addEventListener("DOMContentLoaded", async () => {
+      try {
+        const sharedViewSessionResponse = await sharedSendRequest("GET", "/api/shared/session");
+        const sharedViewSessionNextPageWebAddress = sharedViewSessionResponse.sharedViewSessionIsLoggedIn
+          ? sharedViewSessionResponse.sharedViewSessionNextPageWebAddress
+          : "/shared/shared-login.html";
+        window.location.replace(sharedViewSessionNextPageWebAddress);
+      } catch {
+        // Keep the login link available if the session could not be read.
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard - LMS Admin</title>
+  <link rel="stylesheet" href="/shared/shared-common.css">
+  <script src="/shared/shared-common.js?v=1" defer></script>
+  <script src="/admin/admin-common.js?v=1" defer></script>
+  <script src="/admin/admin-dashboard.js?v=1" defer></script>
+</head>
+<body>
+  <!-- Page frame: adminBuildPageFrame places this work area inside the frame. -->
+  <main hidden>
+    <div class="shared-page-header">
+      <div class="shared-page-header-text">
+        <h1 class="shared-page-title">Dashboard</h1>
+      </div>
+    </div>
+
+    <section class="shared-card" id="sharedCheckSystemHealthPanel" aria-live="polite">
+      <div class="shared-card-header">
+        <h2 class="shared-card-title">System health</h2>
+      </div>
+      <div class="shared-card-body">
+        <dl class="shared-fact-list">
+          <div class="shared-fact">
+            <dt class="shared-fact-label">Database</dt>
+            <dd class="shared-fact-value" id="sharedCheckSystemHealthDatabaseText">-</dd>
+          </div>
+          <div class="shared-fact">
+            <dt class="shared-fact-label">Tables</dt>
+            <dd class="shared-fact-value" id="sharedCheckSystemHealthTableCountText">-</dd>
+          </div>
+          <div class="shared-fact">
+            <dt class="shared-fact-label">Server time</dt>
+            <dd class="shared-fact-value">
+              <time class="shared-nowrap" id="sharedCheckSystemHealthServerTimeText">-</time>
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -2,6 +2,8 @@
 
 A web-based logistics system with four roles: **Client, Warehouse, Delivery, and Admin**.
 
+For this Admin branch, follow the [Admin system setup](ADMIN_README.md). The sections below describe the team's database-setup baseline.
+
 ## Tech Stack
 
 - Java 21 · Spring Boot 4.1.2 · Maven

@@ -105,3 +105,19 @@ For a **fresh** local Docker volume, `docker compose up --build` initializes the
 - **Payment status mapping, cancellation rules, pickup cycle IDs, exception/retry policy:** require team agreement.
 
 This is a complete **25-table structural baseline**, not a claim of complete executable LMS business behaviour.
+
+## Admin changes
+
+For a fresh local Admin volume, Compose runs `01_create_tables.sql` followed by `03_admin_changes.sql`. The second script applies all seven changes in one transaction and brings the `public` schema to **27 tables**. `02_sample_data.sql` remains optional.
+
+| Change | Database update |
+| --- | --- |
+| A1 | Allows `BANNED` in `app_user.account_status` alongside `ACTIVE`, `INACTIVE` and `LOCKED`. |
+| A2 | Adds required integer `app_user.session_version` with default `0`. |
+| A3 | Creates `shortage_case` with decision history and allows one `OPEN` or `WAITING_RESTOCK` case per order and product. |
+| A4 | Creates `delivery_assignment_history` and indexes assignment times by package. |
+| A5 | Adds `client_instruction.source` with default `TRACKING_PAGE` and an optional `recorded_by_user_id` link to `app_user`. |
+| A6 | Adds optional `client_instruction.resolution_note`. |
+| A7 | Adds a unique index on `LOWER(app_user.username)`. |
+
+The initialization scripts run only when PostgreSQL creates a fresh volume. On an existing **local Admin** database that has only the 25-table baseline, apply `03_admin_changes.sql` once using `psql` with `ON_ERROR_STOP=1`. Existing usernames that differ only by case will cause the transaction to roll back. Record manual applications in the stage report or operation log with the operator, environment and result.

@@ -10,6 +10,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       # Used ONLY during first initialization of an empty database volume.
       - ./database/01_create_tables.sql:/docker-entrypoint-initdb.d/01_create_tables.sql:ro
+      - ./database/03_admin_changes.sql:/docker-entrypoint-initdb.d/03_admin_changes.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U lms -d lms"]
       interval: 5s
@@ -26,6 +27,10 @@ services:
       SPRING_DATASOURCE_USERNAME: lms
       SPRING_DATASOURCE_PASSWORD: lms_local_dev_only
       SPRING_JPA_HIBERNATE_DDL_AUTO: none
+      SPRING_PROFILES_ACTIVE: admintest
+      LMS_SESSION_IDLE_TIMEOUT_MINUTES: 15
+      LMS_BOOTSTRAP_ADMIN_USERNAME: "${LMS_BOOTSTRAP_ADMIN_USERNAME:-admin_local}"
+      LMS_BOOTSTRAP_ADMIN_TEMPORARY_PASSWORD: "${LMS_BOOTSTRAP_ADMIN_TEMPORARY_PASSWORD:?Set a local bootstrap password in .env}"
     depends_on:
       db:
         condition: service_healthy

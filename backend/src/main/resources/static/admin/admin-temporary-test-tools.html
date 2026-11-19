@@ -1,0 +1,139 @@
+<!doctype html>
+<!-- TEMPORARY TEST CODE - remove before integration
+     The test-mode page groups local fixture tools by their implementation stage. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Test tools - LMS Admin</title>
+  <link rel="stylesheet" href="/shared/shared-common.css">
+  <script src="/shared/shared-common.js?v=1" defer></script>
+  <script src="/admin/admin-common.js?v=1" defer></script>
+  <script src="/admin/admin-temporary-test-tools.js?v=2" defer></script>
+</head>
+<body>
+  <!-- Page frame: wait for test mode to be confirmed before showing the content. -->
+  <main hidden>
+    <div class="shared-page-header" hidden>
+      <div class="shared-page-header-text">
+        <h1 class="shared-page-title">Test tools <span class="shared-flag shared-flag-waiting">Test mode</span></h1>
+        <p class="shared-page-subtitle" id="adminTemporaryViewTestModeText">These tools exist only in test mode.</p>
+      </div>
+    </div>
+
+    <!-- TEMPORARY TEST CODE - remove before integration
+         Stage 1 exercises temporary credentials and stored account states. -->
+    <h2 class="shared-section-title" hidden>Stage 1</h2>
+    <div class="shared-grid-two" hidden>
+      <section class="shared-card" id="adminTemporaryCreateTestUserPanel">
+        <div class="shared-card-body">
+          <h3 class="shared-card-title">Create test user</h3>
+          <p>Creates an active account with a temporary password.</p>
+          <label class="shared-field">
+            <span class="shared-field-label">Role</span>
+            <span class="shared-select shared-select-wide">
+              <select id="adminTemporaryCreateTestUserRoleSelect">
+                <option value="CLIENT">Client</option>
+                <option value="WAREHOUSE_WORKER">Warehouse Worker</option>
+                <option value="DELIVERY_WORKER">Delivery Worker</option>
+                <option value="ADMIN">Admin</option>
+              </select>
+              <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+            </span>
+          </label>
+          <div class="shared-button-row">
+            <button class="shared-button" type="button" id="adminTemporaryCreateTestUserButton">Create test user</button>
+          </div>
+          <p class="shared-note" id="adminTemporaryCreateTestUserResultText" aria-live="polite" hidden></p>
+        </div>
+      </section>
+      <section class="shared-card" id="adminTemporaryEndUserLockPanel">
+        <div class="shared-card-body">
+          <h3 class="shared-card-title">End lock</h3>
+          <p>Ends the 15-minute lock of an account, as if the time had run out.</p>
+          <label class="shared-field">
+            <span class="shared-field-label">Username</span>
+            <input class="shared-input" type="text" id="adminTemporaryEndUserLockUsernameInput">
+          </label>
+          <div class="shared-button-row">
+            <button class="shared-button" type="button" id="adminTemporaryEndUserLockButton">End lock</button>
+          </div>
+          <p class="shared-note" id="adminTemporaryEndUserLockResultText" aria-live="polite" hidden></p>
+        </div>
+      </section>
+      <section class="shared-card" id="adminTemporaryExpireTemporaryPasswordPanel">
+        <div class="shared-card-body">
+          <h3 class="shared-card-title">Expire temporary password</h3>
+          <p>Lets the temporary password of an account run out at once.</p>
+          <label class="shared-field">
+            <span class="shared-field-label">Username</span>
+            <input class="shared-input" type="text" id="adminTemporaryExpireTemporaryPasswordUsernameInput">
+          </label>
+          <div class="shared-button-row">
+            <button class="shared-button" type="button" id="adminTemporaryExpireTemporaryPasswordButton">
+              Expire temporary password
+            </button>
+          </div>
+          <p class="shared-note" id="adminTemporaryExpireTemporaryPasswordResultText" aria-live="polite" hidden></p>
+        </div>
+      </section>
+      <section class="shared-card" id="adminTemporarySetUserStatusPanel">
+        <div class="shared-card-body">
+          <h3 class="shared-card-title">Set user status</h3>
+          <p>Sets only the stored status of an account.</p>
+          <label class="shared-field">
+            <span class="shared-field-label">Username</span>
+            <input class="shared-input" type="text" id="adminTemporarySetUserStatusUsernameInput">
+          </label>
+          <label class="shared-field">
+            <span class="shared-field-label">Status</span>
+            <span class="shared-select shared-select-wide">
+              <select id="adminTemporarySetUserStatusAccountStatusSelect">
+                <option value="ACTIVE">Active</option>
+                <option value="INACTIVE">Deactivated</option>
+                <option value="BANNED">Banned</option>
+                <option value="LOCKED">Locked (old status)</option>
+              </select>
+              <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+            </span>
+          </label>
+          <div class="shared-button-row">
+            <button class="shared-button" type="button" id="adminTemporarySetUserStatusButton">Set user status</button>
+          </div>
+          <p class="shared-note" id="adminTemporarySetUserStatusResultText" aria-live="polite" hidden></p>
+        </div>
+      </section>
+    </div>
+
+    <!-- TEMPORARY TEST CODE - remove before integration
+         Stage 2 prepares the users list and account-impact fixtures. -->
+    <h2 class="shared-section-title" hidden>Stage 2</h2>
+    <div class="shared-grid-two" hidden>
+      <section class="shared-card" id="adminTemporaryCreateManyTestUserPanel">
+        <div class="shared-card-body">
+          <h3 class="shared-card-title">Create many test users</h3>
+          <p>Creates 25 Client accounts, so that page numbers can be tested.</p>
+          <div class="shared-button-row">
+            <button class="shared-button" type="button" id="adminTemporaryCreateManyTestUserButton">
+              Create many test users
+            </button>
+          </div>
+          <p class="shared-note" id="adminTemporaryCreateManyTestUserResultText" aria-live="polite" hidden></p>
+        </div>
+      </section>
+      <section class="shared-card" id="adminTemporaryCreateWorkerWithActiveWorkPanel">
+        <div class="shared-card-body">
+          <h3 class="shared-card-title">Create worker with active work</h3>
+          <p>Creates a Warehouse Worker and a Delivery Worker who both have work in progress.</p>
+          <div class="shared-button-row">
+            <button class="shared-button" type="button" id="adminTemporaryCreateWorkerWithActiveWorkButton">
+              Create worker with active work
+            </button>
+          </div>
+          <p class="shared-note" id="adminTemporaryCreateWorkerWithActiveWorkResultText" aria-live="polite" hidden></p>
+        </div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
