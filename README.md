@@ -26,6 +26,18 @@
 | 8 | Refund problems | Planned |
 | 9 | Dashboard and final checks | Planned |
 
-## Run locally
+## Set up and test locally
 
-Use Docker Desktop in Linux containers mode. Copy `.env.example` to `.env`, set a local bootstrap password, and run `docker compose up --build -d` from the Admin branch checkout. The app opens at `http://127.0.0.1:8081/`. Use sample data with the local test tools. See the [Admin setup guide](ADMIN_README.md) for first sign-in, database checks, and automated tests.
+1. Download the [Admin branch ZIP](https://github.com/MarcoChong48/Logistics-Managment-Project/archive/refs/heads/feature/admin-system.zip) and extract it.
+2. Give your AI coding assistant the **entire unzipped project folder** by opening it as the assistant's workspace. Select the folder containing `compose.yaml`, `backend/`, and `database/`. Do this before creating `.env`. Ask the assistant to read `ADMIN_README.md` and help you start and test the Stage 2 Admin system.
+3. Start Docker Desktop in Linux containers mode. In the extracted folder, copy `.env.example` to `.env` and set `LMS_BOOTSTRAP_ADMIN_TEMPORARY_PASSWORD` to a password for this local test.
+4. Run these commands from the folder containing `compose.yaml`. Wait for `db` to show as healthy and `backend` to show as running.
+
+   ```powershell
+   docker compose up --build -d
+   docker compose ps
+   ```
+
+5. Open `http://127.0.0.1:8081/`. Sign in as `admin_local` with the temporary password you set and change it when prompted. Open **Test tools** to create sample accounts, then use **Users** to test search, filters, and account actions.
+
+For password requirements, database checks, and automated tests, see the [Admin setup guide](ADMIN_README.md).
