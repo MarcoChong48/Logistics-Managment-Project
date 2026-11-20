@@ -1,7 +1,9 @@
 package com.lms.backend.client.order;
 
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -19,6 +21,7 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -34,6 +37,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.core.env.MapPropertySource;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -50,6 +55,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.jayway.jsonpath.JsonPath;
 import com.lms.backend.shared.database.AppUser;
 import com.lms.backend.shared.database.AppUserRepository;
+import com.lms.backend.shared.database.CustomerOrderReleaseRepository;
+import com.lms.backend.shared.database.CustomerOrderRepository;
 import com.lms.backend.shared.database.CustomerOrderWriteRepository;
 import com.lms.backend.shared.database.Inventory;
 import com.lms.backend.shared.database.InventoryRepository;
@@ -61,7 +68,8 @@ import com.lms.backend.shared.value.SharedUserRole;
 
 @SpringBootTest(properties = {
         "lms.shared.bootstrap-admin-username=",
-        "lms.shared.bootstrap-admin-temporary-password="
+        "lms.shared.bootstrap-admin-temporary-password=",
+        "lms.client.orders.expiry.enabled=false"
 })
 @AutoConfigureMockMvc
 @Transactional
@@ -87,6 +95,15 @@ class ClientOrderApiTest {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private CustomerOrderRepository orders;
+
+    @Autowired
+    private CustomerOrderReleaseRepository releaseRows;
+
+    @Autowired
+    private ClientOrderReleaseService releases;
 
     // Keep fixtures in the test transaction instead of committing separate audit rows.
     @MockitoBean
@@ -361,14 +378,233 @@ class ClientOrderApiTest {
         assertEquals(1, reservedStock(second));
     }
 
+    @Test
+    void ownerCanCancelTwiceWithOnlyOneRelease() throws Exception {
+        Product product = createProduct("4.00", "ACTIVE", 8, 1);
+        AppUser owner = createUser(SharedUserRole.CLIENT);
+        var session = signIn(owner);
+        String reference = createOrder(session, item(product, 3));
+
+        cancel(session, reference).andExpect(status().isOk())
+                .andExpect(jsonPath("$.orderReference").value(reference))
+                .andExpect(jsonPath("$.orderStatus").value("CANCELLED"));
+        cancel(session, reference).andExpect(status().isOk())
+                .andExpect(jsonPath("$.orderStatus").value("CANCELLED"));
+
+        assertEquals(1, reservedStock(product));
+        assertEquals("CANCELLED", orderStatus(reference));
+        assertEquals(1L, countReservations(reference, "RELEASED"));
+        assertEquals(1L, database.sql("""
+                SELECT count(*) FROM stock_movement WHERE product_id = :productId
+                    AND movement_type = 'RELEASE' AND reserved_delta = -3 AND quantity_delta = 0
+                    AND actor_user_id = :clientId AND reason = :reason
+                """).param("productId", product.productId).param("clientId", owner.userID)
+                .param("reason", "CLIENT_CANCELLED: " + reference).query(Long.class).single());
+    }
+
+    @Test
+    void rejectsOtherClientsAnonymousUsersAndAdminsOnCancellation() throws Exception {
+        Product product = createProduct("4.00", "ACTIVE", 8, 0);
+        String reference = createOrder(signIn(createUser(SharedUserRole.CLIENT)), item(product, 3));
+        String path = ORDERS + "/" + reference + "/cancel";
+
+        cancel(signIn(createUser(SharedUserRole.CLIENT)), reference)
+                .andExpect(status().isNotFound()).andExpect(jsonPath("$.code").value("CLIENT_ORDER_NOT_FOUND"));
+        mvc.perform(post(path).servletPath(path)).andExpect(status().isUnauthorized());
+        cancel(signIn(createUser(SharedUserRole.ADMIN)), reference)
+                .andExpect(status().isForbidden()).andExpect(jsonPath("$.code").value("SHARED_ACCESS_DENIED"));
+        assertEquals("AWAITING_PAYMENT", orderStatus(reference));
+        assertEquals(3, reservedStock(product));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"accepted", "acceptedAt", "picking", "consumed"})
+    void protectsOrdersWithPaymentOrFulfillmentEvidence(String protectedBy) throws Exception {
+        Product product = createProduct("4.00", "ACTIVE", 8, 0);
+        var owner = signIn(createUser(SharedUserRole.CLIENT));
+        String reference = createOrder(owner, item(product, 3));
+        long id = orderId(reference);
+        String sql = switch (protectedBy) {
+            case "accepted" -> "INSERT INTO payment (order_id, amount, payment_status) VALUES (:id, 12, 'ACCEPTED')";
+            case "acceptedAt" -> "INSERT INTO payment (order_id, amount, accepted_at) VALUES (:id, 12, NOW())";
+            case "picking" -> "INSERT INTO picking_task (order_id, task_status) VALUES (:id, 'IN_PROGRESS')";
+            case "consumed" -> """
+                    UPDATE stock_reservation sr SET status = 'CONSUMED', consumed_at = NOW()
+                    FROM order_item item WHERE sr.order_item_id = item.order_item_id AND item.order_id = :id
+                    """;
+            default -> throw new AssertionError(protectedBy);
+        };
+        database.sql(sql).param("id", id).update();
+        var order = orders.findById(id).orElseThrow();
+        order.createdTime = releaseRows.databaseTime().minus(Duration.ofHours(25));
+        order.paymentDeadline = order.createdTime.plus(Duration.ofHours(24));
+        orders.flush();
+
+        releases.expireIfDue(id);
+        cancel(owner, reference).andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("CLIENT_ORDER_CANCELLATION_NOT_ALLOWED"));
+        assertEquals(3, reservedStock(product));
+        assertEquals("AWAITING_PAYMENT", orderStatus(reference));
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void expiresDueOrdersAndBarsPaymentAtTheDeadlineBeforeTheSweep() throws Exception {
+        Product product = createProduct("4.00", "ACTIVE", 8, 0);
+        var session = signIn(createUser(SharedUserRole.CLIENT));
+        String reference = createOrder(session, item(product, 3));
+        long id = orderId(reference);
+        var future = orders.findById(id).orElseThrow();
+        assertTrue(future.canAcceptPaymentAt(future.paymentDeadline.minusSeconds(1)));
+        assertFalse(future.canAcceptPaymentAt(future.paymentDeadline));
+        releases.expireIfDue(id);
+        assertEquals("AWAITING_PAYMENT", orderStatus(reference));
+        assertEquals(3, reservedStock(product));
+
+        makeOverdue(id);
+        assertFalse(orders.findById(id).orElseThrow().canAcceptPaymentAt(releaseRows.databaseTime()));
+        releases.expireIfDue(id);
+        releases.expireIfDue(id);
+        assertEquals("CANCELLED", orderStatus(reference));
+        assertFalse(orders.findById(id).orElseThrow().canAcceptPaymentAt(future.paymentDeadline.minusSeconds(1)));
+        assertEquals(0, reservedStock(product));
+        assertEquals(1L, countReservations(reference, "RELEASED"));
+        assertEquals(1L, database.sql("""
+                SELECT count(*) FROM stock_movement WHERE movement_type = 'RELEASE'
+                    AND actor_user_id IS NULL AND reason = :reason
+                """).param("reason", "PAYMENT_DEADLINE_EXPIRED: " + reference).query(Long.class).single());
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void concurrentCancellationAndExpiryReleaseAllProductsOnce() throws Exception {
+        Product first = createProduct("4.00", "ACTIVE", 8, 1);
+        Product second = createProduct("5.00", "ACTIVE", 8, 2);
+        var session = signIn(createUser(SharedUserRole.CLIENT));
+        String reference = createOrder(session, item(second, 2) + "," + item(first, 3));
+        long id = orderId(reference);
+        makeOverdue(id);
+
+        CountDownLatch ready = new CountDownLatch(2);
+        CountDownLatch start = new CountDownLatch(1);
+        try (var workers = Executors.newFixedThreadPool(2)) {
+            var cancellation = workers.submit(() -> {
+                ready.countDown();
+                assertTrue(start.await(5, TimeUnit.SECONDS));
+                return cancel(session, reference).andReturn().getResponse().getStatus();
+            });
+            var expiry = workers.submit(() -> {
+                ready.countDown();
+                assertTrue(start.await(5, TimeUnit.SECONDS));
+                releases.expireIfDue(id);
+                return null;
+            });
+            boolean bothReady = ready.await(5, TimeUnit.SECONDS);
+            start.countDown();
+            assertTrue(bothReady);
+            assertEquals(200, cancellation.get(20, TimeUnit.SECONDS));
+            expiry.get(20, TimeUnit.SECONDS);
+        }
+        assertEquals("CANCELLED", orderStatus(reference));
+        assertEquals(2L, countReservations(reference, "RELEASED"));
+        assertEquals(2L, countForProducts("""
+                SELECT count(*) FROM stock_movement WHERE product_id IN (:ids) AND movement_type = 'RELEASE'
+                """));
+        assertEquals(1, reservedStock(first));
+        assertEquals(2, reservedStock(second));
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void cancellationAndCreationCanShareTheSameProductLocks() throws Exception {
+        Product first = createProduct("4.00", "ACTIVE", 6, 1);
+        Product second = createProduct("5.00", "ACTIVE", 6, 1);
+        var owner = signIn(createUser(SharedUserRole.CLIENT));
+        AppUser otherClient = createUser(SharedUserRole.CLIENT);
+        var otherSession = signIn(otherClient);
+        String reference = createOrder(owner, item(second, 2) + "," + item(first, 2));
+
+        CountDownLatch ready = new CountDownLatch(2);
+        CountDownLatch start = new CountDownLatch(1);
+        try (var workers = Executors.newFixedThreadPool(2)) {
+            var creation = workers.submit(() -> submitWhenReady(ready, start, otherSession,
+                    request(item(first, 3) + "," + item(second, 3))));
+            var cancellation = workers.submit(() -> {
+                ready.countDown();
+                assertTrue(start.await(5, TimeUnit.SECONDS));
+                return cancel(owner, reference).andReturn().getResponse().getStatus();
+            });
+            boolean bothReady = ready.await(5, TimeUnit.SECONDS);
+            start.countDown();
+            assertTrue(bothReady);
+            assertEquals(201, creation.get(20, TimeUnit.SECONDS));
+            assertEquals(200, cancellation.get(20, TimeUnit.SECONDS));
+        }
+        assertEquals("CANCELLED", orderStatus(reference));
+        assertEquals(2L, countReservations(reference, "RELEASED"));
+        assertEquals(1L, countOrders(otherClient));
+        assertEquals(4, reservedStock(first));
+        assertEquals(4, reservedStock(second));
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void rollsBackEarlierReleasesWhenAnotherProductHasInconsistentStock() throws Exception {
+        Product first = createProduct("4.00", "ACTIVE", 8, 0);
+        Product second = createProduct("5.00", "ACTIVE", 8, 0);
+        var session = signIn(createUser(SharedUserRole.CLIENT));
+        String reference = createOrder(session, item(first, 3) + "," + item(second, 2));
+        setReservedStock(second, 1);
+
+        cancel(session, reference).andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.code").value("SHARED_UNEXPECTED_ERROR"));
+        assertEquals("AWAITING_PAYMENT", orderStatus(reference));
+        assertEquals(2L, countReservations(reference, "HELD"));
+        assertEquals(0L, countReservations(reference, "RELEASED"));
+        assertEquals(0L, countForProducts("""
+                SELECT count(*) FROM stock_movement WHERE product_id IN (:ids) AND movement_type = 'RELEASE'
+                """));
+        assertEquals(3, reservedStock(first));
+        assertEquals(1, reservedStock(second));
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void schedulerMakesProgressAfterFailureAndRetriesPersistedOrdersAfterRestart() throws Exception {
+        Product first = createProduct("4.00", "ACTIVE", 8, 0);
+        Product second = createProduct("5.00", "ACTIVE", 8, 0);
+        var session = signIn(createUser(SharedUserRole.CLIENT));
+        String retry = createOrder(session, item(first, 3));
+        String healthy = createOrder(session, item(second, 2));
+        makeOverdue(orderId(retry));
+        makeOverdue(orderId(healthy));
+        setReservedStock(first, 2);
+
+        try (var scheduler = startExpiryScheduler()) {
+            await().atMost(Duration.ofSeconds(10)).until(() -> orderStatus(healthy).equals("CANCELLED"));
+        }
+        assertEquals("AWAITING_PAYMENT", orderStatus(retry));
+        assertEquals(1L, countReservations(retry, "HELD"));
+        setReservedStock(first, 3);
+        try (var restartedScheduler = startExpiryScheduler()) {
+            await().atMost(Duration.ofSeconds(10)).until(() -> orderStatus(retry).equals("CANCELLED"));
+        }
+        assertEquals(1L, countReservations(retry, "RELEASED"));
+        assertEquals(0, reservedStock(first));
+        assertEquals(0, reservedStock(second));
+    }
+
     @AfterEach
     void removeCommittedTestFixtures() {
         // Most tests roll back automatically. Concurrent requests and the rollback test use independent transactions.
         if (TestTransaction.isActive()) {
             return;
         }
+        if (!fixtureProducts.isEmpty()) {
+            database.sql("DELETE FROM stock_movement WHERE product_id IN (:ids)")
+                    .param("ids", fixtureProducts).update();
+        }
         if (!fixtureUsers.isEmpty()) {
-            database.sql("DELETE FROM stock_movement WHERE actor_user_id IN (:ids)").param("ids", fixtureUsers).update();
             database.sql("""
                     DELETE FROM stock_reservation WHERE order_item_id IN (
                         SELECT oi.order_item_id FROM order_item oi JOIN customer_order co USING (order_id)
@@ -427,6 +663,59 @@ class ClientOrderApiTest {
 
     private long countForProducts(String sql) {
         return database.sql(sql).param("ids", fixtureProducts).query(Long.class).single();
+    }
+
+    private ResultActions cancel(OrderSession session, String reference) throws Exception {
+        String path = ORDERS + "/" + reference + "/cancel";
+        return mvc.perform(post(path).servletPath(path).session(session.session())
+                .header(session.csrfHeader(), session.csrfToken()));
+    }
+
+    private String createOrder(OrderSession session, String items) throws Exception {
+        var response = submit(session, request(items)).andExpect(status().isCreated()).andReturn();
+        return JsonPath.read(response.getResponse().getContentAsString(), "$.orderReference");
+    }
+
+    private long orderId(String reference) {
+        return database.sql("SELECT order_id FROM customer_order WHERE order_reference = :ref")
+                .param("ref", reference).query(Long.class).single();
+    }
+
+    private String orderStatus(String reference) {
+        return database.sql("SELECT order_status FROM customer_order WHERE order_reference = :ref")
+                .param("ref", reference).query(String.class).single();
+    }
+
+    private void makeOverdue(long id) {
+        database.sql("""
+                UPDATE customer_order SET created_at = NOW() - INTERVAL '25 hours',
+                    payment_deadline = NOW() - INTERVAL '1 hour' WHERE order_id = :id
+                """).param("id", id).update();
+    }
+
+    private void setReservedStock(Product product, int reserved) {
+        database.sql("UPDATE inventory SET reserved_stock = :reserved WHERE product_id = :id")
+                .param("reserved", reserved).param("id", product.productId).update();
+    }
+
+    private long countReservations(String reference, String status) {
+        return database.sql("""
+                SELECT count(*) FROM stock_reservation sr JOIN order_item item USING (order_item_id)
+                JOIN customer_order co USING (order_id)
+                WHERE co.order_reference = :ref AND sr.status = :status
+                    AND (sr.status <> 'RELEASED' OR sr.released_at >= sr.reserved_at)
+                """).param("ref", reference).param("status", status).query(Long.class).single();
+    }
+
+    private AnnotationConfigApplicationContext startExpiryScheduler() {
+        var context = new AnnotationConfigApplicationContext();
+        context.getEnvironment().getPropertySources().addFirst(new MapPropertySource("expiry-test",
+                Map.of("lms.client.orders.expiry.enabled", "true", "lms.client.orders.expiry.interval", "PT1H")));
+        context.registerBean(CustomerOrderReleaseRepository.class, () -> releaseRows);
+        context.registerBean(ClientOrderReleaseService.class, () -> releases);
+        context.register(ClientOrderExpiryJob.class);
+        context.refresh();
+        return context;
     }
 
     private int reservedStock(Product product) {

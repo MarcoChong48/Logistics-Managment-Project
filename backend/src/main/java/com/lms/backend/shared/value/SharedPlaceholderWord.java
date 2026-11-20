@@ -20,6 +20,7 @@ public final class SharedPlaceholderWord {
     public static final String SHARED_CUSTODY_STATUS_DELIVERY = "DELIVERY";
     public static final String SHARED_CUSTODY_EVENT_PICKED_UP = "PICKED_UP";
     public static final String SHARED_RESERVATION_STATUS_HELD = "HELD";
+    public static final String SHARED_RESERVATION_STATUS_RELEASED = "RELEASED";
     public static final String SHARED_RESERVATION_STATUS_CONSUMED = "CONSUMED";
 
     /**

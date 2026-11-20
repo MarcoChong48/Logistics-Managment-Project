@@ -36,7 +36,8 @@ import com.lms.backend.shared.value.SharedUserRole;
 
 @SpringBootTest(properties = {
         "lms.shared.bootstrap-admin-username=",
-        "lms.shared.bootstrap-admin-temporary-password="
+        "lms.shared.bootstrap-admin-temporary-password=",
+        "lms.client.orders.expiry.enabled=false"
 })
 @AutoConfigureMockMvc
 @Transactional
