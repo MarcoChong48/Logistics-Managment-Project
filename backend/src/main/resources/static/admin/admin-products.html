@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Products - LMS Admin</title>
+  <link rel="stylesheet" href="/shared/shared-common.css">
+  <script src="/shared/shared-common.js?v=4" defer></script>
+  <script src="/admin/admin-common.js?v=4" defer></script>
+  <script src="/admin/admin-products.js?v=4" defer></script>
+</head>
+<body>
+  <!-- Page frame: adminBuildPageFrame places this work area inside the frame. -->
+  <main hidden>
+    <div class="shared-page-header">
+      <div class="shared-page-header-text">
+        <h1 class="shared-page-title">Products</h1>
+        <p class="shared-page-subtitle" id="adminSearchProductTotalRowCountText" aria-live="polite"></p>
+      </div>
+      <div class="shared-page-header-actions">
+        <button type="button" class="shared-button" id="adminDownloadProductCSVButton">
+          <svg class="shared-icon" aria-hidden="true"><use href="#icon-download"/></svg> Download CSV
+        </button>
+        <button type="button" class="shared-button" id="adminImportProductCSVOpenButton">Import CSV</button>
+        <button type="button" class="shared-button shared-button-primary" id="adminCreateProductOpenButton">
+          <svg class="shared-icon" aria-hidden="true"><use href="#icon-plus"/></svg> Add product
+        </button>
+      </div>
+    </div>
+
+    <section class="shared-card">
+      <!-- Filter bar -->
+      <form class="shared-filter-bar">
+        <label class="shared-input-search">
+          <svg class="shared-icon" aria-hidden="true"><use href="#icon-search"/></svg>
+          <input type="search" id="adminSearchProductKeywordInput" placeholder="Search SKU or name"
+            aria-label="Search SKU or name">
+        </label>
+        <span class="shared-select">
+          <select id="adminSearchProductListingStatusSelect" aria-label="Status">
+            <option value="">All statuses</option>
+            <option value="ACTIVE">Active</option>
+            <option value="INACTIVE">Inactive</option>
+          </select>
+          <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+        </span>
+        <label class="shared-checkbox">
+          <input type="checkbox" id="adminSearchProductIsLowStockOnlyCheckbox">
+          <span>Low stock only</span>
+        </label>
+        <span class="shared-filter-buttons">
+          <button type="submit" class="shared-button" id="adminSearchProductSubmitButton">Search</button>
+          <button type="button" class="shared-button shared-button-quiet" id="adminSearchProductClearButton">
+            Clear
+          </button>
+        </span>
+      </form>
+
+      <div class="shared-card-strip">
+        <p class="shared-note">Stock is changed only by Warehouse.</p>
+      </div>
+
+      <!-- Table -->
+      <div class="shared-table-scroll" role="region" aria-label="Products table" hidden>
+        <table class="shared-table" id="adminSearchProductResultTable">
+          <thead>
+            <tr>
+              <th scope="col">SKU</th>
+              <th scope="col" class="shared-table-wrap">Name</th>
+              <th scope="col" class="shared-table-number">Price</th>
+              <th scope="col" class="shared-table-number">Physical</th>
+              <th scope="col" class="shared-table-number">Reserved</th>
+              <th scope="col" class="shared-table-number">Available</th>
+              <th scope="col" class="shared-table-number">Low below</th>
+              <th scope="col">Status</th>
+              <th scope="col" class="shared-table-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="adminSearchProductResultTableBody"></tbody>
+        </table>
+      </div>
+      <p class="shared-table-empty" id="adminSearchProductEmptyMessage" hidden>No rows found.
+        <button type="button" class="shared-button shared-button-quiet">Clear filters</button>
+      </p>
+
+      <!-- Pager -->
+      <div class="shared-pager" id="adminSearchProductPager" hidden></div>
+    </section>
+  </main>
+
+  <!-- Pop-up windows -->
+  <dialog class="shared-dialog" id="adminCreateProductDialog" aria-labelledby="adminCreateProductDialogTitle">
+    <h2 class="shared-dialog-title" id="adminCreateProductDialogTitle">Add product</h2>
+    <form class="shared-dialog-body" id="adminCreateProductForm" novalidate>
+        <div class="shared-message-place" id="adminCreateProductMessage" aria-live="polite"></div>
+        <label class="shared-field">
+          <span class="shared-field-label">SKU</span>
+          <input class="shared-input" id="adminCreateProductSKUInput" type="text" autofocus>
+          <span class="shared-field-help">3 to 60 characters: letters, digits and hyphens.
+            Small letters become capital letters.</span>
+        </label>
+        <label class="shared-field">
+          <span class="shared-field-label">Name</span>
+          <input class="shared-input" id="adminCreateProductNameInput" type="text">
+          <span class="shared-field-help">2 to 200 characters.</span>
+        </label>
+        <label class="shared-field">
+          <span class="shared-field-label">Price</span>
+          <input class="shared-input" id="adminCreateProductCurrentPriceInput" type="text" inputmode="decimal">
+          <span class="shared-field-help">In HKD. Above 0, with at most 2 decimal places.</span>
+        </label>
+        <label class="shared-field">
+          <span class="shared-field-label">Low below</span>
+          <input class="shared-input" id="adminCreateProductLowStockThresholdInput" type="text" inputmode="numeric">
+          <span class="shared-field-help">The product counts as low when its available stock is below this number.
+            0 means never low.</span>
+        </label>
+        <label class="shared-field">
+          <span class="shared-field-label">Status</span>
+          <span class="shared-select shared-select-wide">
+            <select id="adminCreateProductListingStatusSelect">
+              <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Inactive</option>
+            </select>
+            <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+          </span>
+        </label>
+        <p class="shared-note">A new product starts with stock 0. Stock is changed only by Warehouse.</p>
+    </form>
+    <div class="shared-dialog-footer">
+      <button type="button" class="shared-button" id="adminCreateProductCancelButton" data-close-dialog>
+        Cancel
+      </button>
+      <button type="submit" class="shared-button shared-button-primary" id="adminCreateProductConfirmButton"
+        form="adminCreateProductForm">Add product</button>
+    </div>
+  </dialog>
+
+  <dialog class="shared-dialog" id="adminEditProductDialog" aria-labelledby="adminEditProductDialogTitle">
+    <h2 class="shared-dialog-title" id="adminEditProductDialogTitle">Edit product</h2>
+    <form class="shared-dialog-body" id="adminEditProductForm" novalidate>
+        <div class="shared-message-place" id="adminEditProductMessage" aria-live="polite"></div>
+        <label class="shared-field">
+          <span class="shared-field-label">SKU</span>
+          <input class="shared-input" id="adminEditProductSKUInput" type="text" autofocus
+            aria-describedby="adminEditProductSKUWarningText">
+          <span class="shared-field-help" id="adminEditProductSKUWarningText">
+            Printed QR labels must be printed again after the SKU changes.
+          </span>
+        </label>
+        <label class="shared-field">
+          <span class="shared-field-label">Name</span>
+          <input class="shared-input" id="adminEditProductNameInput" type="text">
+        </label>
+        <label class="shared-field">
+          <span class="shared-field-label">Price</span>
+          <input class="shared-input" id="adminEditProductCurrentPriceInput" type="text" inputmode="decimal">
+        </label>
+        <label class="shared-field">
+          <span class="shared-field-label">Low below</span>
+          <input class="shared-input" id="adminEditProductLowStockThresholdInput" type="text" inputmode="numeric">
+        </label>
+    </form>
+    <div class="shared-dialog-footer">
+      <button type="button" class="shared-button" id="adminEditProductCancelButton" data-close-dialog>
+        Cancel
+      </button>
+      <button type="submit" class="shared-button shared-button-primary" id="adminEditProductConfirmButton"
+        form="adminEditProductForm">Save product</button>
+    </div>
+  </dialog>
+
+  <dialog class="shared-dialog" id="adminViewProductQRCodeDialog" aria-labelledby="adminViewProductQRCodeDialogTitle">
+    <h2 class="shared-dialog-title" id="adminViewProductQRCodeDialogTitle">QR label</h2>
+    <div class="shared-dialog-body">
+      <div class="shared-label-box">
+        <img class="shared-label-picture" id="adminViewProductQRCodeImage" alt="">
+        <p class="shared-strong" id="adminViewProductQRCodeSKUText"></p>
+        <p id="adminViewProductQRCodeNameText"></p>
+      </div>
+      <p class="shared-muted">The QR code holds exactly the SKU.</p>
+    </div>
+    <div class="shared-dialog-footer">
+      <button type="button" class="shared-button" id="adminViewProductQRCodePrintButton" data-print-label disabled>
+        Print label
+      </button>
+      <button type="button" class="shared-button shared-button-primary" id="adminViewProductQRCodeCloseButton"
+        data-close-dialog>Close</button>
+    </div>
+  </dialog>
+
+  <dialog class="shared-dialog shared-dialog-wide" id="adminImportProductCSVDialog"
+    aria-labelledby="adminImportProductCSVDialogTitle">
+    <h2 class="shared-dialog-title" id="adminImportProductCSVDialogTitle">Import products from a CSV file</h2>
+    <form class="shared-dialog-body" id="adminImportProductCSVForm" novalidate>
+        <label class="shared-field">
+          <span class="shared-field-label">CSV file</span>
+          <input class="shared-input" type="file" id="adminImportProductCSVFileInput" name="adminImportProductCSVFile"
+            accept=".csv,text/csv" autofocus>
+          <span class="shared-field-help">At most 1 MB, and at most 500 lines after the first line.</span>
+        </label>
+        <p class="shared-note" id="adminImportProductCSVFormatText">The first line of the file must be exactly:
+          <span class="shared-fixed-text">SKU,name,currentPrice,lowStockThreshold</span>
+        </p>
+        <div class="shared-message-place" id="adminImportProductCSVResultText" aria-live="polite"></div>
+        <div class="shared-table-scroll" role="region" aria-label="Rejected lines table" hidden>
+          <table class="shared-table">
+            <thead>
+              <tr>
+                <th scope="col" class="shared-table-number">Line</th>
+                <th scope="col" class="shared-table-wrap">Reason</th>
+              </tr>
+            </thead>
+            <tbody id="adminImportProductCSVRejectedTableBody"></tbody>
+          </table>
+        </div>
+    </form>
+    <div class="shared-dialog-footer">
+      <button type="button" class="shared-button" id="adminImportProductCSVCancelButton" data-close-dialog>
+        Close
+      </button>
+      <button type="submit" class="shared-button shared-button-primary" id="adminImportProductCSVConfirmButton"
+        form="adminImportProductCSVForm">Import file</button>
+    </div>
+  </dialog>
+</body>
+</html>

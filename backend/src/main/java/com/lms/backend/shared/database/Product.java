@@ -3,8 +3,12 @@ package com.lms.backend.shared.database;
 import java.math.BigDecimal;
 import java.time.Instant;
 
+import com.lms.backend.shared.value.SharedListingStatus;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -35,7 +39,8 @@ public class Product {
     public int lowStockThreshold;
 
     @Column(name = "listing_status", nullable = false, length = 30)
-    public String listingStatus;
+    @Enumerated(EnumType.STRING)
+    public SharedListingStatus listingStatus;
 
     @Column(name = "created_at", nullable = false)
     public Instant createdTime;

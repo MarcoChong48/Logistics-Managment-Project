@@ -188,6 +188,35 @@
         </div>
       </section>
     </div>
+    <!-- TEMPORARY TEST CODE - remove before integration
+         Stage 4 sets up availability and reservation shortfalls. -->
+    <h2 class="shared-section-title" hidden>Stage 4</h2>
+    <div class="shared-grid-two" hidden>
+      <section class="shared-card" id="adminTemporarySetProductStockPanel">
+        <form class="shared-card-body">
+          <h3 class="shared-card-title">Set product stock</h3>
+          <p>Sets the two stock numbers of a product, which Admin itself may not change.</p>
+          <label class="shared-field">
+            <span class="shared-field-label">SKU</span>
+            <input class="shared-input" id="adminTemporarySetProductStockSKUInput" type="text" required>
+          </label>
+          <label class="shared-field">
+            <span class="shared-field-label">Physical stock</span>
+            <input class="shared-input" id="adminTemporarySetProductStockPhysicalStockInput" type="number"
+                   min="0" step="1" required>
+          </label>
+          <label class="shared-field">
+            <span class="shared-field-label">Reserved stock</span>
+            <input class="shared-input" id="adminTemporarySetProductStockReservedStockInput" type="number"
+                   min="0" step="1" required>
+          </label>
+          <div class="shared-button-row">
+            <button class="shared-button" type="submit" id="adminTemporarySetProductStockButton">Set product stock</button>
+          </div>
+          <p class="shared-note" id="adminTemporarySetProductStockResultText" aria-live="polite" hidden></p>
+        </form>
+      </section>
+    </div>
   </main>
 </body>
 </html>

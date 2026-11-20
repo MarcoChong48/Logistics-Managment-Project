@@ -21,5 +21,7 @@ public record AdminViewUserResponse(
         String employeeNumber,
         String vehicleType,
         String vehiclePlate,
-        String equipmentNote) {
+        String equipmentNote,
+        boolean adminViewUserIsSuperAdmin,
+        boolean adminViewUserCanChange) {
 }

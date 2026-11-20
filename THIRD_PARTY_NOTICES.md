@@ -5,3 +5,5 @@ Stage 0 adds no third-party libraries, fonts, scripts or icons. Its frontend use
 The copied backend retains the Maven-managed dependencies, Maven wrapper and Eclipse Temurin image declared in the database-setup snapshot. The copied Compose stack retains the PostgreSQL 17 image. See [the POM](backend/pom.xml), [the Dockerfile](backend/Dockerfile) and [Compose](compose.yaml) for the inherited declarations.
 
 Stage 1 adds the Spring Boot-managed Spring Security starter for request protection and BCrypt. Spring Boot and Spring Security are licensed under Apache License 2.0. [Spring Boot 4.1.2 dependency coordinates](https://docs.spring.io/spring-boot/appendix/dependency-versions/coordinates.html) · [Spring Security license](https://github.com/spring-projects/spring-security/blob/main/LICENSE.txt)
+
+Stage 4 adds ZXing Core 3.5.4 (`com.google.zxing:core`) to encode product SKUs as QR codes. ZXing is licensed under Apache License 2.0. [ZXing release](https://github.com/zxing/zxing/releases/tag/zxing-3.5.4) · [ZXing license](https://github.com/zxing/zxing/blob/zxing-3.5.4/LICENSE)

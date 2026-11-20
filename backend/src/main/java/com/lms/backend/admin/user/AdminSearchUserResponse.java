@@ -7,5 +7,6 @@ public record AdminSearchUserResponse(
         List<AdminSearchUserRow> adminSearchUserRowList,
         int adminSearchUserPageNumber,
         int adminSearchUserTotalPageCount,
-        long adminSearchUserTotalRowCount) {
+        long adminSearchUserTotalRowCount,
+        boolean adminSearchUserCanManageAdminAccount) {
 }

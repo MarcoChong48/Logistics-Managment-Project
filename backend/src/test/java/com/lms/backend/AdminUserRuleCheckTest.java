@@ -3,6 +3,7 @@ package com.lms.backend;
 import static com.lms.backend.admin.user.AdminUserRule.adminCheckLastAdminRule;
 import static com.lms.backend.admin.user.AdminUserRule.adminCheckLockedNowRule;
 import static com.lms.backend.admin.user.AdminUserRule.adminCheckRoleChangeRule;
+import static com.lms.backend.admin.user.AdminUserRule.adminCheckSuperAdminRule;
 import static com.lms.backend.admin.user.AdminUserRule.adminCheckUsernameRule;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -76,5 +77,24 @@ class AdminUserRuleCheckTest {
     void adminCheckLockedNowRuleResult(SharedAccountStatus accountStatus, Instant lockUntil,
             boolean adminCheckLockedNowRuleExpected) {
         assertEquals(adminCheckLockedNowRuleExpected, adminCheckLockedNowRule(accountStatus, lockUntil, Instant.EPOCH));
+    }
+
+    /**
+     * What it does: Checks that the role and configured name must both identify the super admin.
+     * Input: An account username and role, the bootstrap username and the expected result.
+     * Output: Pass when only the configured Admin matches, regardless of capitals.
+     */
+    @ParameterizedTest
+    @CsvSource({
+        "admin_main,ADMIN,admin_main,true",
+        "ADMIN_MAIN,ADMIN,admin_main,true",
+        "admin_main,WAREHOUSE_WORKER,admin_main,false",
+        "second_admin,ADMIN,admin_main,false",
+        "admin_main,ADMIN,'',false"
+    })
+    void adminCheckSuperAdminRuleResult(String username, SharedUserRole role,
+            String adminCheckSuperAdminRuleBootstrapUsername, boolean adminCheckSuperAdminRuleExpected) {
+        assertEquals(adminCheckSuperAdminRuleExpected,
+                adminCheckSuperAdminRule(username, role, adminCheckSuperAdminRuleBootstrapUsername));
     }
 }

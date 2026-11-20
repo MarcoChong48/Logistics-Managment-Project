@@ -43,6 +43,13 @@ const adminTemporaryCreatePrivateValueLogRowButton =
   document.getElementById("adminTemporaryCreatePrivateValueLogRowButton");
 const adminTemporaryCreatePrivateValueLogRowResultText =
   document.getElementById("adminTemporaryCreatePrivateValueLogRowResultText");
+const adminTemporarySetProductStockButton = document.getElementById("adminTemporarySetProductStockButton");
+const adminTemporarySetProductStockSKUInput = document.getElementById("adminTemporarySetProductStockSKUInput");
+const adminTemporarySetProductStockPhysicalStockInput =
+  document.getElementById("adminTemporarySetProductStockPhysicalStockInput");
+const adminTemporarySetProductStockReservedStockInput =
+  document.getElementById("adminTemporarySetProductStockReservedStockInput");
+const adminTemporarySetProductStockResultText = document.getElementById("adminTemporarySetProductStockResultText");
 
 // ===== SECTION 2: PAGE STATE =====
 // The frame checks the Admin's session. The tool page also checks the dedicated mode endpoint.
@@ -90,6 +97,7 @@ adminTemporaryCreatePickingScanRowButton.addEventListener("click", adminTemporar
 adminTemporaryCreateOldLogRowButton.addEventListener("click", adminTemporaryCreateOldLogRow);
 adminTemporaryRunLogCleanupButton.addEventListener("click", adminTemporaryRunLogCleanup);
 adminTemporaryCreatePrivateValueLogRowButton.addEventListener("click", adminTemporaryCreatePrivateValueLogRow);
+adminTemporarySetProductStockButton.form.addEventListener("submit", adminTemporarySetProductStock);
 
 // ===== SECTION 4: adminTemporaryCreateTestUser =====
 
@@ -326,4 +334,33 @@ async function adminTemporaryCreatePrivateValueLogRow() {
       + adminTemporaryCreatePrivateValueLogRowError.message;
   }
   adminTemporaryCreatePrivateValueLogRowResultText.hidden = false;
+}
+
+// ===== SECTION 14: adminTemporarySetProductStock =====
+
+// TEMPORARY TEST CODE - remove before integration
+// Stage 4 checks low stock and shortfall on a product that the user has added.
+// What it does: Send the chosen stock numbers and show the saved result or the server's refusal.
+// Input: The form submission and the three tool inputs.
+// Output: The tool's plain-text result.
+async function adminTemporarySetProductStock(adminTemporarySetProductStockEvent) {
+  adminTemporarySetProductStockEvent.preventDefault();
+  adminTemporarySetProductStockResultText.hidden = true;
+  adminTemporarySetProductStockResultText.textContent = "";
+  const adminTemporarySetProductStockRequest = {
+    adminTemporarySetProductStockSKU: adminTemporarySetProductStockSKUInput.value,
+    adminTemporarySetProductStockPhysicalStock: adminTemporarySetProductStockPhysicalStockInput.valueAsNumber,
+    adminTemporarySetProductStockReservedStock: adminTemporarySetProductStockReservedStockInput.valueAsNumber
+  };
+  try {
+    const adminTemporarySetProductStockResponse = await sharedSendRequest(
+      "POST", "/api/admin/temporary-test/product-stock", adminTemporarySetProductStockRequest,
+      adminTemporarySetProductStockButton
+    );
+    adminTemporarySetProductStockResultText.textContent = adminTemporarySetProductStockResponse.message;
+  } catch (adminTemporarySetProductStockError) {
+    adminTemporarySetProductStockResultText.textContent = adminTemporarySetProductStockError.code + ": "
+      + adminTemporarySetProductStockError.message;
+  }
+  adminTemporarySetProductStockResultText.hidden = false;
 }

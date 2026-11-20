@@ -5,6 +5,7 @@ import static com.lms.backend.admin.common.AdminCommonRule.ADMIN_TABLE_PAGE_SIZE
 import static com.lms.backend.admin.common.AdminCommonRule.adminCheckReasonText;
 import static com.lms.backend.admin.common.AdminCommonRule.adminCountPage;
 import static com.lms.backend.admin.common.AdminPrivateValueRule.adminHidePrivateValue;
+import static com.lms.backend.admin.user.AdminUserRule.adminCheckSuperAdminRule;
 import static com.lms.backend.shared.csv.SharedCSVWriter.sharedWriteCSVDownload;
 import static com.lms.backend.shared.log.SharedAuditAction.SHARED_AUDIT_ACTION_CSV_DOWNLOADED;
 import static com.lms.backend.shared.log.SharedAuditAction.SHARED_AUDIT_ACTION_DELIVERY_WORKER_PROFILE_EDITED;
@@ -41,6 +42,7 @@ import java.util.Objects;
 import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -71,6 +73,7 @@ import com.lms.backend.shared.error.SharedMessageResponse;
 import com.lms.backend.shared.error.SharedRuleException;
 import com.lms.backend.shared.log.SharedAuditLogWriter;
 import com.lms.backend.shared.log.SharedSecurityLogWriter;
+import com.lms.backend.shared.login.SharedCurrentUser;
 import com.lms.backend.shared.login.SharedCurrentUserReader;
 import com.lms.backend.shared.login.SharedPasswordRule;
 import com.lms.backend.shared.value.SharedAccountStatus;
@@ -98,10 +101,11 @@ public class AdminUserService {
     private final SharedAuditLogWriter adminUserAuditLogWriter;
     private final SharedSecurityLogWriter adminUserSecurityLogWriter;
     private final PasswordEncoder adminUserPasswordEncoder;
+    private final String adminCheckSuperAdminGuardBootstrapUsername;
 
     /**
      * What it does: Connects account management to the shared database, session and logging services.
-     * Input: The account and work repositories, the session reader, log writers and password encoder.
+     * Input: The repositories, session reader, log writers, password encoder and bootstrap Admin username.
      * Output: A service ready to enforce the account rules.
      */
     public AdminUserService(
@@ -116,7 +120,8 @@ public class AdminUserService {
             SharedCurrentUserReader adminUserCurrentUserReader,
             SharedAuditLogWriter adminUserAuditLogWriter,
             SharedSecurityLogWriter adminUserSecurityLogWriter,
-            PasswordEncoder adminUserPasswordEncoder) {
+            PasswordEncoder adminUserPasswordEncoder,
+            @Value("${lms.shared.bootstrap-admin-username:}") String adminCheckSuperAdminGuardBootstrapUsername) {
         this.adminUserRepository = adminUserRepository;
         this.adminEditDeliveryWorkerProfileRepository = adminEditDeliveryWorkerProfileRepository;
         this.adminPreviewUserImpactPickingAssignmentRepository = adminPreviewUserImpactPickingAssignmentRepository;
@@ -129,6 +134,7 @@ public class AdminUserService {
         this.adminUserAuditLogWriter = adminUserAuditLogWriter;
         this.adminUserSecurityLogWriter = adminUserSecurityLogWriter;
         this.adminUserPasswordEncoder = adminUserPasswordEncoder;
+        this.adminCheckSuperAdminGuardBootstrapUsername = adminCheckSuperAdminGuardBootstrapUsername;
     }
 
     // ===== SECTION 3: adminSearchUser =====
@@ -146,7 +152,9 @@ public class AdminUserService {
             int adminSearchUserPageNumber) {
         // Time and filters are shared by the account query and the displayed lock flags.
         Instant adminSearchUserTime = Instant.now();
-        Long adminSearchUserCurrentUserID = adminUserCurrentUserReader.sharedReadCurrentUser().userID();
+        SharedCurrentUser adminSearchUserCurrentUser = adminUserCurrentUserReader.sharedReadCurrentUser();
+        boolean adminSearchUserCanManageAdminAccount = adminCheckSuperAdminRule(adminSearchUserCurrentUser.username(),
+                adminSearchUserCurrentUser.role(), adminCheckSuperAdminGuardBootstrapUsername);
         SharedUserRole role = adminReadSearchUserRole(adminSearchUserRole);
         boolean adminSearchUserIsLockedOnly = "LOCKED_NOW".equals(adminSearchUserAccountStatus);
         SharedAccountStatus accountStatus = adminReadSearchAccountStatus(adminSearchUserAccountStatus);
@@ -172,9 +180,9 @@ public class AdminUserService {
         }
 
         List<AdminSearchUserRow> adminSearchUserRowList = adminReadUserRows(adminSearchUserPage.getContent(),
-                adminSearchUserCurrentUserID, adminSearchUserTime);
+                adminSearchUserCurrentUser.userID(), adminSearchUserCanManageAdminAccount, adminSearchUserTime);
         return new AdminSearchUserResponse(adminSearchUserRowList, adminSearchUserActualPageNumber,
-                adminSearchUserTotalPageCount, adminSearchUserTotalRowCount);
+                adminSearchUserTotalPageCount, adminSearchUserTotalRowCount, adminSearchUserCanManageAdminAccount);
     }
 
     // ===== SECTION 4: adminViewUser =====
@@ -193,16 +201,25 @@ public class AdminUserService {
             adminViewUserProfile = adminEditDeliveryWorkerProfileRepository.findById(userID)
                     .orElse(adminViewUserProfile);
         }
-        Long adminViewUserCurrentUserID = adminUserCurrentUserReader.sharedReadCurrentUser().userID();
+        // Use the same account protections as the search rows.
+        SharedCurrentUser adminViewUserCurrentUser = adminUserCurrentUserReader.sharedReadCurrentUser();
+        boolean adminViewUserIsOwnAccount = userID.equals(adminViewUserCurrentUser.userID());
+        boolean adminViewUserIsSuperAdmin = adminCheckSuperAdminRule(adminViewUserAccount.username,
+                adminViewUserAccount.role, adminCheckSuperAdminGuardBootstrapUsername);
+        boolean adminViewUserCanChange = !adminViewUserIsOwnAccount && !adminViewUserIsSuperAdmin
+                && (adminViewUserAccount.role != SharedUserRole.ADMIN || adminCheckSuperAdminRule(
+                        adminViewUserCurrentUser.username(), adminViewUserCurrentUser.role(),
+                        adminCheckSuperAdminGuardBootstrapUsername));
+
         return new AdminViewUserResponse(userID, adminViewUserAccount.username, adminViewUserAccount.role,
                 adminViewUserAccount.accountStatus, adminViewUserAccount.failedLoginCount,
                 adminViewUserAccount.lockUntil, adminViewUserAccount.mustChangePassword,
                 adminViewUserAccount.temporaryPasswordExpiryTime, adminViewUserAccount.createdTime,
                 AdminUserRule.adminCheckLockedNowRule(
                         adminViewUserAccount.accountStatus, adminViewUserAccount.lockUntil, Instant.now()),
-                userID.equals(adminViewUserCurrentUserID), adminViewUserProfile.employeeNumber,
+                adminViewUserIsOwnAccount, adminViewUserProfile.employeeNumber,
                 adminViewUserProfile.vehicleType, adminViewUserProfile.vehiclePlate,
-                adminViewUserProfile.equipmentNote);
+                adminViewUserProfile.equipmentNote, adminViewUserIsSuperAdmin, adminViewUserCanChange);
     }
 
     // ===== SECTION 5: adminCreateUser =====
@@ -227,6 +244,7 @@ public class AdminUserService {
         if (role == null) {
             throw adminRefuseInput("Choose a valid role.");
         }
+        adminCheckSuperAdminGuard(null, role, adminUserCurrentUserReader.sharedReadCurrentUser());
         DeliveryWorkerProfile adminCreateUserProfile = null;
         if (role == SharedUserRole.DELIVERY_WORKER) {
             adminCreateUserProfile = adminBuildDeliveryWorkerProfile(null,
@@ -335,11 +353,13 @@ public class AdminUserService {
         List<AppUser> adminChangeUserRoleAdminAccountList = adminLockAdminAccounts(role);
         AppUser adminChangeUserRoleAccount = adminReadUserForChange(userID, role);
         adminCheckOwnAccount(userID, "You cannot change your own role.");
+        SharedUserRole adminChangeUserRoleNewRole =
+                adminReadRole(adminChangeUserRoleRequest.adminChangeUserRoleNewRole());
+        adminCheckSuperAdminGuard(adminChangeUserRoleAccount, adminChangeUserRoleNewRole,
+                adminUserCurrentUserReader.sharedReadCurrentUser());
         if (adminChangeUserRoleAccount.accountStatus != SharedAccountStatus.ACTIVE) {
             throw adminRefuseUserState("Only an active account can change role.");
         }
-        SharedUserRole adminChangeUserRoleNewRole =
-                adminReadRole(adminChangeUserRoleRequest.adminChangeUserRoleNewRole());
         String adminChangeUserRoleRuleAnswer = AdminUserRule.adminCheckRoleChangeRule(role, adminChangeUserRoleNewRole);
         if (!"allowed".equals(adminChangeUserRoleRuleAnswer)) {
             throw new SharedRuleException(HttpStatus.CONFLICT, "ADMIN_ROLE_CHANGE_NOT_ALLOWED",
@@ -396,6 +416,7 @@ public class AdminUserService {
         List<AppUser> adminBanUserAdminAccountList = adminLockAdminAccounts(role);
         AppUser adminBanUserAccount = adminReadUserForChange(userID, role);
         adminCheckOwnAccount(userID, "You cannot ban your own account.");
+        adminCheckSuperAdminGuard(adminBanUserAccount, null, adminUserCurrentUserReader.sharedReadCurrentUser());
         if (adminBanUserAccount.accountStatus != SharedAccountStatus.ACTIVE) {
             throw adminRefuseUserState("Only an active account can be banned.");
         }
@@ -420,6 +441,7 @@ public class AdminUserService {
     public SharedMessageResponse adminUnbanUser(Long userID, AdminUnbanUserRequest adminUnbanUserRequest) {
         String adminUnbanUserReason = adminCheckReasonText(adminUnbanUserRequest.adminUnbanUserReason());
         AppUser adminUnbanUserAccount = adminReadUserForChange(userID);
+        adminCheckSuperAdminGuard(adminUnbanUserAccount, null, adminUserCurrentUserReader.sharedReadCurrentUser());
         if (adminUnbanUserAccount.accountStatus != SharedAccountStatus.BANNED) {
             throw adminRefuseUserState("Only a banned account can be unbanned.");
         }
@@ -447,6 +469,7 @@ public class AdminUserService {
         List<AppUser> adminDeactivateUserAdminAccountList = adminLockAdminAccounts(role);
         AppUser adminDeactivateUserAccount = adminReadUserForChange(userID, role);
         adminCheckOwnAccount(userID, "You cannot deactivate your own account.");
+        adminCheckSuperAdminGuard(adminDeactivateUserAccount, null, adminUserCurrentUserReader.sharedReadCurrentUser());
         if (adminDeactivateUserAccount.accountStatus != SharedAccountStatus.ACTIVE
                 && adminDeactivateUserAccount.accountStatus != SharedAccountStatus.BANNED) {
             throw adminRefuseUserState("Only an active or banned account can be deactivated.");
@@ -473,6 +496,7 @@ public class AdminUserService {
             Long userID, AdminReactivateUserRequest adminReactivateUserRequest) {
         String adminReactivateUserReason = adminCheckReasonText(adminReactivateUserRequest.adminReactivateUserReason());
         AppUser adminReactivateUserAccount = adminReadUserForChange(userID);
+        adminCheckSuperAdminGuard(adminReactivateUserAccount, null, adminUserCurrentUserReader.sharedReadCurrentUser());
         if (adminReactivateUserAccount.accountStatus != SharedAccountStatus.INACTIVE) {
             throw adminRefuseUserState("Only a deactivated account can be reactivated.");
         }
@@ -493,6 +517,7 @@ public class AdminUserService {
     @Transactional
     public SharedMessageResponse adminUnlockUser(Long userID) {
         AppUser adminUnlockUserAccount = adminReadUserForChange(userID);
+        adminCheckSuperAdminGuard(adminUnlockUserAccount, null, adminUserCurrentUserReader.sharedReadCurrentUser());
         if (!AdminUserRule.adminCheckLockedNowRule(
                 adminUnlockUserAccount.accountStatus, adminUnlockUserAccount.lockUntil, Instant.now())) {
             throw adminRefuseUserState("This account is not locked.");
@@ -533,6 +558,7 @@ public class AdminUserService {
                 adminCheckReasonText(adminResetPasswordRequest.adminResetPasswordIdentityCheckMethod());
         AppUser adminResetPasswordAccount = adminReadUserForChange(userID);
         adminCheckOwnAccount(userID, "Use Change password for your own account.");
+        adminCheckSuperAdminGuard(adminResetPasswordAccount, null, adminUserCurrentUserReader.sharedReadCurrentUser());
         if (adminResetPasswordAccount.accountStatus != SharedAccountStatus.ACTIVE) {
             throw adminRefuseUserState("Unban or reactivate the account first.");
         }
@@ -566,7 +592,11 @@ public class AdminUserService {
             String adminSearchUserAccountStatus) {
         // Apply the same account filters and result mapping as the Users search.
         Instant adminDownloadUserCSVTime = Instant.now();
-        Long actorUserID = adminUserCurrentUserReader.sharedReadCurrentUser().userID();
+        SharedCurrentUser adminDownloadUserCSVCurrentUser = adminUserCurrentUserReader.sharedReadCurrentUser();
+        Long actorUserID = adminDownloadUserCSVCurrentUser.userID();
+        boolean adminDownloadUserCSVCanManageAdminAccount = adminCheckSuperAdminRule(
+                adminDownloadUserCSVCurrentUser.username(), adminDownloadUserCSVCurrentUser.role(),
+                adminCheckSuperAdminGuardBootstrapUsername);
         SharedUserRole role = adminReadSearchUserRole(adminSearchUserRole);
         SharedAccountStatus accountStatus = adminReadSearchAccountStatus(adminSearchUserAccountStatus);
         Page<AppUser> adminDownloadUserCSVPage = adminUserRepository.adminSearchUser(
@@ -574,14 +604,15 @@ public class AdminUserService {
                 "LOCKED_NOW".equals(adminSearchUserAccountStatus), SharedAccountStatus.LOCKED, adminDownloadUserCSVTime,
                 PageRequest.of(0, ADMIN_CSV_MAXIMUM_ROW_COUNT));
         List<List<Object>> adminDownloadUserCSVRowList = adminReadUserRows(adminDownloadUserCSVPage.getContent(),
-                actorUserID, adminDownloadUserCSVTime).stream()
+                actorUserID, adminDownloadUserCSVCanManageAdminAccount, adminDownloadUserCSVTime).stream()
                 .map(adminDownloadUserCSVRow -> Arrays.<Object>asList(adminDownloadUserCSVRow.userID(),
                         adminDownloadUserCSVRow.username(), adminDownloadUserCSVRow.role(),
                         adminDownloadUserCSVRow.accountStatus(), adminDownloadUserCSVRow.failedLoginCount(),
                         adminDownloadUserCSVRow.lockUntil(), adminDownloadUserCSVRow.mustChangePassword(),
                         adminDownloadUserCSVRow.createdTime(), adminDownloadUserCSVRow.adminSearchUserIsLockedNow(),
                         adminDownloadUserCSVRow.adminSearchUserLastLoginTime(),
-                        adminDownloadUserCSVRow.adminSearchUserIsOwnAccount())).toList();
+                        adminDownloadUserCSVRow.adminSearchUserIsOwnAccount(),
+                        adminDownloadUserCSVRow.adminSearchUserIsSuperAdmin())).toList();
 
         // Record only the applied filters and exported row count.
         Map<String, String> adminDownloadUserCSVFilterMap = new LinkedHashMap<>();
@@ -603,7 +634,8 @@ public class AdminUserService {
                 adminDownloadUserCSVPage.getTotalElements() > ADMIN_CSV_MAXIMUM_ROW_COUNT ? "Only the first 10000 users by username are included." : null;
         return sharedWriteCSVDownload(List.of("userID", "username", "role", "accountStatus", "failedLoginCount",
                 "lockUntil", "mustChangePassword", "createdTime", "adminSearchUserIsLockedNow",
-                "adminSearchUserLastLoginTime", "adminSearchUserIsOwnAccount"), adminDownloadUserCSVRowList,
+                "adminSearchUserLastLoginTime", "adminSearchUserIsOwnAccount", "adminSearchUserIsSuperAdmin"),
+                adminDownloadUserCSVRowList,
                 "admin-users", adminDownloadUserCSVTime, adminDownloadUserCSVLimitMessage);
     }
 
@@ -627,15 +659,23 @@ public class AdminUserService {
 
     /**
      * What it does: Builds the safe account rows shared by the screen and CSV.
-     * Input: The matched accounts, current Admin ID and time of the search.
+     * Input: The matched accounts, current Admin ID and permission to manage Admin accounts, and search time.
      * Output: The account rows in the repository's order.
      */
     private List<AdminSearchUserRow> adminReadUserRows(List<AppUser> adminReadUserRowsAccountList,
-            Long adminReadUserRowsCurrentUserID, Instant adminReadUserRowsTime) {
+            Long adminReadUserRowsCurrentUserID, boolean adminReadUserRowsCanManageAdminAccount,
+            Instant adminReadUserRowsTime) {
         // Attach last-login times in one query and copy only the approved fields.
         Map<Long, Instant> adminReadUserRowsLastLoginTimeMap = adminFindLastLoginTimes(adminReadUserRowsAccountList);
         List<AdminSearchUserRow> adminReadUserRowsResultList = new ArrayList<>();
         for (AppUser adminReadUserRowsAccount : adminReadUserRowsAccountList) {
+            // Identify protected accounts before deciding which ones the current Admin can change.
+            boolean adminSearchUserIsOwnAccount = adminReadUserRowsCurrentUserID.equals(
+                    adminReadUserRowsAccount.userID);
+            boolean adminSearchUserIsSuperAdmin = adminCheckSuperAdminRule(adminReadUserRowsAccount.username,
+                    adminReadUserRowsAccount.role, adminCheckSuperAdminGuardBootstrapUsername);
+            boolean adminSearchUserCanChange = !adminSearchUserIsOwnAccount && !adminSearchUserIsSuperAdmin
+                    && (adminReadUserRowsAccount.role != SharedUserRole.ADMIN || adminReadUserRowsCanManageAdminAccount);
             adminReadUserRowsResultList.add(new AdminSearchUserRow(adminReadUserRowsAccount.userID,
                     adminReadUserRowsAccount.username, adminReadUserRowsAccount.role,
                     adminReadUserRowsAccount.accountStatus, adminReadUserRowsAccount.failedLoginCount,
@@ -644,9 +684,36 @@ public class AdminUserService {
                     AdminUserRule.adminCheckLockedNowRule(adminReadUserRowsAccount.accountStatus,
                             adminReadUserRowsAccount.lockUntil, adminReadUserRowsTime),
                     adminReadUserRowsLastLoginTimeMap.get(adminReadUserRowsAccount.userID),
-                    adminReadUserRowsCurrentUserID.equals(adminReadUserRowsAccount.userID)));
+                    adminSearchUserIsOwnAccount, adminSearchUserIsSuperAdmin, adminSearchUserCanChange));
         }
         return adminReadUserRowsResultList;
+    }
+
+    /**
+     * What it does: Protects the super admin and requires its permission for changes involving the Admin role.
+     * Input: The target account if it exists, the new role if one was requested, and the signed-in Admin.
+     * Output: None, or 409 ADMIN_SUPER_ADMIN_PROTECTED or 403 ADMIN_SUPER_ADMIN_REQUIRED.
+     */
+    private void adminCheckSuperAdminGuard(AppUser adminCheckSuperAdminGuardAccount,
+            SharedUserRole adminCheckSuperAdminGuardNewRole, SharedCurrentUser adminCheckSuperAdminGuardCurrentUser) {
+        // The super admin is protected even when the caller also lacks permission to manage Admin accounts.
+        if (adminCheckSuperAdminGuardAccount != null
+                && adminCheckSuperAdminRule(adminCheckSuperAdminGuardAccount.username,
+                        adminCheckSuperAdminGuardAccount.role, adminCheckSuperAdminGuardBootstrapUsername)) {
+            throw new SharedRuleException(HttpStatus.CONFLICT, "ADMIN_SUPER_ADMIN_PROTECTED",
+                    "The super admin account cannot be changed.");
+        }
+
+        // The shared error handler records these write refusals independently of the account transaction.
+        boolean adminCheckSuperAdminGuardIsAdminChange = adminCheckSuperAdminGuardNewRole == SharedUserRole.ADMIN
+                || (adminCheckSuperAdminGuardAccount != null
+                        && adminCheckSuperAdminGuardAccount.role == SharedUserRole.ADMIN);
+        if (adminCheckSuperAdminGuardIsAdminChange
+                && !adminCheckSuperAdminRule(adminCheckSuperAdminGuardCurrentUser.username(),
+                        adminCheckSuperAdminGuardCurrentUser.role(), adminCheckSuperAdminGuardBootstrapUsername)) {
+            throw new SharedRuleException(HttpStatus.FORBIDDEN, "ADMIN_SUPER_ADMIN_REQUIRED",
+                    "Only the super admin can create or change Admin accounts.");
+        }
     }
 
     /**

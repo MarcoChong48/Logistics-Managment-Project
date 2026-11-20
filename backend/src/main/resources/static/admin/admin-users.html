@@ -62,6 +62,10 @@
         </span>
       </form>
 
+      <div class="shared-card-strip" id="adminSearchUserNotePanel" hidden>
+        <p class="shared-note">Only the super admin can create or change Admin accounts.</p>
+      </div>
+
       <!-- Table -->
       <div class="shared-table-scroll" role="region" aria-label="Users table" hidden>
         <table class="shared-table" id="adminSearchUserResultTable">
@@ -103,7 +107,6 @@
             <option value="CLIENT">Client</option>
             <option value="WAREHOUSE_WORKER">Warehouse Worker</option>
             <option value="DELIVERY_WORKER">Delivery Worker</option>
-            <option value="ADMIN">Admin</option>
           </select>
           <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
         </span>
@@ -176,7 +179,12 @@
         </div>
         <div class="shared-fact">
           <dt class="shared-fact-label">Status</dt>
-          <dd class="shared-fact-value"><span class="shared-status-badge" id="adminViewUserAccountStatusBadge"></span></dd>
+          <dd class="shared-fact-value">
+            <span class="shared-cell-line">
+              <span class="shared-status-badge" id="adminViewUserAccountStatusBadge"></span>
+              <span class="shared-flag shared-flag-closed" hidden>Super admin</span>
+            </span>
+          </dd>
         </div>
         <div class="shared-fact">
           <dt class="shared-fact-label">Created</dt>

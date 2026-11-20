@@ -4,6 +4,7 @@ import static com.lms.backend.shared.log.SharedSecurityEvent.SHARED_SECURITY_EVE
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +34,7 @@ public class SharedBootstrapAdminRunner implements ApplicationRunner {
     private final TransactionTemplate sharedCreateBootstrapAdminTransaction;
     private final String sharedCreateBootstrapAdminUsername;
     private final String sharedCreateBootstrapAdminTemporaryPassword;
+    private final boolean sharedCreateBootstrapAdminResetOnStart;
 
     /**
      * What it does: Receives the account services and local startup settings.
@@ -46,7 +48,8 @@ public class SharedBootstrapAdminRunner implements ApplicationRunner {
             PlatformTransactionManager sharedCreateBootstrapAdminTransactionManager,
             @Value("${lms.shared.bootstrap-admin-username:}") String sharedCreateBootstrapAdminUsername,
             @Value("${lms.shared.bootstrap-admin-temporary-password:}")
-            String sharedCreateBootstrapAdminTemporaryPassword) {
+            String sharedCreateBootstrapAdminTemporaryPassword,
+            @Value("${lms.shared.bootstrap-admin-reset-on-start:false}") boolean sharedCreateBootstrapAdminResetOnStart) {
         this.sharedCreateBootstrapAdminUserRepository = sharedCreateBootstrapAdminUserRepository;
         this.sharedCreateBootstrapAdminPasswordEncoder = sharedCreateBootstrapAdminPasswordEncoder;
         this.sharedCreateBootstrapAdminSecurityLogWriter = sharedCreateBootstrapAdminSecurityLogWriter;
@@ -54,6 +57,7 @@ public class SharedBootstrapAdminRunner implements ApplicationRunner {
                 new TransactionTemplate(sharedCreateBootstrapAdminTransactionManager);
         this.sharedCreateBootstrapAdminUsername = sharedCreateBootstrapAdminUsername;
         this.sharedCreateBootstrapAdminTemporaryPassword = sharedCreateBootstrapAdminTemporaryPassword;
+        this.sharedCreateBootstrapAdminResetOnStart = sharedCreateBootstrapAdminResetOnStart;
     }
 
     // ===== SECTION 2: STARTUP =====
@@ -71,17 +75,19 @@ public class SharedBootstrapAdminRunner implements ApplicationRunner {
     // ===== SECTION 3: sharedCreateBootstrapAdmin =====
 
     /**
-     * What it does: Creates or restores the configured Admin when the system has no usable Admin.
-     * Input: None. Reads the two bootstrap settings supplied at startup.
-     * Output: None. Logs a warning for unusable settings and a security event when issuing a password.
+     * What it does: Restores Admin access when no usable Admin exists or the operator requests a reset.
+     * Input: None. Reads the username, temporary password and reset setting supplied at startup.
+     * Output: None. Logs credential issuance and warns about an explicit reset or invalid settings.
      */
     public void sharedCreateBootstrapAdmin() {
-        Long userID = sharedCreateBootstrapAdminTransaction.execute(sharedCreateBootstrapAdminTransactionStatus -> {
-            // Check saved accounts after taking the startup lock so another startup cannot issue a password twice.
+        Map.Entry<Long, Boolean> sharedCreateBootstrapAdminResult = sharedCreateBootstrapAdminTransaction
+                .execute(sharedCreateBootstrapAdminTransactionStatus -> {
+            // Serialize the availability check and account write across concurrent starts.
             sharedCreateBootstrapAdminUserRepository.sharedCreateBootstrapAdminLock();
             Instant sharedCreateBootstrapAdminTime = Instant.now();
-            if (sharedCreateBootstrapAdminUserRepository.sharedCreateBootstrapAdminHasUsableAccount(
-                    SharedUserRole.ADMIN, SharedAccountStatus.ACTIVE, sharedCreateBootstrapAdminTime)) {
+            if (!sharedCreateBootstrapAdminResetOnStart
+                    && sharedCreateBootstrapAdminUserRepository.sharedCreateBootstrapAdminHasUsableAccount(
+                            SharedUserRole.ADMIN, SharedAccountStatus.ACTIVE, sharedCreateBootstrapAdminTime)) {
                 return null;
             }
 
@@ -96,6 +102,8 @@ public class SharedBootstrapAdminRunner implements ApplicationRunner {
             // A configured name can only restore an Admin. It must never take over another role's account.
             AppUser sharedCreateBootstrapAdminUser = sharedCreateBootstrapAdminUserRepository
                     .findByUsernameForChange(sharedCreateBootstrapAdminUsername).orElseGet(AppUser::new);
+            boolean sharedCreateBootstrapAdminIsRequestedReset = sharedCreateBootstrapAdminResetOnStart
+                    && sharedCreateBootstrapAdminUser.userID != null;
             if (sharedCreateBootstrapAdminUser.userID == null) {
                 sharedCreateBootstrapAdminUser.username = sharedCreateBootstrapAdminUsername;
                 sharedCreateBootstrapAdminUser.role = SharedUserRole.ADMIN;
@@ -115,13 +123,20 @@ public class SharedBootstrapAdminRunner implements ApplicationRunner {
                     SharedLoginRule.SHARED_TEMPORARY_PASSWORD_VALID_HOURS, ChronoUnit.HOURS);
             sharedCreateBootstrapAdminUser.failedLoginCount = 0;
             sharedCreateBootstrapAdminUser.lockUntil = null;
-            return sharedCreateBootstrapAdminUserRepository.save(sharedCreateBootstrapAdminUser).userID;
+            Long userID = sharedCreateBootstrapAdminUserRepository.save(sharedCreateBootstrapAdminUser).userID;
+            return Map.entry(userID, sharedCreateBootstrapAdminIsRequestedReset);
         });
 
         // The log's foreign key must be able to see the saved account in its own transaction.
-        if (userID != null) {
+        if (sharedCreateBootstrapAdminResult != null) {
+            boolean sharedCreateBootstrapAdminWasReset = sharedCreateBootstrapAdminResult.getValue();
             sharedCreateBootstrapAdminSecurityLogWriter.sharedWriteSecurityLog(
-                    userID, SHARED_SECURITY_EVENT_TEMPORARY_PASSWORD_ISSUED, "SUCCESS", "bootstrap admin");
+                    sharedCreateBootstrapAdminResult.getKey(), SHARED_SECURITY_EVENT_TEMPORARY_PASSWORD_ISSUED,
+                    "SUCCESS", sharedCreateBootstrapAdminWasReset ? "super admin reset on start" : "bootstrap admin");
+            if (sharedCreateBootstrapAdminWasReset) {
+                sharedCreateBootstrapAdminLogger.warn(
+                        "The super admin was reset. Set LMS_BOOTSTRAP_ADMIN_RESET_ON_START back to false.");
+            }
         }
     }
 }

@@ -1,6 +1,6 @@
 # LMS design note: how to rebuild a draft page in the new design
 
-Version 2.5, 20 November 2026.
+Version 2.6, 20 November 2026.
 
 ---
 
@@ -29,6 +29,12 @@ The Logistics Management System (LMS) has an old website draft: six sample scree
 | 9 | The checks to do before you hand over |
 | Appendix A | The finished style sheet. You copy it unchanged. |
 | Appendix B | The icons. You copy them unchanged. |
+
+**What changed in version 2.6.** If you worked from version 2.5, this is the only difference:
+
+| Section | Change |
+|---|---|
+| 2.11 | New flag "Super admin", family Closed: the account is the super admin, the first Admin, and no other Admin can change it. |
 
 **What changed in version 2.5.** If you worked from version 2.4, these are all the differences:
 
@@ -440,6 +446,7 @@ Flags that are already decided:
 | Final review | Problem | A returned package has waited 7 days for the client's answer. |
 | Worker not active | Problem | The worker's account is banned or deactivated. |
 | Temporary password | Closed | The temporary password of the account has not been used yet. |
+| Super admin | Closed | The account is the super admin, the first Admin. No other Admin can change it. |
 | Test mode | Waiting | The system runs in test mode. |
 | New | Closed | A notice that was not read yet. |
 

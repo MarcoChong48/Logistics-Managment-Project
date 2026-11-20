@@ -17,5 +17,7 @@ public record AdminSearchUserRow(
         Instant createdTime,
         boolean adminSearchUserIsLockedNow,
         Instant adminSearchUserLastLoginTime,
-        boolean adminSearchUserIsOwnAccount) {
+        boolean adminSearchUserIsOwnAccount,
+        boolean adminSearchUserIsSuperAdmin,
+        boolean adminSearchUserCanChange) {
 }

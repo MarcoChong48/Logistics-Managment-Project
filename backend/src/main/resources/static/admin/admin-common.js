@@ -94,10 +94,9 @@ async function adminBuildPageFrame(adminBuildPageFrameActivePageName) {
       <svg class="shared-icon" aria-hidden="true"><use href="#icon-users"/></svg>
       <span class="shared-page-frame-menu-text">Users</span>
     </a>
-    <a class="shared-page-frame-menu-item shared-page-frame-menu-item-disabled" aria-disabled="true">
+    <a class="shared-page-frame-menu-item" href="/admin/admin-products.html">
       <svg class="shared-icon" aria-hidden="true"><use href="#icon-products"/></svg>
       <span class="shared-page-frame-menu-text">Products</span>
-      <span class="shared-page-frame-menu-stage">Stage 4</span>
     </a>
     <div class="shared-page-frame-menu-label">Look up</div>
     <a class="shared-page-frame-menu-item shared-page-frame-menu-item-disabled" aria-disabled="true">

@@ -2,7 +2,7 @@
 
 `feature/admin-system` contains the Admin module and shared sign-in for the team's Logistics Management System. It builds on `feature/database-setup` using Java 21, Spring Boot 4.1.2, PostgreSQL 17, and Docker Compose.
 
-**Stage 3 (Logs and shared login updates) passed on 20 November 2026.** Four of ten stages are complete. Stage 3 passed all 27 acceptance cases and seven repeats.
+**Stage 4 (Products) passed on 20 November 2026.** Five of ten stages are complete. Stage 4 passed all 13 hand tests. Stage 5 (Orders) is next.
 
 Start with the [team integration guide](TEAM_GUIDE.md) to add a role to the shared application.
 
@@ -12,6 +12,8 @@ Start with the [team integration guide](TEAM_GUIDE.md) to add a role to the shar
 - **Shared login.** Sign-in and sign-out, an idle timeout, temporary login lockouts, and separate password-change flows for temporary and permanent credentials. Each role's pages and APIs are protected by its role check.
 - **User accounts.** Search, filter, and create accounts for all four LMS roles. Admins can edit Delivery Worker profiles, preview work affected by account changes, change eligible staff roles, ban or deactivate accounts and reverse those actions, unlock accounts, and reset passwords.
 - **Logs and CSV.** Search the read-only audit log, security log and picking scan history, and export their filtered rows or the Users list as CSV. The Logs page shows the latest daily retention run.
+- **Products.** Search and edit the catalogue, activate or deactivate products, see stock and low-stock flags, print SKU QR labels, and import or export products by CSV.
+- **Super admin.** The bootstrap Admin can create and manage other Admin accounts and recover access with the local reset setting. Other Admins manage non-Admin accounts.
 
 ## Ten-stage roadmap
 
@@ -21,8 +23,8 @@ Start with the [team integration guide](TEAM_GUIDE.md) to add a role to the shar
 | 1 | Shared login | Passed |
 | 2 | User accounts | Passed |
 | 3 | Logs and shared login updates | Passed |
-| 4 | Products | Planned |
-| 5 | Orders | Planned |
+| 4 | Products | Passed |
+| 5 | Orders | Planned next |
 | 6 | Warehouse cases | Planned |
 | 7 | Delivery cases | Planned |
 | 8 | Refund problems | Planned |
@@ -40,6 +42,6 @@ Start with the [team integration guide](TEAM_GUIDE.md) to add a role to the shar
    docker compose ps
    ```
 
-5. Open `http://127.0.0.1:8081/`. Sign in as `admin_local` with the temporary password you set and change it when prompted. Open **Test tools** for sample users and log fixtures. Use **Users** and **Logs** to test filters and CSV downloads.
+5. Open `http://127.0.0.1:8081/`. Sign in as `admin_local` with the temporary password you set and change it when prompted. Open **Users**, **Logs**, or **Products** to test the Admin features. Use **Test tools** to create sample users, add log fixtures, or set test stock for a product.
 
 For password requirements, database checks, and automated tests, see the [Admin setup guide](ADMIN_README.md).

@@ -31,8 +31,8 @@ window.addEventListener("pageshow", (sharedSendRequestPageEvent) => {
 
 // ===== SECTION 4: sharedSendRequest =====
 
-// What it does: Send a JSON request with the security token when needed and keep its button disabled.
-// Input: The HTTP method, web address, optional JSON body and optional button.
+// What it does: Send a request with the security token when needed and keep its button disabled.
+// Input: The HTTP method, web address, optional JSON or form data body and optional button.
 // Output: The parsed JSON answer or a CSV response. A failure gives a code, message and HTTP status.
 async function sharedSendRequest(
   sharedSendRequestMethod,
@@ -52,7 +52,10 @@ async function sharedSendRequest(
       method: sharedSendRequestMethod,
       headers: { Accept: "application/json, text/csv" }
     };
-    if (sharedSendRequestBody != null) {
+    if (sharedSendRequestBody instanceof FormData) {
+      // The browser supplies the multipart content type and its boundary.
+      sharedSendRequestOptions.body = sharedSendRequestBody;
+    } else if (sharedSendRequestBody != null) {
       sharedSendRequestOptions.headers["Content-Type"] = "application/json";
       sharedSendRequestOptions.body = JSON.stringify(sharedSendRequestBody);
     }

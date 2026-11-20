@@ -74,4 +74,18 @@ public final class AdminUserRule {
         return accountStatus == SharedAccountStatus.LOCKED
                 || (lockUntil != null && lockUntil.isAfter(adminCheckLockedNowRuleTime));
     }
+
+    // ===== SECTION 6: adminCheckSuperAdminRule =====
+
+    /**
+     * What it does: Identifies the Admin designated as the super admin in the startup settings.
+     * Input: The account username and role and the configured bootstrap Admin username.
+     * Output: True when the account is an Admin with the configured name, ignoring capitals.
+     */
+    public static boolean adminCheckSuperAdminRule(String username, SharedUserRole role,
+            String adminCheckSuperAdminRuleBootstrapUsername) {
+        return role == SharedUserRole.ADMIN && adminCheckSuperAdminRuleBootstrapUsername != null
+                && !adminCheckSuperAdminRuleBootstrapUsername.isBlank()
+                && adminCheckSuperAdminRuleBootstrapUsername.equalsIgnoreCase(username);
+    }
 }

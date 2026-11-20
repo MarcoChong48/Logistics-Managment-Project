@@ -21,7 +21,7 @@ services:
     build: ./backend
     ports:
       - "127.0.0.1:8081:8081"
-    environment:
+    environment: &admin_backend_environment
       SERVER_PORT: 8081
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/lms
       SPRING_DATASOURCE_USERNAME: lms
@@ -31,9 +31,34 @@ services:
       LMS_SESSION_IDLE_TIMEOUT_MINUTES: 15
       LMS_BOOTSTRAP_ADMIN_USERNAME: "${LMS_BOOTSTRAP_ADMIN_USERNAME:-admin_local}"
       LMS_BOOTSTRAP_ADMIN_TEMPORARY_PASSWORD: "${LMS_BOOTSTRAP_ADMIN_TEMPORARY_PASSWORD:?Set a local bootstrap password in .env}"
+      LMS_BOOTSTRAP_ADMIN_RESET_ON_START: "${LMS_BOOTSTRAP_ADMIN_RESET_ON_START:-false}"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # TEMPORARY TEST CODE - remove before integration (Stage 4 flow checks).
+  flow-check:
+    profiles: [check]
+    build:
+      context: ./backend
+      target: flow-check
+    environment:
+      <<: *admin_backend_environment
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/lms_flow_check
+      SPRING_PROFILES_ACTIVE: ""
+      LMS_BOOTSTRAP_ADMIN_RESET_ON_START: "false"
+    volumes:
+      - ./database:/flow-schema:ro
+      - ./README.md:/flow-docs/README.md:ro
+      - ./TEAM_GUIDE.md:/flow-docs/TEAM_GUIDE.md:ro
+      - ./docs/DESIGN_NOTES_GENERAL.md:/flow-docs/DESIGN_NOTES_GENERAL.md:ro
+      - flow_check_lock:/flow-lock
+      - flow_check_maven:/root/.m2
     depends_on:
       db:
         condition: service_healthy
 
 volumes:
   postgres_data:
+  flow_check_lock:
+  flow_check_maven:

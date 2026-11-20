@@ -13,11 +13,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import org.springframework.web.util.ServletRequestPathUtils;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import com.lms.backend.admin.common.AdminCommonRule;
 
@@ -50,6 +52,15 @@ public class SharedErrorHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleExceptionInternal(Exception sharedHandleErrorException,
             Object sharedHandleErrorOriginalBody, HttpHeaders sharedHandleErrorHeaders,
             HttpStatusCode sharedHandleErrorStatus, WebRequest sharedHandleErrorRequest) {
+        // Multipart validation may reject a large catalogue file before the import service runs.
+        if (sharedHandleErrorException instanceof MaxUploadSizeExceededException
+                && sharedHandleErrorRequest instanceof ServletWebRequest adminImportProductCSVRequest
+                && "/api/admin/products/import".equals(adminImportProductCSVRequest.getRequest().getServletPath())) {
+            return super.handleExceptionInternal(sharedHandleErrorException,
+                    new SharedErrorResponse("ADMIN_IMPORT_FILE_INVALID",
+                            "The file must be UTF-8, at most 1 MB, with the required header and at most 500 product lines."),
+                    sharedHandleErrorHeaders, HttpStatus.BAD_REQUEST, sharedHandleErrorRequest);
+        }
         // Use fixed public messages. Keep headers such as Allow on a 405 response.
         SharedErrorResponse sharedHandleErrorResponse;
         switch (sharedHandleErrorStatus.value()) {

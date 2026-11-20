@@ -6,6 +6,7 @@ const adminSearchUserRoleSelect = document.getElementById("adminSearchUserRoleSe
 const adminSearchUserAccountStatusSelect = document.getElementById("adminSearchUserAccountStatusSelect");
 const adminSearchUserSubmitButton = document.getElementById("adminSearchUserSubmitButton");
 const adminSearchUserClearButton = document.getElementById("adminSearchUserClearButton");
+const adminSearchUserNotePanel = document.getElementById("adminSearchUserNotePanel");
 const adminSearchUserResultTable = document.getElementById("adminSearchUserResultTable");
 const adminSearchUserResultTableBody = document.getElementById("adminSearchUserResultTableBody");
 const adminSearchUserEmptyMessage = document.getElementById("adminSearchUserEmptyMessage");
@@ -72,6 +73,7 @@ let adminSearchUserPageNumber = 1;
 let adminSearchUserFilterList = [];
 let adminSearchUserRequestCount = 0;
 let adminSearchUserIsActionPending = false;
+let adminSearchUserCanManageAdminAccount = false;
 let adminEditDeliveryWorkerProfileUserID;
 let adminChangeUserRoleUserID;
 let adminResetPasswordUserID;
@@ -201,6 +203,8 @@ async function adminViewUser(adminViewUserRow) {
     adminViewUserResponse.adminViewUserIsLockedNow, adminViewUserResponse.lockUntil);
   adminViewUserAccountStatusBadge.className = adminViewUserBadge.className;
   adminViewUserAccountStatusBadge.textContent = adminViewUserBadge.textContent;
+  adminViewUserAccountStatusBadge.parentElement.querySelector(".shared-flag").hidden =
+    !adminViewUserResponse.adminViewUserIsSuperAdmin;
 
   // Last login is available in the search result. Show dates using the browser's local time.
   adminViewUserCreatedTimeText.textContent = sharedFormatTime(adminViewUserResponse.createdTime);
@@ -219,7 +223,8 @@ async function adminViewUser(adminViewUserRow) {
   // Populate profile fields only for the role that owns them.
   const adminViewUserHasDeliveryProfile = adminViewUserResponse.role === "DELIVERY_WORKER";
   adminEditDeliveryWorkerProfilePanel.hidden = !adminViewUserHasDeliveryProfile;
-  adminEditDeliveryWorkerProfileSaveButton.hidden = !adminViewUserHasDeliveryProfile;
+  adminEditDeliveryWorkerProfileSaveButton.hidden =
+    !adminViewUserHasDeliveryProfile || !adminViewUserResponse.adminViewUserCanChange;
   adminEditDeliveryWorkerProfileEmployeeNumberInput.value = adminViewUserResponse.employeeNumber ?? "";
   adminEditDeliveryWorkerProfileVehicleTypeInput.value = adminViewUserResponse.vehicleType ?? "";
   adminEditDeliveryWorkerProfileVehiclePlateInput.value = adminViewUserResponse.vehiclePlate ?? "";
@@ -339,7 +344,7 @@ function adminBuildUserImpactText(adminBuildUserImpactResponse) {
 
 // What it does: Show the current role and active work before asking for a change.
 // Input: The selected staff user's search row.
-// Output: The role window with only the two other staff roles and a required reason.
+// Output: The role window with the permitted staff roles and a required reason.
 async function adminChangeUserRoleOpen(adminChangeUserRoleRow) {
   const adminChangeUserRoleImpact = await sharedSendRequest("GET", "/api/admin/users/" + adminChangeUserRoleRow.userID
     + "/impact");
@@ -348,7 +353,8 @@ async function adminChangeUserRoleOpen(adminChangeUserRoleRow) {
   adminChangeUserRoleCurrentRoleText.textContent = sharedFormatStatusWord(adminChangeUserRoleRow.role);
   adminChangeUserRoleNewRoleSelect.replaceChildren();
   for (const adminChangeUserRoleChoice of ["WAREHOUSE_WORKER", "DELIVERY_WORKER", "ADMIN"]) {
-    if (adminChangeUserRoleChoice !== adminChangeUserRoleRow.role) {
+    if (adminChangeUserRoleChoice !== adminChangeUserRoleRow.role
+      && (adminChangeUserRoleChoice !== "ADMIN" || adminSearchUserCanManageAdminAccount)) {
       adminChangeUserRoleNewRoleSelect.add(new Option(sharedFormatStatusWord(adminChangeUserRoleChoice),
         adminChangeUserRoleChoice));
     }
@@ -521,6 +527,16 @@ function adminSearchUserRenderRows(adminSearchUserResponse) {
   // Remember a row's action trigger so updating the table does not drop keyboard focus.
   const adminSearchUserFocusedControl = document.activeElement;
   const adminSearchUserRows = adminSearchUserResponse.adminSearchUserRowList;
+  // Use the same server permission to show the note and both role selectors.
+  adminSearchUserCanManageAdminAccount = adminSearchUserResponse.adminSearchUserCanManageAdminAccount;
+  adminSearchUserNotePanel.hidden = adminSearchUserCanManageAdminAccount;
+  const adminCreateUserAdminOption = adminCreateUserRoleSelect.querySelector('option[value="ADMIN"]');
+  if (adminSearchUserCanManageAdminAccount && !adminCreateUserAdminOption) {
+    adminCreateUserRoleSelect.add(new Option("Admin", "ADMIN"));
+  } else if (!adminSearchUserCanManageAdminAccount) {
+    adminCreateUserAdminOption?.remove();
+  }
+
   const adminSearchUserTotalRowCount = adminSearchUserResponse.adminSearchUserTotalRowCount;
   adminSearchUserTotalRowCountText.textContent = adminSearchUserTotalRowCount
     + (adminSearchUserTotalRowCount === 1 ? " account" : " accounts");
@@ -572,6 +588,9 @@ function adminSearchUserBuildRow(adminSearchUserRow) {
   }
   if (adminSearchUserRow.mustChangePassword) {
     adminSearchUserStatusLine.append(adminBuildFlag("Temporary password", "closed"));
+  }
+  if (adminSearchUserRow.adminSearchUserIsSuperAdmin) {
+    adminSearchUserStatusLine.append(adminBuildFlag("Super admin", "closed"));
   }
   adminSearchUserStatusCell.append(adminSearchUserStatusLine);
 
@@ -630,6 +649,9 @@ function adminSearchUserBuildActionList(adminSearchUserRow) {
       adminSearchUserActionName, false, adminSearchUserAction);
   };
   const adminSearchUserActionList = [adminSearchUserAddAction("View", "adminViewUser", adminViewUser)];
+  if (!adminSearchUserRow.adminSearchUserCanChange) {
+    return adminSearchUserActionList;
+  }
 
   // Active staff can change between staff roles. All active accounts can have a password reset.
   if (adminSearchUserRow.accountStatus === "ACTIVE") {

@@ -186,4 +186,19 @@ public class AdminTemporaryTestToolController {
     public SharedMessageResponse adminTemporaryCreatePrivateValueLogRow() {
         return adminTemporaryViewTestModeService.adminTemporaryCreatePrivateValueLogRow();
     }
+
+    // ===== SECTION 13: POST /api/admin/temporary-test/product-stock =====
+
+    // TEMPORARY TEST CODE - remove before integration
+    // Stage 4 sets up low stock and reservation shortfalls.
+    /**
+     * What it does: Sends a local stock fixture request to the test service.
+     * Input: The product SKU, physical stock and reserved stock.
+     * Output: A shared success message, or an input or missing-product error.
+     */
+    @PostMapping("/api/admin/temporary-test/product-stock")
+    public SharedMessageResponse adminTemporarySetProductStock(
+            @RequestBody AdminTemporarySetProductStockRequest adminTemporarySetProductStockRequest) {
+        return adminTemporaryViewTestModeService.adminTemporarySetProductStock(adminTemporarySetProductStockRequest);
+    }
 }

@@ -2,6 +2,7 @@
 // Local fixtures exercise accounts, sessions, active work, log privacy and retention.
 package com.lms.backend.admin.temporarytest;
 
+import static com.lms.backend.admin.user.AdminUserRule.adminCheckSuperAdminRule;
 import static com.lms.backend.shared.login.SharedLoginRule.SHARED_TEMPORARY_PASSWORD_VALID_HOURS;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_COLLECTION_OUTCOME_COLLECTED;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_COLLECTION_OUTCOME_PENDING;
@@ -17,12 +18,14 @@ import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_PICKUP_L
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_RESERVATION_STATUS_CONSUMED;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_RESERVATION_STATUS_HELD;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -49,6 +52,62 @@ import com.lms.backend.shared.value.SharedUserRole;
 @Profile("admintest")
 public class AdminTemporaryTestToolService {
 
+    // TEMPORARY TEST CODE - remove before integration
+    // Stage 4 creates low-stock and reservation-shortfall fixtures without a Warehouse page.
+    /**
+     * What it does: Sets both stock numbers on an existing test-database product.
+     * Input: The product SKU and two nonnegative whole numbers.
+     * Output: A shared message or an error for invalid input or missing stock.
+     */
+    @Transactional
+    public SharedMessageResponse adminTemporarySetProductStock(
+            AdminTemporarySetProductStockRequest adminTemporarySetProductStockRequest) {
+        String adminTemporarySetProductStockSKU = adminTemporarySetProductStockRequest.adminTemporarySetProductStockSKU();
+        BigDecimal adminTemporarySetProductStockPhysicalStock =
+                adminTemporarySetProductStockRequest.adminTemporarySetProductStockPhysicalStock();
+        BigDecimal adminTemporarySetProductStockReservedStock =
+                adminTemporarySetProductStockRequest.adminTemporarySetProductStockReservedStock();
+        if (adminTemporarySetProductStockSKU == null || adminTemporarySetProductStockSKU.isBlank()
+                || adminTemporarySetProductStockPhysicalStock == null || adminTemporarySetProductStockReservedStock == null) {
+            throw new SharedRuleException(HttpStatus.BAD_REQUEST, "SHARED_INPUT_INVALID",
+                    "Enter a SKU and both stock numbers.");
+        }
+
+        // The database stores nonnegative integers and allows a reservation shortfall.
+        int physicalStock;
+        int reservedStock;
+        try {
+            physicalStock = adminTemporarySetProductStockPhysicalStock.intValueExact();
+            reservedStock = adminTemporarySetProductStockReservedStock.intValueExact();
+        } catch (ArithmeticException adminTemporarySetProductStockNumberError) {
+            throw new SharedRuleException(HttpStatus.BAD_REQUEST, "SHARED_INPUT_INVALID",
+                    "Stock numbers must be whole numbers that fit in the database.");
+        }
+        if (physicalStock < 0 || reservedStock < 0) {
+            throw new SharedRuleException(HttpStatus.BAD_REQUEST, "SHARED_INPUT_INVALID",
+                    "Stock numbers cannot be negative.");
+        }
+
+        // One update saves both numbers together, including when reserved exceeds physical.
+        String SKU = adminTemporarySetProductStockSKU.strip().toUpperCase(Locale.ROOT);
+        int adminTemporarySetProductStockUpdatedCount = adminTemporaryCreateTestUserDatabase.sql("""
+                UPDATE inventory
+                SET physical_stock = :physicalStock, reserved_stock = :reservedStock, updated_at = CURRENT_TIMESTAMP
+                FROM product
+                WHERE inventory.product_id = product.product_id AND product.sku = :SKU
+                """)
+                .param("physicalStock", physicalStock)
+                .param("reservedStock", reservedStock)
+                .param("SKU", SKU)
+                .update();
+        if (adminTemporarySetProductStockUpdatedCount == 0) {
+            throw new SharedRuleException(HttpStatus.NOT_FOUND, "ADMIN_PRODUCT_NOT_FOUND",
+                    "No product stock was found for this SKU.");
+        }
+        return new SharedMessageResponse("Stock for " + SKU + " was set to " + physicalStock
+                + " physical and " + reservedStock + " reserved.");
+    }
+
     // ===== SECTION 1: OTHER CLASSES THIS CLASS USES =====
 
     private final AppUserRepository adminTemporaryTestUserRepository;
@@ -58,10 +117,11 @@ public class AdminTemporaryTestToolService {
     private final TransactionTemplate adminTemporaryCreateTestUserTransaction;
     private final AdminLogCleanupTask adminTemporaryRunLogCleanupTask;
     private final PickingScanHistoryRepository adminTemporaryCreateOldLogRowPickingScanRepository;
+    private final String adminTemporarySetUserStatusBootstrapUsername;
 
     /**
      * What it does: Receives the database and password helpers for the local test tools.
-     * Input: Database and password helpers, the security log writer and the scheduled cleanup task.
+     * Input: Database and password helpers, the log writer, cleanup task and bootstrap Admin username.
      * Output: A test tools service that only loads in test mode.
      */
     public AdminTemporaryTestToolService(AppUserRepository adminTemporaryTestUserRepository,
@@ -70,7 +130,8 @@ public class AdminTemporaryTestToolService {
             SharedSecurityLogWriter adminTemporaryCreateTestUserLogWriter,
             PlatformTransactionManager adminTemporaryCreateTestUserTransactionManager,
             AdminLogCleanupTask adminTemporaryRunLogCleanupTask,
-            PickingScanHistoryRepository adminTemporaryCreateOldLogRowPickingScanRepository) {
+            PickingScanHistoryRepository adminTemporaryCreateOldLogRowPickingScanRepository,
+            @Value("${lms.shared.bootstrap-admin-username:}") String adminTemporarySetUserStatusBootstrapUsername) {
         this.adminTemporaryTestUserRepository = adminTemporaryTestUserRepository;
         this.adminTemporaryCreateTestUserDatabase = adminTemporaryCreateTestUserDatabase;
         this.adminTemporaryCreateTestUserPasswordEncoder = adminTemporaryCreateTestUserPasswordEncoder;
@@ -79,6 +140,7 @@ public class AdminTemporaryTestToolService {
                 new TransactionTemplate(adminTemporaryCreateTestUserTransactionManager);
         this.adminTemporaryRunLogCleanupTask = adminTemporaryRunLogCleanupTask;
         this.adminTemporaryCreateOldLogRowPickingScanRepository = adminTemporaryCreateOldLogRowPickingScanRepository;
+        this.adminTemporarySetUserStatusBootstrapUsername = adminTemporarySetUserStatusBootstrapUsername;
     }
 
     // ===== SECTION 2: adminTemporaryViewTestMode =====
@@ -194,13 +256,19 @@ public class AdminTemporaryTestToolService {
     /**
      * What it does: Moves the temporary password's expiry time into the past.
      * Input: The account's username.
-     * Output: A message confirming the expiry time was moved, or a shared input error.
+     * Output: A confirmation message, a shared input error, or 409 for the protected super admin.
      */
     @Transactional
     public SharedMessageResponse adminTemporaryExpireTemporaryPassword(
             AdminTemporaryExpireTemporaryPasswordRequest adminTemporaryExpireTemporaryPasswordRequest) {
         AppUser adminTemporaryExpireTemporaryPasswordUser = adminTemporaryFindTestUser(
                 adminTemporaryExpireTemporaryPasswordRequest.adminTemporaryExpireTemporaryPasswordUsername());
+        // Keep the backup Admin's password available while testing other accounts.
+        if (adminCheckSuperAdminRule(adminTemporaryExpireTemporaryPasswordUser.username,
+                adminTemporaryExpireTemporaryPasswordUser.role, adminTemporarySetUserStatusBootstrapUsername)) {
+            throw new SharedRuleException(HttpStatus.CONFLICT, "ADMIN_SUPER_ADMIN_PROTECTED",
+                    "The super admin account cannot be changed.");
+        }
         adminTemporaryExpireTemporaryPasswordUser.temporaryPasswordExpiryTime = Instant.now()
                 .minus(1, ChronoUnit.MINUTES);
         return new SharedMessageResponse("Expired the temporary password for "
@@ -214,7 +282,7 @@ public class AdminTemporaryTestToolService {
     /**
      * What it does: Sets the specified status on an account.
      * Input: The username and requested account status.
-     * Output: A message with the saved status, or a shared input error.
+     * Output: A message with the saved status, a shared input error, or 409 for the protected super admin.
      */
     @Transactional
     public SharedMessageResponse adminTemporarySetUserStatus(
@@ -226,6 +294,12 @@ public class AdminTemporaryTestToolService {
 
         AppUser adminTemporarySetUserStatusUser = adminTemporaryFindTestUser(
                 adminTemporarySetUserStatusRequest.adminTemporarySetUserStatusUsername());
+        // The backup Admin stays available regardless of the requested test status.
+        if (adminCheckSuperAdminRule(adminTemporarySetUserStatusUser.username, adminTemporarySetUserStatusUser.role,
+                adminTemporarySetUserStatusBootstrapUsername)) {
+            throw new SharedRuleException(HttpStatus.CONFLICT, "ADMIN_SUPER_ADMIN_PROTECTED",
+                    "The super admin account cannot be changed.");
+        }
         adminTemporarySetUserStatusUser.accountStatus = accountStatus;
         return new SharedMessageResponse("Set the status of " + adminTemporarySetUserStatusUser.username + " to "
                 + accountStatus + ".");

@@ -2,7 +2,7 @@
 
 ## 1. Start from the Admin branch
 
-`feature/admin-system` contains the shared Spring Boot application, the PostgreSQL schema and the Admin module. The Stage 2 update was published on 19 November 2026. Its Client, Warehouse and Delivery addresses required a login. Stage 3 adds the role checks below.
+`feature/admin-system` contains the shared Spring Boot application, the PostgreSQL schema and the Admin module. The Stage 2 update was published on 19 November 2026. Its Client, Warehouse and Delivery addresses required a login. The role checks in Part 4 apply from Stage 3. The first Admin is the super admin from Stage 4.
 
 ## 2. Run the local stack
 
@@ -20,7 +20,11 @@ docker compose up --build -d
 docker compose ps
 ```
 
-When the database is healthy, open [the local sign-in page](http://127.0.0.1:8081/). Sign in as the bootstrap Admin with the temporary password you set, choose a new password and sign in again. Keep `.env` local. See the [Admin setup guide](ADMIN_README.md) for startup and schema checks.
+When the database is healthy, sign in as the bootstrap Admin with the temporary password you set. Choose a new password and sign in again. Keep `.env` local. [Local sign-in](http://127.0.0.1:8081/) · [Startup and schema checks](ADMIN_README.md)
+
+The bootstrap account is the super admin. It alone creates and changes Admin accounts. Other Admins can manage Clients, Warehouse Workers and Delivery Workers.
+
+To recover a lost super admin password, set `LMS_BOOTSTRAP_ADMIN_RESET_ON_START=true` and a new `LMS_BOOTSTRAP_ADMIN_TEMPORARY_PASSWORD` in `.env`. Run `docker compose up -d` to apply the settings. Sign in with the temporary password and choose a new password. Set `LMS_BOOTSTRAP_ADMIN_RESET_ON_START=false` and run `docker compose up -d` again. The reset repeats on every backend start while the setting is true.
 
 ## 3. Get a test account for your role
 
