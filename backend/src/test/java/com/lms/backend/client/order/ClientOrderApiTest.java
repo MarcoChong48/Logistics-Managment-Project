@@ -5,8 +5,11 @@ import static org.hamcrest.Matchers.matchesPattern;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -33,16 +36,21 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.env.MapPropertySource;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.mock.web.MockHttpSession;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
@@ -53,8 +61,10 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.jayway.jsonpath.JsonPath;
+import com.lms.backend.BackendApplication;
 import com.lms.backend.shared.database.AppUser;
 import com.lms.backend.shared.database.AppUserRepository;
+import com.lms.backend.shared.database.ClientOrderIdempotencyRepository;
 import com.lms.backend.shared.database.CustomerOrderReleaseRepository;
 import com.lms.backend.shared.database.CustomerOrderRepository;
 import com.lms.backend.shared.database.CustomerOrderWriteRepository;
@@ -63,6 +73,7 @@ import com.lms.backend.shared.database.InventoryRepository;
 import com.lms.backend.shared.database.Product;
 import com.lms.backend.shared.database.ProductRepository;
 import com.lms.backend.shared.log.SharedSecurityLogWriter;
+import com.lms.backend.shared.login.SharedCurrentUser;
 import com.lms.backend.shared.value.SharedAccountStatus;
 import com.lms.backend.shared.value.SharedUserRole;
 
@@ -111,6 +122,9 @@ class ClientOrderApiTest {
 
     @MockitoSpyBean
     private CustomerOrderWriteRepository orderWrites;
+
+    @MockitoSpyBean
+    private ClientOrderIdempotencyRepository idempotency;
 
     private final List<Long> fixtureUsers = new ArrayList<>();
     private final List<Long> fixtureProducts = new ArrayList<>();
@@ -594,6 +608,228 @@ class ClientOrderApiTest {
         assertEquals(0, reservedStock(second));
     }
 
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void replaysOriginalCreatedResponseForNormalizedRequestWithoutReadingCurrentProducts() throws Exception {
+        Product first = createProduct("4.00", "ACTIVE", 8, 0);
+        Product second = createProduct("5.25", "ACTIVE", 8, 0);
+        AppUser owner = createUser(SharedUserRole.CLIENT);
+        var session = signIn(owner);
+        String key = "normalized-retry";
+        String originalBody = request(item(second, 2) + "," + item(first, 1));
+        String response = postWithKey(session, key, originalBody).andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        String orderReference = JsonPath.read(response, "$.orderReference");
+        assertEquals(1L, database.sql("""
+                SELECT count(*) FROM client_order_idempotency
+                WHERE client_user_id = :clientId AND idempotency_key = :key AND order_id = :orderId
+                    AND octet_length(request_fingerprint) = 32
+                """).param("clientId", owner.userID).param("key", key).param("orderId", orderId(orderReference))
+                .query(Long.class).single());
+
+        database.sql("UPDATE product SET listing_status = 'INACTIVE', current_price = 50 WHERE product_id IN (:ids)")
+                .param("ids", fixtureProducts).update();
+        database.sql("UPDATE inventory SET physical_stock = 0 WHERE product_id IN (:ids)")
+                .param("ids", fixtureProducts).update();
+        String normalizedRetry = request(item(first, 1) + "," + item(second, 2))
+                .replace("Test Recipient", "  Test Recipient  ");
+        String replay = postWithKey(session, key, normalizedRetry).andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        assertEquals(response, replay);
+        assertEquals(1L, countOrders(owner));
+        assertEquals(1, reservedStock(first));
+        assertEquals(2, reservedStock(second));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"items[0].quantity", "items[0].productId", "recipientName", "contactPhone",
+            "deliveryAddress"})
+    void rejectsKeyReuseWhenAnyNormalizedFieldChanges(String field) throws Exception {
+        Product product = createProduct("4.00", "ACTIVE", 8, 0);
+        AppUser owner = createUser(SharedUserRole.CLIENT);
+        var session = signIn(owner);
+        String body = request(item(product, 1));
+        postWithKey(session, "original-order", body).andExpect(status().isCreated());
+        Object different = switch (field) {
+            case "items[0].quantity" -> 2;
+            case "items[0].productId" -> Long.MAX_VALUE;
+            default -> "Changed delivery detail";
+        };
+        String modified = JsonPath.parse(body).set("$." + field, different).jsonString();
+        postWithKey(session, "original-order", modified).andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("CLIENT_ORDER_IDEMPOTENCY_KEY_CONFLICT"));
+        assertEquals(1L, countOrders(owner));
+        assertEquals(1, reservedStock(product));
+    }
+
+    @Test
+    void scopesTheSameKeyToDifferentClients() throws Exception {
+        Product product = createProduct("4.00", "ACTIVE", 8, 0);
+        AppUser first = createUser(SharedUserRole.CLIENT);
+        AppUser second = createUser(SharedUserRole.CLIENT);
+        String body = request(item(product, 2));
+        String left = postWithKey(signIn(first), "s.replace-is-independent_~1", body).andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        String right = postWithKey(signIn(second), "s.replace-is-independent_~1", body).andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        assertNotEquals(JsonPath.<String>read(left, "$.orderReference"), JsonPath.<String>read(right, "$.orderReference"));
+        assertEquals(1L, countOrders(first));
+        assertEquals(1L, countOrders(second));
+        assertEquals(4, reservedStock(product));
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"   ", "two keys", "a,b", "contains/slash", "é"})
+    void rejectsMissingOrInvalidKeys(String key) throws Exception {
+        assertInvalidKey(key);
+    }
+
+    @Test
+    void rejectsMultipleIdempotencyKeyHeaders() throws Exception {
+        Product product = createProduct("4.00", "ACTIVE", 8, 0);
+        AppUser owner = createUser(SharedUserRole.CLIENT);
+        var session = signIn(owner);
+        mvc.perform(post(ORDERS).servletPath(ORDERS).session(session.session())
+                        .header(session.csrfHeader(), session.csrfToken())
+                        .header("Idempotency-Key", "first-key", "second-key")
+                        .contentType(MediaType.APPLICATION_JSON).content(request(item(product, 1))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("CLIENT_ORDER_IDEMPOTENCY_KEY_INVALID"));
+        assertEquals(0L, countOrders(owner));
+        assertEquals(0, reservedStock(product));
+    }
+
+    @Test
+    void rejectsKeysLongerThan128Characters() throws Exception {
+        assertInvalidKey("a".repeat(129));
+    }
+
+    @Test
+    void acceptsA128CharacterKey() throws Exception {
+        Product product = createProduct("4.00", "ACTIVE", 8, 0);
+        postWithKey(signIn(createUser(SharedUserRole.CLIENT)), "a".repeat(128), request(item(product, 1)))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void simultaneousRequestsWaitForTheSameKeyAndReserveOnlyOnce() throws Exception {
+        Product product = createProduct("4.00", "ACTIVE", 3, 0);
+        AppUser owner = createUser(SharedUserRole.CLIENT);
+        var firstSession = signIn(owner);
+        var retrySession = signIn(owner);
+        String body = request(item(product, 3));
+        String key = "concurrent-request";
+        CountDownLatch rowInserted = new CountDownLatch(1);
+        CountDownLatch canCommit = new CountDownLatch(1);
+        doAnswer(call -> {
+            call.callRealMethod();
+            rowInserted.countDown();
+            assertTrue(canCommit.await(15, TimeUnit.SECONDS));
+            return null;
+        }).when(idempotency).insertCompleted(eq(owner.userID.longValue()), eq(key), any(byte[].class),
+                anyLong(), anyString());
+
+        try (var workers = Executors.newFixedThreadPool(2)) {
+            var first = workers.submit(() -> postWithKey(firstSession, key, body).andExpect(status().isCreated())
+                    .andReturn().getResponse().getContentAsString());
+            try {
+                assertTrue(rowInserted.await(10, TimeUnit.SECONDS));
+                var retry = workers.submit(() -> postWithKey(retrySession, key, body).andExpect(status().isCreated())
+                        .andReturn().getResponse().getContentAsString());
+                await().atMost(Duration.ofSeconds(10)).until(() -> database.sql("""
+                        SELECT EXISTS (SELECT 1 FROM pg_locks WHERE locktype = 'advisory' AND NOT granted
+                          AND database = (SELECT oid FROM pg_database WHERE datname = current_database()))
+                        """).query(Boolean.class).single());
+                canCommit.countDown();
+                assertEquals(first.get(15, TimeUnit.SECONDS), retry.get(15, TimeUnit.SECONDS));
+            } finally {
+                canCommit.countDown();
+            }
+        }
+        assertEquals(1L, countOrders(owner));
+        assertEquals(1L, countForProducts("SELECT count(*) FROM stock_movement WHERE product_id IN (:ids)"));
+        assertEquals(3, reservedStock(product));
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void failedTransactionRollsBackTheInsertedKeyAndSameKeyCanSucceed() throws Exception {
+        Product product = createProduct("4.00", "ACTIVE", 8, 0);
+        AppUser owner = createUser(SharedUserRole.CLIENT);
+        String body = request(item(product, 2));
+        String key = "retry-after-rollback";
+        var session = signIn(owner);
+        doAnswer(call -> {
+            call.callRealMethod();
+            throw new DataIntegrityViolationException("Injected failure after saving the replay record.");
+        }).doCallRealMethod().when(idempotency).insertCompleted(eq(owner.userID.longValue()), eq(key),
+                any(byte[].class), anyLong(), anyString());
+
+        postWithKey(session, key, body).andExpect(status().isInternalServerError());
+        assertEquals(0L, countOrders(owner));
+        assertTrue(idempotency.findCompleted(owner.userID, key).isEmpty());
+        assertEquals(0, reservedStock(product));
+        postWithKey(session, key, body).andExpect(status().isCreated());
+        assertEquals(1L, countOrders(owner));
+        assertEquals(2, reservedStock(product));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"cancelled", "expired"})
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void replaysTheOriginalReceiptAfterAnOrderCloses(String closure) throws Exception {
+        Product product = createProduct("4.00", "ACTIVE", 8, 0);
+        AppUser owner = createUser(SharedUserRole.CLIENT);
+        var session = signIn(owner);
+        String body = request(item(product, 2));
+        String original = postWithKey(session, "closed-order", body).andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        String reference = JsonPath.read(original, "$.orderReference");
+        if (closure.equals("cancelled")) {
+            cancel(session, reference).andExpect(status().isOk());
+        } else {
+            long id = orderId(reference);
+            makeOverdue(id);
+            releases.expireIfDue(id);
+        }
+        assertEquals("CANCELLED", orderStatus(reference));
+        String replay = postWithKey(session, "closed-order", body).andExpect(status().isCreated())
+                .andExpect(jsonPath("$.orderStatus").value("AWAITING_PAYMENT"))
+                .andReturn().getResponse().getContentAsString();
+        assertEquals(original, replay);
+        assertEquals(1L, countOrders(owner));
+        assertEquals(0, reservedStock(product));
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void replaysAcrossApplicationRestarts() {
+        Product product = createProduct("4.00", "ACTIVE", 8, 0);
+        AppUser owner = createUser(SharedUserRole.CLIENT);
+        var payload = new ClientCreateOrderRequest(
+                List.of(new ClientCreateOrderRequest.Item(BigDecimal.valueOf(product.productId), BigDecimal.ONE)),
+                "Test Recipient", "+852 5555 0100", "Flat A, 12 Nathan Road, Kowloon, Hong Kong");
+        var context = SecurityContextHolder.createEmptyContext();
+        var principal = new SharedCurrentUser(owner.userID, owner.username, owner.role);
+        context.setAuthentication(new UsernamePasswordAuthenticationToken(principal, null, List.of()));
+        SecurityContextHolder.setContext(context);
+        try {
+            ClientCreateOrderResponse first;
+            try (var app = startCreateOrderApplication()) {
+                first = app.getBean(ClientOrderService.class).createOrder("restart-retry", payload);
+            }
+            try (var restarted = startCreateOrderApplication()) {
+                assertEquals(first, restarted.getBean(ClientOrderService.class).createOrder("restart-retry", payload));
+            }
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
+        assertEquals(1L, countOrders(owner));
+        assertEquals(1, reservedStock(product));
+    }
+
     @AfterEach
     void removeCommittedTestFixtures() {
         // Most tests roll back automatically. Concurrent requests and the rollback test use independent transactions.
@@ -605,6 +841,8 @@ class ClientOrderApiTest {
                     .param("ids", fixtureProducts).update();
         }
         if (!fixtureUsers.isEmpty()) {
+            database.sql("DELETE FROM client_order_idempotency WHERE client_user_id IN (:ids)")
+                    .param("ids", fixtureUsers).update();
             database.sql("""
                     DELETE FROM stock_reservation WHERE order_item_id IN (
                         SELECT oi.order_item_id FROM order_item oi JOIN customer_order co USING (order_id)
@@ -731,9 +969,31 @@ class ClientOrderApiTest {
     }
 
     private ResultActions submit(OrderSession session, String body) throws Exception {
-        return mvc.perform(post(ORDERS).servletPath(ORDERS).session(session.session())
+        return postWithKey(session, UUID.randomUUID().toString(), body);
+    }
+
+    private ResultActions postWithKey(OrderSession session, String key, String body) throws Exception {
+        var request = post(ORDERS).servletPath(ORDERS).session(session.session())
                 .header(session.csrfHeader(), session.csrfToken()).contentType(MediaType.APPLICATION_JSON)
-                .content(body));
+                .content(body);
+        if (key != null) {
+            request.header("Idempotency-Key", key);
+        }
+        return mvc.perform(request);
+    }
+
+    private void assertInvalidKey(String key) throws Exception {
+        AppUser owner = createUser(SharedUserRole.CLIENT);
+        postWithKey(signIn(owner), key, request("{\"productId\":1,\"quantity\":1}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("CLIENT_ORDER_IDEMPOTENCY_KEY_INVALID"));
+        assertEquals(0L, countOrders(owner));
+    }
+
+    private ConfigurableApplicationContext startCreateOrderApplication() {
+        return new SpringApplicationBuilder(BackendApplication.class).run("--server.port=0", "--server.address=127.0.0.1",
+                "--lms.shared.bootstrap-admin-username=", "--lms.shared.bootstrap-admin-temporary-password=",
+                "--lms.client.orders.expiry.enabled=false", "--debug=false");
     }
 
     private OrderSession signIn(AppUser user) throws Exception {

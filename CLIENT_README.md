@@ -1,6 +1,6 @@
 # Client order creation
 
-`POST /api/client/orders` requires a signed-in Client and the shared CSRF token. It accepts product IDs and whole-number quantities, the recipient name, a contact phone, and the full Hong Kong delivery address. The schema stores the address as supplied and has no delivery-instructions field on the order's address record.
+`POST /api/client/orders` requires a signed-in Client, the shared CSRF token, and an `Idempotency-Key` header. The entire key must match `[A-Za-z0-9._~-]{1,128}`. The request accepts product IDs and whole-number quantities, the recipient name, a contact phone, and the full Hong Kong delivery address. The schema stores the address as supplied and has no delivery-instructions field on the order's address record.
 
 ## Try it locally
 
@@ -9,12 +9,14 @@ Start the [local stack](ADMIN_README.md) and sign in as a Client. Run the follow
 ```javascript
 await sharedSendRequest("GET", "/api/client/products")
 
-await sharedSendRequest("POST", "/api/client/orders", {
+const orderKey = crypto.randomUUID()
+const orderRequest = {
   items: [{ productId: 123, quantity: 1 }],
   recipientName: "Test Recipient",
   contactPhone: "+852 5555 0100",
   deliveryAddress: "Flat A, 12 Nathan Road, Kowloon, Hong Kong"
-})
+}
+await sharedSendRequest("POST", "/api/client/orders", orderRequest, null, orderKey)
 ```
 
 Expect HTTP 201 with `orderReference`, `orderStatus` set to `AWAITING_PAYMENT`, `totalAmount` in HKD, and `paymentDeadline` 24 hours after creation. The total uses current product prices and includes delivery. Invalid items or delivery fields return 400. Recipient names, phones, and addresses are limited to 120, 40, and 1,000 characters respectively. Missing products return 404. Inactive products or unavailable stock return 409.
@@ -35,10 +37,16 @@ At the deadline, unpaid orders are eligible for the expiry job. The job starts w
 
 Both expiry and a Client cancellation use the existing `CANCELLED` order status. Each affected `HELD` reservation becomes `RELEASED`, with a release timestamp, a decrease in reserved inventory, and a `RELEASE` stock movement in the same transaction. Movement reasons begin with `PAYMENT_DEADLINE_EXPIRED` or `CLIENT_CANCELLED`; physical stock is unchanged. Locks are taken on the existing order first, then products and inventory in product ID order, then reservations. Future payment writers must use the same order-row lock before checking `CustomerOrder.canAcceptPaymentAt` with current database time and validating the existing holds. The deadline bars payment eligibility even if the sweep has yet to run.
 
-## Proposed Create Order retry protection
+## Create Order retry protection
 
-The [proposed migration](database/proposals/client_order_idempotency.sql) adds a table keyed by authenticated Client ID and `Idempotency-Key`. It is outside the Compose initialization scripts and requires approval and separate application.
+Install [migration 04](database/04_client_order_idempotency.sql) before starting the updated backend against an existing database. Fresh Compose volumes initialize it automatically. See the [installation steps](database/README.md#client-order-idempotency).
 
-The proposed implementation normalizes the validated request, sorts items by product ID, and hashes the versioned canonical payload with SHA-256. The hash covers items and delivery details, while prices and inventory remain server-controlled. Within the order transaction, a PostgreSQL transaction advisory lock scoped to the Client and key serializes retries before stock is locked. A matching fingerprint returns the stored 201 response, even after the order has changed status. A different fingerprint returns 409. The original response, fingerprint, and order ID are recorded in the same transaction as a new order and its reservations. Failed transactions leave the key available for retry. The table's primary key enforces uniqueness across app instances and restarts.
+Create Order hashes the validated request with SHA-256 using a versioned encoding, sorting items by product ID and trimming outer whitespace from delivery fields. The Client-scoped key lock is taken before stock locks. A matching request returns the stored 201 response, even after the order expires or is cancelled. The replay does not read prices, listings, or inventory. A different valid request with the same Client and key returns 409. Missing or invalid keys return 400. The response record, order, and reservations commit together. Failed transactions leave the key available for retry.
 
-Create Order retry protection is pending approval. Repeated successful POST requests can still create separate orders. Payment confirmation is pending. Automated verification uses PostgreSQL 18.1. PostgreSQL 17 and manual browser testing remain unverified.
+The optional fifth argument to `sharedSendRequest()` adds the key alongside the existing session credentials and CSRF header. Generate one key for each intended order and preserve it with that order's payload, including across a page reload if retry is offered. After an ambiguous failure such as a timeout, use the same signed-in Client and resend the same payload with the same key. A new intended order needs a new key.
+
+## Verification and deployment limits
+
+- Automated verification uses PostgreSQL 18.1. PostgreSQL 17 and manual browser testing are pending.
+- Existing databases need migration `04` before using the updated Create Order API. Earlier orders have no replay records.
+- Payment integration is pending.

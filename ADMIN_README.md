@@ -6,7 +6,7 @@ This branch adds the Admin system to the team's PostgreSQL baseline. It includes
 
 1. Open Docker Desktop in Linux containers mode and open a terminal in this checkout. If another LMS stack is using port 8081, run `docker compose down` from that stack's own checkout to release the port and keep its data.
 2. Copy `.env.example` to `.env`. Open `.env` locally and set a temporary bootstrap password. Use 8–72 characters and at most 72 bytes in UTF-8. Use a password dedicated to this local test stack. Git ignores `.env`.
-3. Build and start the stack.
+3. If you are reusing an initialized database volume, apply any pending [database migrations](database/README.md#client-order-idempotency) before rebuilding the backend. Then build and start the stack.
 
    ```powershell
    docker compose up --build -d
@@ -24,4 +24,4 @@ docker build --no-cache --target rule-check --progress plain ./backend
 docker compose exec db psql -U lms -d lms -c "\dt"
 ```
 
-On a fresh volume, Compose runs `01_create_tables.sql` and `03_admin_changes.sql` in order. The result is 27 tables. For the migration details, see the [database README](database/README.md). Run `docker compose down` from this checkout to stop the stack and keep its data.
+On a fresh volume, Compose runs `01_create_tables.sql`, `03_admin_changes.sql`, and `04_client_order_idempotency.sql` in order, creating 28 tables. For migration details on existing volumes, see the [database README](database/README.md). Run `docker compose down` from this checkout to stop the stack and keep its data.

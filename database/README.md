@@ -6,7 +6,8 @@
 
 - `01_create_tables.sql`: 25 related PostgreSQL tables, PKs, FKs, constraints, indexes. All 25 tables are in the `public` schema. Meant for a **new/empty** PostgreSQL database.
 - `02_sample_data.sql`: optional fictional product/stock data for local testing; **never auto-applied**.
-- `../compose.yaml`: optional replacement for the repository's `compose.yaml`. Adds a bind mount so a **new Docker PostgreSQL volume** creates the tables automatically on first initialization.
+- `03_admin_changes.sql` and `04_client_order_idempotency.sql` extend the baseline.
+- `../compose.yaml` mounts scripts `01`, `03`, and `04` for automatic initialization of a **new Docker PostgreSQL volume**.
 
 ## Table mapping from the original ERD
 
@@ -40,9 +41,9 @@
 
 Why `app_user`, `customer_order`, `delivery_package`? Avoid collision/ambiguity with SQL terms and use lowercase snake_case for JPA mapping. **Tell the entire team these are the authoritative table names before updating Java code.**
 
-## Apply NOW on your existing running Docker database
+## Apply the baseline to a running, empty database
 
-You already have an empty persistent `postgres_data` volume (as shown by `\\dt` returning no relations). From the **Git repository root** in PowerShell, with `docker compose up` already running:
+Use these baseline commands only if you have verified that the running database contains no tables. From the repository root in PowerShell, with the database container running:
 
 ```powershell
 docker compose cp .\database\01_create_tables.sql db:/tmp/01_create_tables.sql
@@ -65,15 +66,7 @@ docker compose exec db psql -U lms -d lms -c "SELECT p.sku,p.name,i.physical_sto
 
 ## Teammate's first-run Docker setup
 
-Copy `compose.yaml` from this package to the repository root (or simply add the mount shown below under `db.volumes` in your existing Compose file). Commit `database/01_create_tables.sql` and `compose.yaml` together.
-
-```yaml
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./database/01_create_tables.sql:/docker-entrypoint-initdb.d/01_create_tables.sql:ro
-```
-
-For a **fresh** local Docker volume, `docker compose up --build` initializes the database using this SQL automatically. The official Postgres container runs files in `/docker-entrypoint-initdb.d` only when the data directory is empty. If a teammate already has a populated volume, the mount alone **does not** update their existing schema. They should apply a documented change script manually, or intentionally recreate their disposable local data after backup.
+Use the repository's `compose.yaml`. On a **fresh** local Docker volume, `docker compose up --build` runs the mounted initialization scripts in order. The Postgres container runs `/docker-entrypoint-initdb.d` only when the data directory is empty. For a populated volume, apply only the pending versioned scripts manually and retain the volume.
 
 ## SQL change policy — manual, no Flyway
 
@@ -108,7 +101,7 @@ This is a complete **25-table structural baseline**, not a claim of complete exe
 
 ## Admin changes
 
-For a fresh local Admin volume, Compose runs `01_create_tables.sql` followed by `03_admin_changes.sql`. The second script applies all seven changes in one transaction and brings the `public` schema to **27 tables**. `02_sample_data.sql` remains optional.
+On a fresh local volume, `01_create_tables.sql` runs before `03_admin_changes.sql`. The Admin script applies all seven changes in one transaction and brings the `public` schema to **27 tables** before the Client migration below. `02_sample_data.sql` remains optional.
 
 | Change | Database update |
 | --- | --- |
@@ -121,3 +114,23 @@ For a fresh local Admin volume, Compose runs `01_create_tables.sql` followed by 
 | A7 | Adds a unique index on `LOWER(app_user.username)`. |
 
 The initialization scripts run only when PostgreSQL creates a fresh volume. On an existing **local Admin** database that has only the 25-table baseline, apply `03_admin_changes.sql` once using `psql` with `ON_ERROR_STOP=1`. Existing usernames that differ only by case will cause the transaction to roll back. Record manual applications in the stage report or operation log with the operator, environment and result.
+
+## Client Order Idempotency
+
+`04_client_order_idempotency.sql` adds one table for persistent Create Order responses. Fresh Compose volumes run scripts `01`, `03`, and `04` in that order and have **28 tables**. For a fresh integration test database, apply the same scripts in order with `psql -v ON_ERROR_STOP=1`.
+
+On an existing database with `01` and `03` already applied, verify the intended database and check whether `04` is present. For an existing local Compose volume, run from the repository root.
+
+```powershell
+docker compose exec db psql -v ON_ERROR_STOP=1 -U lms -d lms -tAc "SELECT to_regclass('public.client_order_idempotency')"
+```
+
+If the check returns the table name, skip `04`. If it returns a blank result, run `04` once before deploying the updated backend.
+
+```powershell
+docker compose cp .\database\04_client_order_idempotency.sql db:/tmp/04_client_order_idempotency.sql
+docker compose exec db psql -v ON_ERROR_STOP=1 -U lms -d lms -f /tmp/04_client_order_idempotency.sql
+docker compose exec db psql -U lms -d lms -c "\d public.client_order_idempotency"
+```
+
+Record the migration in the team’s operations log. The script creates the new table in one transaction. A repeat execution stops with an already-exists error and leaves the existing table and data intact. Existing orders and volumes are retained, and old orders have no replay record to backfill.

@@ -6,7 +6,7 @@
 
 ## What's included
 
-- **Setup.** Local database with 27 tables, a health endpoint, the Admin page frame, and test tools for creating sample accounts and work assignments.
+- **Setup.** Local database with 28 tables, including Client order idempotency, a health endpoint, the Admin page frame, and test tools for creating sample accounts and work assignments.
 - **Shared login.** Sign-in and sign-out, role-based access, an idle timeout, temporary login lockouts, password changes, and forced replacement of temporary passwords.
 - **User accounts.** Search, filter, and create accounts for all four LMS roles. Admins can edit Delivery Worker profiles, preview work affected by account changes, change eligible staff roles, ban or deactivate accounts and reverse those actions, unlock accounts, and reset passwords.
 - **Audit records.** Sign-in security events and Admin account changes are recorded. The Admin log viewer is planned for Stage 3.
@@ -28,10 +28,10 @@
 
 ## Set up and test locally
 
-1. Download the [Admin branch ZIP](https://github.com/MarcoChong48/Logistics-Managment-Project/archive/refs/heads/feature/admin-system.zip) and extract it.
+1. Use this checkout or extract the [Client branch ZIP](https://github.com/MarcoChong48/Logistics-Managment-Project/archive/refs/heads/feature/client-backend.zip).
 2. Give your AI coding assistant the **entire unzipped project folder** by opening it as the assistant's workspace. Select the folder containing `compose.yaml`, `backend/`, and `database/`. Do this before creating `.env`. Ask the assistant to read `ADMIN_README.md` and help you start and test the Stage 2 Admin system.
 3. Start Docker Desktop in Linux containers mode. In the extracted folder, copy `.env.example` to `.env` and set `LMS_BOOTSTRAP_ADMIN_TEMPORARY_PASSWORD` to a password for this local test.
-4. Run these commands from the folder containing `compose.yaml`. Wait for `db` to show as healthy and `backend` to show as running.
+4. If you are reusing an initialized volume, follow the [database migration steps](database/README.md#client-order-idempotency) before rebuilding the backend. Then run these commands from the folder containing `compose.yaml`. Wait for `db` to show as healthy and `backend` to show as running.
 
    ```powershell
    docker compose up --build -d

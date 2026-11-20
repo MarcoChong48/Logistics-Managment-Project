@@ -32,13 +32,14 @@ window.addEventListener("pageshow", (sharedSendRequestPageEvent) => {
 // ===== SECTION 4: sharedSendRequest =====
 
 // What it does: Send a JSON request with the security token when needed and keep its button disabled.
-// Input: The HTTP method, web address, optional JSON body and optional button.
+// Input: The HTTP method, web address, optional JSON body, button and order idempotency key.
 // Output: The parsed JSON answer, or an object with a code, message and HTTP status on failure.
 async function sharedSendRequest(
   sharedSendRequestMethod,
   sharedSendRequestWebAddress,
   sharedSendRequestBody,
-  sharedSendRequestButton
+  sharedSendRequestButton,
+  sharedSendRequestIdempotencyKey
 ) {
   // Save the button's state so completion does not enable a button that was already disabled.
   const sharedSendRequestButtonWasDisabled = sharedSendRequestButton?.disabled;
@@ -52,6 +53,9 @@ async function sharedSendRequest(
     if (sharedSendRequestBody != null) {
       sharedSendRequestOptions.headers["Content-Type"] = "application/json";
       sharedSendRequestOptions.body = JSON.stringify(sharedSendRequestBody);
+    }
+    if (sharedSendRequestIdempotencyKey != null) {
+      sharedSendRequestOptions.headers["Idempotency-Key"] = sharedSendRequestIdempotencyKey;
     }
 
     // Read a fresh token at sign-in in case the session expired while the form was open.

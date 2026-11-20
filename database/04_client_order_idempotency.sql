@@ -1,4 +1,4 @@
--- PROPOSAL ONLY. Apply separately after approval and before enabling Idempotency-Key.
+-- Apply once after 03_admin_changes.sql, before deploying Client Create Order idempotency.
 BEGIN;
 
 CREATE TABLE client_order_idempotency (
