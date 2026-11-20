@@ -1,13 +1,20 @@
 package com.lms.backend.shared.database;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import jakarta.persistence.LockModeType;
+
 public interface ProductRepository extends JpaRepository<Product, Long> {
+
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    List<Product> findByProductIdInOrderByProductIdAsc(Collection<Long> productIds);
 
     @Query("""
             select p.productId as productId, p.sku as sku, p.name as name,
