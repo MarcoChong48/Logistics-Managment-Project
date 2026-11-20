@@ -4,12 +4,14 @@ This walkthrough uses local demo data. Check the running interface for the seede
 
 ## Preparation
 
-1. Build and launch the app from `features/delivery`, then open `http://localhost:8080`. [Build and launch instructions](../README.md)
+1. Start Docker Desktop in Linux containers mode. From `features/delivery/`, run `docker compose up --build -d` followed by `docker compose ps`. When `db` is healthy and `backend` is running, open `http://127.0.0.1:8080`. [Launch instructions](../README.md#run-the-local-demo-with-docker-compose)
 2. Sign in as `ken` with `Delivery123!`.
 3. Use **Overview** to check the work waiting for you, then open **Pickup**. The examples use list `PL-1001` and package `PKG-1001`. Use the actual IDs shown in your demo.
 4. Explain that the list and packed orders use **Place holder** Warehouse data. Open **Decisions & integrations** for the team decisions and external handoffs.
 
 The local store persists. Use a fresh separate demo data directory for an independent run if supported by the package; do not reset another person's saved work.
+
+Run `docker compose down` from the same folder after testing. PostgreSQL records and proof files are saved in separate volumes for the next session.
 
 ## Normal delivery
 

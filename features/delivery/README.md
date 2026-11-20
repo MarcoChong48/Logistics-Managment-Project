@@ -1,8 +1,32 @@
-# LMS Delivery App
+# LMS Delivery App v3.1
 
 A Delivery Worker app for the Logistics Management System, with a local demo profile. The app uses the enhanced B direction, with an HTML, CSS and native JavaScript interface and a Java 21 / Spring Boot 4.1.2 JSON API. Supabase PostgreSQL uses the team v0.4 draft and Delivery extensions.
 
 Delivery actions update the screen after the Java backend accepts them. Demo-only **Test tools** uses clearly labelled **Place holder** controls to simulate Warehouse, Client and Admin handoffs. These controls run against demo data under simulated staff identities.
+
+[繁體中文組員使用指南](docs/QUICKSTART_ZH_HK.md)
+
+## Run the local demo with Docker Compose
+
+Start Docker Desktop in Linux containers mode. From this repository's `features/delivery/` folder, run:
+
+```powershell
+docker compose up --build -d
+docker compose ps
+```
+
+Wait for `db` to be healthy and `backend` to be running. Open [http://127.0.0.1:8080](http://127.0.0.1:8080) and sign in with a demo account.
+
+| Username | Password | Role |
+|---|---|---|
+| `ken` | `Delivery123!` | Delivery Worker |
+| `mei` | `Delivery123!` | Delivery Worker |
+
+Compose builds the Java 21 app and starts a private PostgreSQL 17 database with fictional demo data. The first build downloads images and build dependencies. PostgreSQL data and private proof files each have their own named volume. [Docker Compose settings](compose.yaml)
+
+To see startup logs, run `docker compose logs -f backend`. To stop Delivery and keep the demo data, run `docker compose down` from the same folder. The Admin reference uses port 8081. If port 8080 is busy, run `$env:DELIVERY_PORT = '8082'` in PowerShell before starting Compose and open [http://127.0.0.1:8082](http://127.0.0.1:8082).
+
+The Java/H2 launch is described below. The hosted database setup uses the Supabase profile with team connection settings. [Database guide](docs/DATABASE.md)
 
 ## Delivery workspace
 
@@ -23,7 +47,8 @@ The workspace follows the shared design notes for menus, forms, dialogs and tabl
 
 | Task | Start here |
 |---|---|
-| Build and demo the app | [Build script](Build-Delivery.ps1), [Windows launcher](Start%20Delivery%20App.cmd) and [demo walkthrough](docs/DEMO.md) |
+| Run the app in Docker | [Compose settings](compose.yaml) and [demo walkthrough](docs/DEMO.md) |
+| Build and run with local Java | [Build script](Build-Delivery.ps1), [Windows launcher](Start%20Delivery%20App.cmd) and [demo walkthrough](docs/DEMO.md) |
 | Change a screen | [Browser page modules](frontend/src/features/), [workspace frame](frontend/src/app/shell.js), [shared styles](frontend/src/shared/shared-common.css), [HTML entry page](frontend/index.html) and [original Delivery prototype](docs/prototypes/delivery_field_app_pickup_proof_ken/screen.png) |
 | Change an API or business rule | [Java backend](backend/src/main/java/hk/edu/hkmu/lms/delivery/), [API contract](API_CONTRACT.md) and [U-01 to U-16 decisions](docs/DECISIONS.md) |
 | Inspect SQL or seed data | [Supabase database guide](docs/DATABASE.md) and [local H2 demo SQL](backend/src/main/resources/schema.sql) |
@@ -45,12 +70,12 @@ features/delivery/
 |   `-- prototypes/  HTML designs, screenshots and shared design notes
 |-- supabase/      PostgreSQL migrations based on database draft v0.4
 |-- qa/            Test scripts and recorded evidence
-`-- Dockerfile    Container build
+`-- compose.yaml and Dockerfile    Local PostgreSQL demo and app image
 ```
 
-The first demo launch seeds an empty local database. Maven bundles the frontend files directly into the JAR. Build output goes to `backend/target/` and `delivery-app.jar`. Keep the launch scripts and the generated JAR in this feature folder. GitHub Actions configuration lives under `.github/workflows/` at the repository root and runs against the source checkout.
+Each demo setup seeds its database on first launch. Maven bundles the frontend files directly into the JAR. Build output goes to `backend/target/` and `delivery-app.jar`. Keep the launch scripts and the generated JAR in this feature folder. GitHub Actions configuration lives under `.github/workflows/` at the repository root and runs against the source checkout.
 
-## Build and start from source
+## Build and start with local Java and H2
 
 This checkout supplies the source and build scripts. Build the JAR before using the launcher. Use a Java 21 JDK and Maven. The first build downloads tools and dependencies. Node.js is used only for optional browser and HTTP QA scripts.
 
@@ -66,11 +91,6 @@ The build obtains Maven 3.9.11 if needed, packages the frontend files, runs the 
 
 Open `http://localhost:8080` when the application is ready. Sign in with either demo account.
 
-| Username | Password | Role |
-|---|---|---|
-| `ken` | `Delivery123!` | Delivery Worker |
-| `mei` | `Delivery123!` | Delivery Worker |
-
 On macOS or Linux, install Maven 3.9.11 and the Java 21 JDK. From the repository root, run the equivalent build and launch commands.
 
 ```sh
@@ -79,7 +99,7 @@ mvn -f backend/pom.xml clean package
 java -jar backend/target/delivery-app.jar --spring.profiles.active=demo --server.address=127.0.0.1
 ```
 
-If another app uses port 8080, stop it or start this Windows copy with `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Run-Delivery.ps1 -Port 8081` and open `http://localhost:8081`. On macOS or Linux, add `--server.port=8081`.
+If another app uses port 8080, stop it or start this Windows copy with `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Run-Delivery.ps1 -Port 8082` and open `http://localhost:8082`. On macOS or Linux, add `--server.port=8082`.
 
 These are two separate demo Delivery identities. The name Mei here does not grant Warehouse access. Use a separate browser profile or private window to compare ownership between workers. Stop the server with Ctrl+C in its window before making an offline backup.
 
@@ -93,7 +113,7 @@ mvn -Dspring-boot.run.profiles=demo spring-boot:run
 
 Run it again to copy changed frontend files into the static resource directory. For Supabase setup and the schema review, follow the [database guide](docs/DATABASE.md).
 
-## Saved local data
+## Saved data from the Java and H2 launcher
 
 Launch from the app folder. The local demo database is `data/database` (H2 adds its file extension), and private proofs use `data/proofs`. Set `LMS_DATA_DIR` before starting to use a different data directory. Do not point two running app copies at the same local store.
 

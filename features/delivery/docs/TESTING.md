@@ -1,5 +1,13 @@
 # Delivery verification
 
+## Delivery v3.0 Docker Compose verification on 20 November 2026
+
+- Compose configuration validated both the default loopback binding and an alternate host port. The backend built with Java 21 and Spring Boot 4.1.2. All 15 Maven tests passed.
+- A fresh Compose project initialized 25 core tables in PostgreSQL 17. Chrome passed desktop and mobile login, QR text entry, signing and delivery confirmation, and simulated return approval for redelivery.
+- After `docker compose down` and `docker compose up -d`, the delivered attempt, signature metadata and approved return were still saved. The signature file had the same SHA-256 checksum after restart.
+
+Use a separate Compose project on a free host port for a clean test. The [startup guide](../README.md#run-the-local-demo-with-docker-compose) has the default commands. The checks below include real console and browser runs against disposable data.
+
 ## Shared-design update checklist
 
 Use a fresh isolated demo store for the workflow. Use a second isolated store for the password test, since the new password persists. Run the integration-mode check with the configured Supabase profile against a dedicated test database. The current results and historical checks are recorded below.

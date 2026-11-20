@@ -18,6 +18,12 @@ The `supabase` profile uses PostgreSQL. The `demo` profile keeps the existing lo
 
 Warehouse, Client, Admin and payment handoffs stay marked **Place holder** in the demo. The team needs a common contract for which service writes orders, stock and custody, including its lock and retry rules.
 
+## Local PostgreSQL in Docker
+
+The [Delivery Compose file](../compose.yaml) starts an isolated PostgreSQL 17 database and the Delivery backend. On the first start of an empty `postgres_data` volume, PostgreSQL runs the core migration followed by the Delivery runtime migration. The backend waits for the database, then uses the `supabase` profile with local settings and seeds fictional data.
+
+The database volume holds the records and the `delivery_data` volume holds private proof files. `docker compose down` keeps both. When the database volume already exists, use a reviewed migration to update its schema. [Local startup instructions](../README.md#run-the-local-demo-with-docker-compose)
+
 ## Start against Supabase
 
 1. Ask the Database owner to review and apply both migrations, in filename order, to a designated development database. Use the [Supabase migration workflow](https://supabase.com/docs/guides/local-development/database-migrations) or a PostgreSQL client. The application does not apply migrations at startup.

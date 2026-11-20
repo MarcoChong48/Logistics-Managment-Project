@@ -26,7 +26,9 @@ Demo `ken` and `mei` are both Delivery Workers. **Test tools** and its routes ar
 
 ## Database profiles
 
-The `demo` profile uses local H2. The `supabase` profile uses PostgreSQL with the [v0.4 migrations and Delivery extensions](DATABASE.md). It starts with demo seeding and automatic retention disabled. Shared transaction coordination with the Warehouse, Client and Admin modules remains a **Place holder**.
+The `demo` profile uses local H2. The `supabase` profile uses PostgreSQL with the [v0.4 migrations and Delivery extensions](DATABASE.md). It disables demo seeding and automatic retention by default. Shared transaction coordination with the Warehouse, Client and Admin modules remains a **Place holder**.
+
+The [local Docker Compose stack](../compose.yaml) enables demo seeding on its private PostgreSQL 17 service. PostgreSQL records and proof files use separate named volumes. The [demo guide](DEMO.md) explains startup.
 
 The local proof directory is `${app.data-dir}/proofs`. Set `LMS_DATA_DIR` to change it. The default listener is `127.0.0.1:8080`. Use `LMS_BIND_ADDRESS` and `PORT` to configure the Java service, or use the Windows launcher with a local port.
 

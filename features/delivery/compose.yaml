@@ -1,0 +1,43 @@
+# Decision U-01, B: Start a repeatable local Delivery demo with Compose.
+name: lms-delivery
+
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: lms_delivery
+      POSTGRES_USER: lms_delivery
+      POSTGRES_PASSWORD: delivery_local_dev_only
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # PostgreSQL runs these scripts in order on a fresh volume.
+      - ./supabase/migrations/20261110000100_lms_database_draft_v0_4.sql:/docker-entrypoint-initdb.d/01_delivery_core.sql:ro
+      - ./supabase/migrations/20261110000200_delivery_runtime_compatibility.sql:/docker-entrypoint-initdb.d/02_delivery_runtime.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    build: .
+    ports:
+      - "127.0.0.1:${DELIVERY_PORT:-8080}:8080"
+    environment:
+      # Reuse the PostgreSQL profile with the private local database.
+      SPRING_PROFILES_ACTIVE: supabase
+      APP_DEMO_ENABLED: "true"
+      SUPABASE_DB_URL: jdbc:postgresql://db:5432/lms_delivery
+      SUPABASE_DB_USER: lms_delivery
+      SUPABASE_DB_PASSWORD: delivery_local_dev_only
+      SUPABASE_DB_SSL_MODE: disable
+      LMS_DATA_DIR: /app/data
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - delivery_data:/app/data
+
+volumes:
+  postgres_data:
+  delivery_data:
