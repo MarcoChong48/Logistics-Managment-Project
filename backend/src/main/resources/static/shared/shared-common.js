@@ -33,7 +33,7 @@ window.addEventListener("pageshow", (sharedSendRequestPageEvent) => {
 
 // What it does: Send a JSON request with the security token when needed and keep its button disabled.
 // Input: The HTTP method, web address, optional JSON body and optional button.
-// Output: The parsed JSON answer, or an object with a code, message and HTTP status on failure.
+// Output: The parsed JSON answer or a CSV response. A failure gives a code, message and HTTP status.
 async function sharedSendRequest(
   sharedSendRequestMethod,
   sharedSendRequestWebAddress,
@@ -48,7 +48,10 @@ async function sharedSendRequest(
 
   try {
     // Set the content type only when a JSON body is sent.
-    const sharedSendRequestOptions = { method: sharedSendRequestMethod, headers: { Accept: "application/json" } };
+    const sharedSendRequestOptions = {
+      method: sharedSendRequestMethod,
+      headers: { Accept: "application/json, text/csv" }
+    };
     if (sharedSendRequestBody != null) {
       sharedSendRequestOptions.headers["Content-Type"] = "application/json";
       sharedSendRequestOptions.body = JSON.stringify(sharedSendRequestBody);
@@ -80,6 +83,12 @@ async function sharedSendRequest(
       sharedStartSessionCountdown(sharedStartSessionCountdownIdleTimeoutSeconds, sharedSendRequestKeepsOpenDialog);
     }
 
+    // CSV downloads still count as activity and keep their server-supplied file name and bytes.
+    if (sharedSendRequestResponse.ok
+      && sharedSendRequestResponse.headers.get("Content-Type")?.startsWith("text/csv")) {
+      return sharedSendRequestResponse;
+    }
+
     // Handle a response that could not be read as JSON without showing browser or server details.
     let sharedSendRequestAnswer;
     try {
@@ -95,9 +104,13 @@ async function sharedSendRequest(
     // Leave failed sign-in on the form. A protected request with an ended session returns to login.
     if (!sharedSendRequestResponse.ok) {
       if (sharedSendRequestResponse.status === 401 && sharedSendRequestWebAddress !== "/api/shared/login") {
-        if (sharedSendRequestAnswer?.code === "SHARED_SESSION_ENDED") {
+        const sharedSendRequestCode = sharedSendRequestAnswer?.code;
+        if (sharedSendRequestWebAddress === "/api/shared/change-password" && sharedSendRequestMethod === "POST"
+          && ["SHARED_SESSION_ENDED", "SHARED_NOT_LOGGED_IN"].includes(sharedSendRequestCode)) {
+          window.location.replace("/shared/shared-login.html?sharedLoginUserNotice=PASSWORD_NOT_CHANGED");
+        } else if (sharedSendRequestCode === "SHARED_SESSION_ENDED") {
           window.location.replace("/shared/shared-login.html?sharedLoginUserNotice=SESSION_ENDED");
-        } else if (sharedSendRequestAnswer?.code === "SHARED_NOT_LOGGED_IN") {
+        } else if (sharedSendRequestCode === "SHARED_NOT_LOGGED_IN") {
           window.location.replace("/shared/shared-login.html");
         }
       }
@@ -536,7 +549,7 @@ async function sharedExtendSession(sharedExtendSessionEvent) {
 // ===== SECTION 18: sharedLogoutUser =====
 
 // What it does: Log out from the current session.
-// Input: The pressed button and an optional place for errors on the welcome page.
+// Input: The pressed button and an optional message place on a page without the frame.
 // Output: Navigation to logged-out login, or a message if logout was refused.
 async function sharedLogoutUser(sharedLogoutUserButton, sharedLogoutUserMessage) {
   // The session ends on the server before the browser switches pages.
@@ -552,15 +565,123 @@ async function sharedLogoutUser(sharedLogoutUserButton, sharedLogoutUserMessage)
       sharedLogoutUserDialogMessage.hidden = false;
       sharedLogoutUserDialogMessage.querySelector("p").textContent = sharedLogoutUserError.message;
     } else if (sharedLogoutUserMessage) {
-      sharedLogoutUserMessage.textContent = sharedLogoutUserError.message;
-      sharedLogoutUserMessage.parentElement.hidden = false;
+      sharedShowInlineMessage(sharedLogoutUserMessage, "ERROR", sharedLogoutUserError.message);
     } else {
       sharedShowMessage("ERROR", sharedLogoutUserError.message);
     }
   }
 }
 
-// ===== SECTION 19: HELPER FUNCTIONS =====
+// ===== SECTION 19: sharedCheckPasswordRuleList =====
+
+// What it does: Check the password rules for advisory feedback while the user types.
+// Input: The exact new and current passwords.
+// Output: The four rule results, length count, byte limit result and whether the passwords are the same.
+function sharedCheckPasswordRuleList(sharedCheckPasswordRuleListNewPassword,
+  sharedCheckPasswordRuleListCurrentPassword) {
+  // Match the server's Unicode character and UTF-8 byte counts.
+  const sharedCheckPasswordRuleListCharacterCount = Array.from(sharedCheckPasswordRuleListNewPassword).length;
+  const sharedCheckPasswordRuleListIsOverByteLimit =
+    new TextEncoder().encode(sharedCheckPasswordRuleListNewPassword).length > 72;
+  return {
+    sharedCheckPasswordRuleListCharacterCount,
+    sharedCheckPasswordRuleListIsOverByteLimit,
+    sharedCheckPasswordRuleListIsLengthMet: sharedCheckPasswordRuleListCharacterCount >= 8
+      && sharedCheckPasswordRuleListCharacterCount <= 72 && !sharedCheckPasswordRuleListIsOverByteLimit,
+    sharedCheckPasswordRuleListHasCapital: /[A-Z]/.test(sharedCheckPasswordRuleListNewPassword),
+    sharedCheckPasswordRuleListHasSmall: /[a-z]/.test(sharedCheckPasswordRuleListNewPassword),
+    sharedCheckPasswordRuleListHasDigit: /[0-9]/.test(sharedCheckPasswordRuleListNewPassword),
+    sharedCheckPasswordRuleListIsSameAsCurrent: sharedCheckPasswordRuleListNewPassword !== ""
+      && sharedCheckPasswordRuleListNewPassword === sharedCheckPasswordRuleListCurrentPassword
+  };
+}
+
+// ===== SECTION 20: sharedMeasurePasswordStrength =====
+
+// What it does: Rate length and character variety for the strength display.
+// Input: The exact new password.
+// Output: NOT_RATED, TOO_WEAK, FAIR, GOOD or STRONG. This advice never blocks a request.
+function sharedMeasurePasswordStrength(sharedMeasurePasswordStrengthNewPassword) {
+  // Use the same four rule results that the page displays.
+  if (sharedMeasurePasswordStrengthNewPassword === "") {
+    return "NOT_RATED";
+  }
+  const sharedMeasurePasswordStrengthRule = sharedCheckPasswordRuleList(sharedMeasurePasswordStrengthNewPassword, "");
+  if (!sharedMeasurePasswordStrengthRule.sharedCheckPasswordRuleListIsLengthMet
+    || !sharedMeasurePasswordStrengthRule.sharedCheckPasswordRuleListHasCapital
+    || !sharedMeasurePasswordStrengthRule.sharedCheckPasswordRuleListHasSmall
+    || !sharedMeasurePasswordStrengthRule.sharedCheckPasswordRuleListHasDigit) {
+    return "TOO_WEAK";
+  }
+
+  // Test Strong first so the levels stay distinct.
+  const sharedMeasurePasswordStrengthCharacterCount =
+    sharedMeasurePasswordStrengthRule.sharedCheckPasswordRuleListCharacterCount;
+  const sharedMeasurePasswordStrengthHasOtherCharacter = /[^A-Za-z0-9]/.test(sharedMeasurePasswordStrengthNewPassword);
+  if (sharedMeasurePasswordStrengthCharacterCount >= 16
+    || (sharedMeasurePasswordStrengthCharacterCount >= 12 && sharedMeasurePasswordStrengthHasOtherCharacter)) {
+    return "STRONG";
+  }
+  if (sharedMeasurePasswordStrengthCharacterCount >= 12 || sharedMeasurePasswordStrengthHasOtherCharacter) {
+    return "GOOD";
+  }
+  return "FAIR";
+}
+
+// ===== SECTION 21: sharedTogglePasswordVisibility =====
+
+// What it does: Show or hide the password input next to the pressed button.
+// Input: The Show or Hide button inside the password input row.
+// Output: Updated visibility and a button label that describes its next action.
+function sharedTogglePasswordVisibility(sharedTogglePasswordVisibilityButton) {
+  // Keep the same input and value so a password remains exactly as entered.
+  const sharedTogglePasswordVisibilityInput = sharedTogglePasswordVisibilityButton.parentElement.querySelector("input");
+  const sharedTogglePasswordVisibilityIsShowing = sharedTogglePasswordVisibilityInput.type === "password";
+  sharedTogglePasswordVisibilityInput.type = sharedTogglePasswordVisibilityIsShowing ? "text" : "password";
+  const sharedTogglePasswordVisibilityAction = sharedTogglePasswordVisibilityIsShowing ? "Hide" : "Show";
+  sharedTogglePasswordVisibilityButton.textContent = sharedTogglePasswordVisibilityAction;
+  const sharedTogglePasswordVisibilityLabel = sharedTogglePasswordVisibilityButton.getAttribute("aria-label");
+  sharedTogglePasswordVisibilityButton.setAttribute("aria-label",
+    sharedTogglePasswordVisibilityLabel.replace(/^\S+/, sharedTogglePasswordVisibilityAction));
+}
+
+// ===== SECTION 22: sharedShowFieldError =====
+
+// What it does: Draw or clear a field error and reflect the field's invalid state.
+// Input: The field, its error line, optional words and whether to mark it even with no words.
+// Output: Updated text, visibility and accessible field state.
+function sharedShowFieldError(sharedShowFieldErrorInput, sharedShowFieldErrorText, sharedShowFieldErrorWords,
+  sharedShowFieldErrorIsMarked = false) {
+  // A red rule state can mark a field even when its error line has no words.
+  sharedShowFieldErrorText.textContent = sharedShowFieldErrorWords;
+  sharedShowFieldErrorText.hidden = sharedShowFieldErrorWords === "";
+  const sharedShowFieldErrorIsInvalid = sharedShowFieldErrorIsMarked || sharedShowFieldErrorWords !== "";
+  sharedShowFieldErrorInput.classList.toggle("shared-input-invalid", sharedShowFieldErrorIsInvalid);
+  if (sharedShowFieldErrorIsInvalid) {
+    sharedShowFieldErrorInput.setAttribute("aria-invalid", "true");
+  } else {
+    sharedShowFieldErrorInput.removeAttribute("aria-invalid");
+  }
+}
+
+// ===== SECTION 23: sharedShowInlineMessage =====
+
+// What it does: Put one icon and message into an existing live region.
+// Input: The message place, message kind and plain text.
+// Output: One inline message. The live region remains available to assistive technology.
+function sharedShowInlineMessage(sharedShowInlineMessagePlace, sharedShowInlineMessageKind,
+  sharedShowInlineMessageText) {
+  // The information variant uses the base class alone.
+  let sharedShowInlineMessageClasses = "shared-inline-message";
+  if (sharedShowInlineMessageKind !== "INFORMATION") {
+    sharedShowInlineMessageClasses += " shared-inline-message-" + sharedShowInlineMessageKind.toLowerCase();
+  }
+  sharedShowInlineMessagePlace.replaceChildren(
+    sharedBuildMessage(sharedShowInlineMessageClasses, sharedShowInlineMessageKind, sharedShowInlineMessageText)
+  );
+}
+
+// ===== SECTION 24: HELPER FUNCTIONS =====
 
 // What it does: Build the icon and text shared by corner and inline messages.
 // Input: The design classes, the message kind and the message text.

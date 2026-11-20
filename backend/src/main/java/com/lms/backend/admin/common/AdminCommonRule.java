@@ -16,6 +16,7 @@ public class AdminCommonRule {
     // ===== SECTION 1: SETTINGS AND LOG WRITER =====
 
     public static final int ADMIN_TABLE_PAGE_SIZE = 20;
+    public static final int ADMIN_CSV_MAXIMUM_ROW_COUNT = 10000;
 
     private final SharedSecurityLogWriter adminWriteRejectedActionLogWriter;
 

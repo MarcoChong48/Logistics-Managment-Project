@@ -130,4 +130,60 @@ public class AdminTemporaryTestToolController {
     public SharedMessageResponse adminTemporaryCreateWorkerWithActiveWork() {
         return adminTemporaryViewTestModeService.adminTemporaryCreateWorkerWithActiveWork();
     }
+
+    // ===== SECTION 9: POST /api/admin/temporary-test/picking-scan-rows =====
+
+    // TEMPORARY TEST CODE - remove before integration
+    // Stage 3 supplies scan history from a synthetic Warehouse picking task.
+    /**
+     * What it does: Creates a picking task with the scan history used by the Logs checks.
+     * Input: None.
+     * Output: The synthetic order reference in a shared message.
+     */
+    @PostMapping("/api/admin/temporary-test/picking-scan-rows")
+    public SharedMessageResponse adminTemporaryCreatePickingScanRow() {
+        return adminTemporaryViewTestModeService.adminTemporaryCreatePickingScanRow();
+    }
+
+    // ===== SECTION 10: POST /api/admin/temporary-test/old-log-rows =====
+
+    // TEMPORARY TEST CODE - remove before integration
+    // Stage 3 prepares rows on both sides of the retention limits.
+    /**
+     * What it does: Replaces the retention test rows.
+     * Input: None.
+     * Output: A shared message confirming fixture creation.
+     */
+    @PostMapping("/api/admin/temporary-test/old-log-rows")
+    public SharedMessageResponse adminTemporaryCreateOldLogRow() {
+        return adminTemporaryViewTestModeService.adminTemporaryCreateOldLogRow();
+    }
+
+    // ===== SECTION 11: POST /api/admin/temporary-test/run-log-cleanup =====
+
+    // TEMPORARY TEST CODE - remove before integration
+    // Stage 3 can invoke the scheduled cleanup immediately for acceptance.
+    /**
+     * What it does: Runs the regular cleanup immediately.
+     * Input: None.
+     * Output: A shared completion message or the usual server error.
+     */
+    @PostMapping("/api/admin/temporary-test/run-log-cleanup")
+    public SharedMessageResponse adminTemporaryRunLogCleanup() {
+        return adminTemporaryViewTestModeService.adminTemporaryRunLogCleanup();
+    }
+
+    // ===== SECTION 12: POST /api/admin/temporary-test/private-value-log-rows =====
+
+    // TEMPORARY TEST CODE - remove before integration
+    // Stage 3 verifies that view and export hide the synthetic private values.
+    /**
+     * What it does: Inserts recognizable test values into an audit and a security row.
+     * Input: None.
+     * Output: A shared message confirming fixture creation.
+     */
+    @PostMapping("/api/admin/temporary-test/private-value-log-rows")
+    public SharedMessageResponse adminTemporaryCreatePrivateValueLogRow() {
+        return adminTemporaryViewTestModeService.adminTemporaryCreatePrivateValueLogRow();
+    }
 }

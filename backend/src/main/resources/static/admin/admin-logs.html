@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Logs - LMS Admin</title>
+  <link rel="stylesheet" href="/shared/shared-common.css">
+  <script src="/shared/shared-common.js?v=3" defer></script>
+  <script src="/admin/admin-common.js?v=3" defer></script>
+  <script src="/admin/admin-logs.js?v=3" defer></script>
+</head>
+<body>
+  <!-- Page frame: adminBuildPageFrame places this work area inside the frame. -->
+  <main hidden>
+    <div class="shared-page-header">
+      <div class="shared-page-header-text">
+        <h1 class="shared-page-title">Logs</h1>
+      </div>
+    </div>
+    <p class="shared-note">Log rows cannot be changed or deleted here.</p>
+
+    <div class="shared-tab-list" role="tablist" aria-label="Logs">
+      <button class="shared-tab shared-tab-active" type="button" role="tab" id="adminShowLogTabAuditButton"
+        aria-selected="true" tabindex="0" aria-controls="adminSearchAuditLogPanel" data-tab="adminSearchAuditLogPanel">
+        Audit log <span class="shared-tab-note">kept 3 years</span>
+      </button>
+      <button class="shared-tab" type="button" role="tab" id="adminShowLogTabSecurityButton"
+        aria-selected="false" tabindex="-1" aria-controls="adminSearchSecurityLogPanel"
+        data-tab="adminSearchSecurityLogPanel">
+        Security log <span class="shared-tab-note">kept 90 days</span>
+      </button>
+      <button class="shared-tab" type="button" role="tab" id="adminShowLogTabPickingScanButton"
+        aria-selected="false" tabindex="-1" aria-controls="adminSearchPickingScanHistoryPanel"
+        data-tab="adminSearchPickingScanHistoryPanel">
+        Picking scans <span class="shared-tab-note">kept 90 days</span>
+      </button>
+    </div>
+
+    <div class="shared-tab-panel" id="adminSearchAuditLogPanel" role="tabpanel"
+      aria-labelledby="adminShowLogTabAuditButton">
+      <section class="shared-card">
+        <!-- Filter bar -->
+        <form class="shared-filter-bar">
+          <span class="shared-filter-range">
+            <label class="shared-filter-label">From
+              <input class="shared-input" type="datetime-local" id="adminSearchAuditLogFromTimeInput"
+                name="adminSearchAuditLogFromTime">
+            </label>
+            <label class="shared-filter-label">To
+              <input class="shared-input" type="datetime-local" id="adminSearchAuditLogToTimeInput"
+                name="adminSearchAuditLogToTime">
+            </label>
+          </span>
+          <input class="shared-input" type="text" placeholder="Actor" aria-label="Actor"
+            id="adminSearchAuditLogActorUsernameInput" name="adminSearchAuditLogActorUsername">
+          <span class="shared-select">
+            <select aria-label="Action" id="adminSearchAuditLogActionSelect" name="adminSearchAuditLogAction">
+              <option value="">All actions</option>
+              <option value="USER_CREATED">User created</option>
+              <option value="USER_ROLE_CHANGED">User role changed</option>
+              <option value="USER_BANNED">User banned</option>
+              <option value="USER_UNBANNED">User unbanned</option>
+              <option value="USER_DEACTIVATED">User deactivated</option>
+              <option value="USER_REACTIVATED">User reactivated</option>
+              <option value="USER_UNLOCKED">User unlocked</option>
+              <option value="USER_PASSWORD_RESET">User password reset</option>
+              <option value="DELIVERY_WORKER_PROFILE_EDITED">Delivery worker profile edited</option>
+              <option value="PRODUCT_CREATED">Product created</option>
+              <option value="PRODUCT_EDITED">Product edited</option>
+              <option value="PRODUCT_ACTIVATED">Product activated</option>
+              <option value="PRODUCT_DEACTIVATED">Product deactivated</option>
+              <option value="PRODUCT_IMPORTED">Product imported</option>
+              <option value="CLIENT_INSTRUCTION_RECORDED_BY_ADMIN">Client instruction recorded by admin</option>
+              <option value="LOG_CLEANUP_RUN">Log cleanup run</option>
+              <option value="CSV_DOWNLOADED">CSV downloaded</option>
+            </select>
+            <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+          </span>
+          <span class="shared-select">
+            <select aria-label="Target" id="adminSearchAuditLogTargetTypeSelect" name="adminSearchAuditLogTargetType">
+              <option value="">All targets</option>
+              <option value="USER">User</option>
+              <option value="PRODUCT">Product</option>
+              <option value="ORDER">Order</option>
+              <option value="PICKING_TASK">Picking task</option>
+              <option value="PACKAGE">Package</option>
+              <option value="SHORTAGE_CASE">Shortage case</option>
+              <option value="CLIENT_INSTRUCTION">Client instruction</option>
+              <option value="REFUND">Refund</option>
+              <option value="LOG">Log</option>
+              <option value="SYSTEM">System</option>
+            </select>
+            <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+          </span>
+          <input class="shared-input shared-input-short" type="text" placeholder="Target ID" aria-label="Target ID"
+            id="adminSearchAuditLogTargetIDInput" name="adminSearchAuditLogTargetID">
+          <span class="shared-filter-buttons">
+            <button type="submit" class="shared-button" id="adminSearchAuditLogSubmitButton">Search</button>
+            <button type="button" class="shared-button shared-button-quiet" id="adminSearchAuditLogClearButton">
+              Clear
+            </button>
+          </span>
+          <span class="shared-filter-end">
+            <button type="button" class="shared-button" id="adminDownloadAuditLogCSVButton">
+              <svg class="shared-icon" aria-hidden="true"><use href="#icon-download"/></svg> Download CSV
+            </button>
+          </span>
+        </form>
+
+        <!-- Table -->
+        <div class="shared-table-scroll" role="region" aria-label="Audit log table" hidden>
+          <table class="shared-table">
+            <thead>
+              <tr>
+                <th scope="col" class="shared-table-time">Time</th>
+                <th scope="col">Actor</th>
+                <th scope="col" class="shared-table-wrap">Action</th>
+                <th scope="col">Target</th>
+                <th scope="col" class="shared-table-wrap">Old and new value</th>
+              </tr>
+            </thead>
+            <tbody id="adminSearchAuditLogResultTableBody"></tbody>
+          </table>
+        </div>
+        <p class="shared-table-empty" id="adminSearchAuditLogEmptyMessage" hidden>No rows found.
+          <button type="button" class="shared-button shared-button-quiet">Clear filters</button>
+        </p>
+
+        <!-- Pager -->
+        <div class="shared-pager" id="adminSearchAuditLogPager" hidden>
+          <span id="adminSearchAuditLogTotalRowCountText" aria-live="polite"></span>
+        </div>
+      </section>
+    </div>
+
+    <div class="shared-tab-panel" id="adminSearchSecurityLogPanel" role="tabpanel"
+      aria-labelledby="adminShowLogTabSecurityButton" hidden>
+      <section class="shared-card">
+        <!-- Filter bar -->
+        <form class="shared-filter-bar">
+          <span class="shared-filter-range">
+            <label class="shared-filter-label">From
+              <input class="shared-input" type="datetime-local" id="adminSearchSecurityLogFromTimeInput"
+                name="adminSearchSecurityLogFromTime">
+            </label>
+            <label class="shared-filter-label">To
+              <input class="shared-input" type="datetime-local" id="adminSearchSecurityLogToTimeInput"
+                name="adminSearchSecurityLogToTime">
+            </label>
+          </span>
+          <input class="shared-input" type="text" placeholder="Username" aria-label="Username"
+            id="adminSearchSecurityLogUsernameInput" name="adminSearchSecurityLogUsername">
+          <span class="shared-select">
+            <select aria-label="Event" id="adminSearchSecurityLogEventTypeSelect"
+              name="adminSearchSecurityLogEventType">
+              <option value="">All events</option>
+              <option value="LOGIN_SUCCESS">Login success</option>
+              <option value="LOGIN_FAILURE">Login failure</option>
+              <option value="ACCOUNT_LOCKED">Account locked</option>
+              <option value="LOGOUT">Logout</option>
+              <option value="PASSWORD_CHANGED">Password changed</option>
+              <option value="TEMPORARY_PASSWORD_ISSUED">Temporary password issued</option>
+              <option value="SESSION_REVOKED">Session revoked</option>
+              <option value="ACCESS_DENIED">Access denied</option>
+              <option value="ACCOUNT_UNLOCKED_BY_ADMIN">Account unlocked by admin</option>
+              <option value="ACCOUNT_BANNED">Account banned</option>
+              <option value="ACCOUNT_UNBANNED">Account unbanned</option>
+              <option value="ACCOUNT_DEACTIVATED">Account deactivated</option>
+              <option value="ACCOUNT_REACTIVATED">Account reactivated</option>
+              <option value="ROLE_CHANGED">Role changed</option>
+              <option value="REJECTED_ADMIN_ACTION">Rejected admin action</option>
+            </select>
+            <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+          </span>
+          <span class="shared-select">
+            <select aria-label="Result" id="adminSearchSecurityLogResultSelect" name="adminSearchSecurityLogResult">
+              <option value="">All results</option>
+              <option value="SUCCESS">Success</option>
+              <option value="FAILURE">Failure</option>
+              <option value="REJECTED">Rejected</option>
+            </select>
+            <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+          </span>
+          <span class="shared-filter-buttons">
+            <button type="submit" class="shared-button" id="adminSearchSecurityLogSubmitButton">Search</button>
+            <button type="button" class="shared-button shared-button-quiet" id="adminSearchSecurityLogClearButton">
+              Clear
+            </button>
+          </span>
+          <span class="shared-filter-end">
+            <button type="button" class="shared-button" id="adminDownloadSecurityLogCSVButton">
+              <svg class="shared-icon" aria-hidden="true"><use href="#icon-download"/></svg> Download CSV
+            </button>
+          </span>
+        </form>
+
+        <!-- Table -->
+        <div class="shared-table-scroll" role="region" aria-label="Security log table" hidden>
+          <table class="shared-table">
+            <thead>
+              <tr>
+                <th scope="col" class="shared-table-time">Time</th>
+                <th scope="col">User</th>
+                <th scope="col">Event</th>
+                <th scope="col">Result</th>
+                <th scope="col" class="shared-table-time">IP address</th>
+                <th scope="col" class="shared-table-wrap">Details and device</th>
+              </tr>
+            </thead>
+            <tbody id="adminSearchSecurityLogResultTableBody"></tbody>
+          </table>
+        </div>
+        <p class="shared-table-empty" id="adminSearchSecurityLogEmptyMessage" hidden>No rows found.
+          <button type="button" class="shared-button shared-button-quiet">Clear filters</button>
+        </p>
+
+        <!-- Pager -->
+        <div class="shared-pager" id="adminSearchSecurityLogPager" hidden>
+          <span id="adminSearchSecurityLogTotalRowCountText" aria-live="polite"></span>
+        </div>
+      </section>
+    </div>
+
+    <div class="shared-tab-panel" id="adminSearchPickingScanHistoryPanel" role="tabpanel"
+      aria-labelledby="adminShowLogTabPickingScanButton" hidden>
+      <section class="shared-card">
+        <!-- Filter bar -->
+        <form class="shared-filter-bar">
+          <span class="shared-filter-range">
+            <label class="shared-filter-label">From
+              <input class="shared-input" type="datetime-local" id="adminSearchPickingScanHistoryFromTimeInput"
+                name="adminSearchPickingScanHistoryFromTime">
+            </label>
+            <label class="shared-filter-label">To
+              <input class="shared-input" type="datetime-local" id="adminSearchPickingScanHistoryToTimeInput"
+                name="adminSearchPickingScanHistoryToTime">
+            </label>
+          </span>
+          <input class="shared-input" type="text" placeholder="Order" aria-label="Order"
+            id="adminSearchPickingScanHistoryOrderReferenceInput" name="adminSearchPickingScanHistoryOrderReference">
+          <input class="shared-input" type="text" placeholder="Worker" aria-label="Worker"
+            id="adminSearchPickingScanHistoryWorkerUsernameInput" name="adminSearchPickingScanHistoryWorkerUsername">
+          <span class="shared-select">
+            <select aria-label="Result" id="adminSearchPickingScanHistoryResultSelect"
+              name="adminSearchPickingScanHistoryResult">
+              <option value="">All results</option>
+              <option value="ACCEPTED">Accepted</option>
+              <option value="REJECTED">Rejected</option>
+              <option value="REVERSED">Reversed</option>
+            </select>
+            <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+          </span>
+          <span class="shared-filter-buttons">
+            <button type="submit" class="shared-button" id="adminSearchPickingScanHistorySubmitButton">Search</button>
+            <button type="button" class="shared-button shared-button-quiet"
+              id="adminSearchPickingScanHistoryClearButton">
+              Clear
+            </button>
+          </span>
+          <span class="shared-filter-end">
+            <button type="button" class="shared-button" id="adminDownloadPickingScanHistoryCSVButton">
+              <svg class="shared-icon" aria-hidden="true"><use href="#icon-download"/></svg> Download CSV
+            </button>
+          </span>
+        </form>
+
+        <!-- Table -->
+        <div class="shared-table-scroll" role="region" aria-label="Picking scans table" hidden>
+          <table class="shared-table">
+            <thead>
+              <tr>
+                <th scope="col" class="shared-table-time">Time</th>
+                <th scope="col">Order</th>
+                <th scope="col">Worker</th>
+                <th scope="col">Scanned code</th>
+                <th scope="col">Product</th>
+                <th scope="col">Result</th>
+                <th scope="col" class="shared-table-wrap">Reason</th>
+              </tr>
+            </thead>
+            <tbody id="adminSearchPickingScanHistoryResultTableBody"></tbody>
+          </table>
+        </div>
+        <p class="shared-table-empty" id="adminSearchPickingScanHistoryEmptyMessage" hidden>No rows found.
+          <button type="button" class="shared-button shared-button-quiet">Clear filters</button>
+        </p>
+
+        <!-- Pager -->
+        <div class="shared-pager" id="adminSearchPickingScanHistoryPager" hidden>
+          <span id="adminSearchPickingScanHistoryTotalRowCountText" aria-live="polite"></span>
+        </div>
+      </section>
+    </div>
+
+    <section class="shared-card" id="adminViewLogCleanupStatusPanel">
+      <div class="shared-card-header">
+        <h2 class="shared-card-title">Log clean-up</h2>
+      </div>
+      <div class="shared-card-body">
+        <dl class="shared-fact-list">
+          <div class="shared-fact">
+            <dt class="shared-fact-label">Last run</dt>
+            <dd class="shared-fact-value" id="adminViewLogCleanupStatusLastRunTimeText">-</dd>
+          </div>
+          <div class="shared-fact">
+            <dt class="shared-fact-label">Rows deleted</dt>
+            <dd class="shared-fact-value" id="adminViewLogCleanupStatusCountText">-</dd>
+          </div>
+          <div class="shared-fact">
+            <dt class="shared-fact-label">Keeping time</dt>
+            <dd class="shared-fact-value" id="adminViewLogCleanupStatusKeepRuleText">-</dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

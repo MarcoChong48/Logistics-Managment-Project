@@ -1,5 +1,6 @@
 package com.lms.backend.admin.user;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -193,5 +194,21 @@ public class AdminUserController {
             @PathVariable("userID") Long userID,
             @RequestBody AdminResetPasswordRequest adminResetPasswordRequest) {
         return adminUserService.adminResetPassword(userID, adminResetPasswordRequest);
+    }
+
+    // ===== SECTION 14: GET /api/admin/users/csv =====
+
+    /**
+     * What it does: Downloads accounts that match the Users search filters.
+     * Input: The optional username, role and account status filters.
+     * Output: A CSV attachment, or 400 for an invalid filter.
+     */
+    @GetMapping("/csv")
+    public ResponseEntity<byte[]> adminDownloadUserCSV(
+            @RequestParam(required = false) String adminSearchUserKeyword,
+            @RequestParam(required = false) String adminSearchUserRole,
+            @RequestParam(required = false) String adminSearchUserAccountStatus) {
+        return adminUserService.adminDownloadUserCSV(adminSearchUserKeyword,
+                adminSearchUserRole, adminSearchUserAccountStatus);
     }
 }

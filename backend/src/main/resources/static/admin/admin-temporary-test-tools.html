@@ -134,6 +134,60 @@
         </div>
       </section>
     </div>
+
+    <!-- TEMPORARY TEST CODE - remove before integration
+         Stage 3 prepares log fixtures and runs the daily cleanup on demand. -->
+    <h2 class="shared-section-title" hidden>Stage 3</h2>
+    <div class="shared-grid-two" hidden>
+      <section class="shared-card" id="adminTemporaryCreatePickingScanRowPanel">
+        <div class="shared-card-body">
+          <h3 class="shared-card-title">Create picking scan rows</h3>
+          <p>Creates a sample order that is being picked, with six scan rows.</p>
+          <div class="shared-button-row">
+            <button class="shared-button" type="button" id="adminTemporaryCreatePickingScanRowButton">
+              Create picking scan rows
+            </button>
+          </div>
+          <p class="shared-note" id="adminTemporaryCreatePickingScanRowResultText" aria-live="polite" hidden></p>
+        </div>
+      </section>
+      <section class="shared-card" id="adminTemporaryCreateOldLogRowPanel">
+        <div class="shared-card-body">
+          <h3 class="shared-card-title">Create old log rows</h3>
+          <p>Adds log rows just older and just newer than the keeping times.</p>
+          <div class="shared-button-row">
+            <button class="shared-button" type="button" id="adminTemporaryCreateOldLogRowButton">
+              Create old log rows
+            </button>
+          </div>
+          <p class="shared-note" id="adminTemporaryCreateOldLogRowResultText" aria-live="polite" hidden></p>
+        </div>
+      </section>
+      <section class="shared-card" id="adminTemporaryRunLogCleanupPanel">
+        <div class="shared-card-body">
+          <h3 class="shared-card-title">Run log clean-up now</h3>
+          <p>Runs the daily clean-up of old log rows at once.</p>
+          <div class="shared-button-row">
+            <button class="shared-button" type="button" id="adminTemporaryRunLogCleanupButton">
+              Run log clean-up now
+            </button>
+          </div>
+          <p class="shared-note" id="adminTemporaryRunLogCleanupResultText" aria-live="polite" hidden></p>
+        </div>
+      </section>
+      <section class="shared-card" id="adminTemporaryCreatePrivateValueLogRowPanel">
+        <div class="shared-card-body">
+          <h3 class="shared-card-title">Create private value log rows</h3>
+          <p>Adds one audit row and one security row that hold private test values.</p>
+          <div class="shared-button-row">
+            <button class="shared-button" type="button" id="adminTemporaryCreatePrivateValueLogRowButton">
+              Create private value log rows
+            </button>
+          </div>
+          <p class="shared-note" id="adminTemporaryCreatePrivateValueLogRowResultText" aria-live="polite" hidden></p>
+        </div>
+      </section>
+    </div>
   </main>
 </body>
 </html>

@@ -14,7 +14,12 @@ public final class SharedAuditAction {
     public static final String SHARED_AUDIT_ACTION_USER_PASSWORD_RESET = "USER_PASSWORD_RESET";
     public static final String SHARED_AUDIT_ACTION_DELIVERY_WORKER_PROFILE_EDITED = "DELIVERY_WORKER_PROFILE_EDITED";
 
-    // ===== SECTION 2: CONSTRUCTOR =====
+    // ===== SECTION 2: LOG ACTIONS =====
+
+    public static final String SHARED_AUDIT_ACTION_LOG_CLEANUP_RUN = "LOG_CLEANUP_RUN";
+    public static final String SHARED_AUDIT_ACTION_CSV_DOWNLOADED = "CSV_DOWNLOADED";
+
+    // ===== SECTION 3: CONSTRUCTOR =====
 
     /**
      * What it does: Keeps the fixed action words from being created as an object.

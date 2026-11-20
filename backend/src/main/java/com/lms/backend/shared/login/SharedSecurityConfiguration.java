@@ -52,7 +52,7 @@ public class SharedSecurityConfiguration {
     // ===== SECTION 2: OPEN AND PROTECTED WEB ADDRESSES =====
 
     /**
-     * What it does: Applies the shared session and Admin role rules before a route can run.
+     * What it does: Applies the shared session and role rules before a route can run.
      * Input: The security builder, database, security log writer, and shared web error resolver.
      * Output: The security filter chain.
      */
@@ -69,6 +69,12 @@ public class SharedSecurityConfiguration {
                         .requestMatchers(SharedSecurityConfiguration::sharedCheckOpenWebAddress).permitAll()
                         .requestMatchers("/admin", "/admin/**", "/api/admin", "/api/admin/**")
                         .hasRole(SharedUserRole.ADMIN.name())
+                        .requestMatchers("/client", "/client/**", "/api/client", "/api/client/**")
+                        .hasRole(SharedUserRole.CLIENT.name())
+                        .requestMatchers("/warehouse", "/warehouse/**", "/api/warehouse", "/api/warehouse/**")
+                        .hasRole(SharedUserRole.WAREHOUSE_WORKER.name())
+                        .requestMatchers("/delivery", "/delivery/**", "/api/delivery", "/api/delivery/**")
+                        .hasRole(SharedUserRole.DELIVERY_WORKER.name())
                         .anyRequest().authenticated());
 
         // Anonymous sessions can obtain a token. Unsafe requests must carry it as a header.
@@ -177,7 +183,7 @@ public class SharedSecurityConfiguration {
     }
 
     /**
-     * What it does: Sets the fallback unauthenticated answer and the Admin role-denial answer.
+     * What it does: Sets the fallback unauthenticated answer and the role-denial answer.
      * Input: The security builder, security log writer, current user reader and shared web error resolver.
      * Output: The builder redirects page requests and returns shared JSON for API requests.
      */

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   LMS shared style sheet: shared-common.css (version 2.2, the ledger look in charcoal and orange)
+   LMS shared style sheet: shared-common.css (version 2.4, the ledger look in charcoal and orange)
    One style sheet for every page of the Logistics Management System.
    Copy this text unchanged. Do not add, remove or change a rule.
 
@@ -10,7 +10,7 @@
      4. Page frame (side menu, top bar, work area)
      5. Page header
      6. Buttons and links
-     7. Fields
+     7. Fields (also the password field with its rule list and strength scale)
      8. Cards, filter bar and layout helpers
      9. Tables and pager
     10. Status badges and flags
@@ -844,6 +844,166 @@ html {
   background: var(--colour-disabled-surface);
   color: var(--colour-disabled-text);
   cursor: not-allowed;
+}
+
+/* A password field: the input and its "Show" button in one row. A button may
+   not stand inside a label, so a password field is a div with a label[for]. */
+.shared-password-input {
+  display: flex;
+  gap: 8px;
+}
+
+.shared-password-input > .shared-input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* "Show" and "Hide" keep one width, so the input never jumps. */
+.shared-password-show {
+  flex: none;
+  min-width: 64px;
+}
+
+/* The strength scale under a new password: four steps, then one line with the
+   advice on the left and the strength word on the right. It only advises, so
+   it is never red: amber (Waiting) for too weak and fair, green (Done) for
+   good and strong. */
+.shared-strength {
+  margin-top: 8px;
+}
+
+.shared-strength-scale {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.shared-strength-scale > span {
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--colour-rule);
+  transition: background-color var(--motion-colour);
+}
+
+.shared-strength-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--colour-text-muted);
+}
+
+.shared-strength-word {
+  flex: none;
+  font-weight: 600;
+}
+
+.shared-strength-too-weak .shared-strength-word,
+.shared-strength-fair .shared-strength-word {
+  color: var(--colour-status-waiting-text);
+}
+
+.shared-strength-too-weak .shared-strength-scale > span:nth-child(1),
+.shared-strength-fair .shared-strength-scale > span:nth-child(-n+2) {
+  background: var(--colour-status-waiting-text);
+}
+
+.shared-strength-good .shared-strength-word,
+.shared-strength-strong .shared-strength-word {
+  color: var(--colour-status-done-text);
+}
+
+.shared-strength-good .shared-strength-scale > span:nth-child(-n+3),
+.shared-strength-strong .shared-strength-scale > span {
+  background: var(--colour-status-done-text);
+}
+
+/* The rules of a password, ticked off while the person types. Like the rows
+   of a ledger, the lines are separated by the grey rule. */
+.shared-rule-list {
+  margin-top: 6px;
+  font-size: 12.5px;
+  line-height: 18px;
+}
+
+.shared-rule {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 0;
+  color: var(--colour-text);
+}
+
+.shared-rule + .shared-rule {
+  border-top: 1px solid var(--colour-rule);
+}
+
+/* The mark before a rule: an empty ring while the rule waits, a green disc
+   with a tick when it is met, a red disc with a cross when it is not met. */
+.shared-rule-mark {
+  position: relative;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-top: 2px;
+  border: 1.5px solid var(--colour-control-line);
+  border-radius: 50%;
+  transition: background-color var(--motion-colour), border-color var(--motion-colour);
+}
+
+.shared-rule-met {
+  color: var(--colour-text-muted);
+}
+
+.shared-rule-met .shared-rule-mark {
+  border-color: var(--colour-status-done-text);
+  background: var(--colour-status-done-text);
+}
+
+.shared-rule-met .shared-rule-mark::after {
+  content: "";
+  position: absolute;
+  left: 3.5px;
+  top: 1px;
+  width: 3.5px;
+  height: 6.5px;
+  border: solid var(--colour-on-fill);
+  border-width: 0 1.6px 1.6px 0;
+  transform: rotate(45deg);
+}
+
+.shared-rule-unmet {
+  color: var(--colour-danger);
+}
+
+.shared-rule-unmet .shared-rule-mark {
+  border-color: var(--colour-danger);
+  background: var(--colour-danger);
+}
+
+.shared-rule-unmet .shared-rule-mark::before,
+.shared-rule-unmet .shared-rule-mark::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 7px;
+  height: 1.6px;
+  border-radius: var(--radius-pill);
+  background: var(--colour-on-fill);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.shared-rule-unmet .shared-rule-mark::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+/* An error line under a rule list or a scale keeps a little air. */
+.shared-rule-list + .shared-field-error,
+.shared-strength + .shared-field-error {
+  margin-top: 4px;
 }
 
 /* ===== SECTION 8: CARDS, FILTER BAR AND LAYOUT HELPERS ===== */

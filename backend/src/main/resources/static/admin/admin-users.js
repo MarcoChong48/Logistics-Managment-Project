@@ -11,6 +11,7 @@ const adminSearchUserResultTableBody = document.getElementById("adminSearchUserR
 const adminSearchUserEmptyMessage = document.getElementById("adminSearchUserEmptyMessage");
 const adminSearchUserTotalRowCountText = document.getElementById("adminSearchUserTotalRowCountText");
 const adminSearchUserPager = document.getElementById("adminSearchUserPager");
+const adminDownloadUserCSVButton = document.getElementById("adminDownloadUserCSVButton");
 
 const adminCreateUserOpenButton = document.getElementById("adminCreateUserOpenButton");
 const adminCreateUserDialog = document.getElementById("adminCreateUserDialog");
@@ -105,6 +106,7 @@ adminSearchUserSubmitButton.form.addEventListener("submit", (adminSearchUserSubm
 });
 adminSearchUserClearButton.addEventListener("click", adminSearchUserClearFilters);
 adminSearchUserEmptyMessage.querySelector("button").addEventListener("click", adminSearchUserClearFilters);
+adminDownloadUserCSVButton.addEventListener("click", adminDownloadUserCSV);
 
 adminCreateUserOpenButton.addEventListener("click", adminCreateUserOpen);
 adminCreateUserRoleSelect.addEventListener("change", adminCreateUserShowDeliveryProfile);
@@ -466,7 +468,29 @@ function adminShowTemporaryPasswordClear() {
   adminShowTemporaryPasswordCopyMessage.replaceChildren();
 }
 
-// ===== SECTION 13: HELPER FUNCTIONS =====
+// ===== SECTION 13: adminDownloadUserCSV =====
+
+// What it does: Download all users matching the filters applied to the Users table.
+// Input: None. Uses the current list filters and the Download CSV button.
+// Output: A users CSV download, or a message if the request fails.
+async function adminDownloadUserCSV() {
+  const adminDownloadUserCSVParameterList = new URLSearchParams();
+  for (const [adminDownloadUserCSVParameterName, adminDownloadUserCSVParameterValue] of adminSearchUserFilterList) {
+    if (adminDownloadUserCSVParameterValue) {
+      adminDownloadUserCSVParameterList.set(adminDownloadUserCSVParameterName, adminDownloadUserCSVParameterValue);
+    }
+  }
+
+  // There is one download for all matching pages, so the page number is omitted.
+  adminDownloadUserCSVButton.disabled = true;
+  try {
+    await adminDownloadCSV("/api/admin/users/csv?" + adminDownloadUserCSVParameterList);
+  } finally {
+    adminDownloadUserCSVButton.disabled = false;
+  }
+}
+
+// ===== SECTION 14: HELPER FUNCTIONS =====
 
 // What it does: Remember the filters the Admin applied.
 // Input: None. Reads the three search controls.

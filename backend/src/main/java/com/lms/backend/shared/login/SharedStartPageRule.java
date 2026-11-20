@@ -24,15 +24,15 @@ public final class SharedStartPageRule {
      *              Until then those roles use the welcome page.
      */
     public static String sharedFindStartPage(SharedUserRole role) {
-        // Return the Admin dashboard for the Admin role.
-        if (role == SharedUserRole.ADMIN) {
-            return "/admin/admin-dashboard.html";
-        }
-
         // PLACEHOLDER OUTPUT PO-10
         // To: Client, Warehouse and Delivery owners.
         // What: The first page for each role after login.
-        // How to use: Return each role's own start page here when it is ready. For now use the welcome page.
-        return "/shared/shared-welcome.html";
+        // How to use: Replace the welcome address on your role's line when its first page is ready.
+        return switch (role) {
+            case ADMIN -> "/admin/admin-dashboard.html";
+            case CLIENT -> "/shared/shared-welcome.html";
+            case WAREHOUSE_WORKER -> "/shared/shared-welcome.html";
+            case DELIVERY_WORKER -> "/shared/shared-welcome.html";
+        };
     }
 }

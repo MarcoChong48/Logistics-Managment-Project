@@ -12,7 +12,8 @@ const sharedLoginUserNoticeMessageMap = new Map([
   ["IDLE", "You were logged out because you were inactive."],
   ["SESSION_ENDED", "Your session has ended. Please log in again."],
   ["PASSWORD_CHANGED", "Password changed. Please log in with your new password."],
-  ["LOGGED_OUT", "You are logged out."]
+  ["LOGGED_OUT", "You are logged out."],
+  ["PASSWORD_NOT_CHANGED", "Your session ended, so your new password was not saved. Please log in again."]
 ]);
 
 // ===== SECTION 3: START OF PAGE =====
@@ -20,8 +21,7 @@ const sharedLoginUserNoticeMessage = sharedLoginUserNoticeMessageMap.get(
   sharedReadPageParameter("sharedLoginUserNotice")
 );
 if (sharedLoginUserNoticeMessage) {
-  sharedLoginUserMessage.parentElement.hidden = false;
-  sharedLoginUserMessage.textContent = sharedLoginUserNoticeMessage;
+  sharedShowInlineMessage(sharedLoginUserMessage, "INFORMATION", sharedLoginUserNoticeMessage);
 }
 sharedLoginUserForm.addEventListener("submit", sharedLoginUser);
 
@@ -55,10 +55,6 @@ async function sharedLoginUser(sharedLoginUserEvent) {
     window.location.replace(sharedLoginUserResponse.sharedLoginUserNextPageWebAddress);
   } catch (sharedLoginUserError) {
     // Put the returned message on the same page so the user can try again.
-    const sharedLoginUserMessagePanel = sharedLoginUserMessage.parentElement;
-    sharedLoginUserMessagePanel.classList.add("shared-inline-message-error");
-    sharedLoginUserMessagePanel.querySelector("use").setAttribute("href", "#icon-alert");
-    sharedLoginUserMessagePanel.hidden = false;
-    sharedLoginUserMessage.textContent = sharedLoginUserError.message;
+    sharedShowInlineMessage(sharedLoginUserMessage, "ERROR", sharedLoginUserError.message);
   }
 }

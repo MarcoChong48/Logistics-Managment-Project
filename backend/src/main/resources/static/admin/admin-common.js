@@ -105,10 +105,9 @@ async function adminBuildPageFrame(adminBuildPageFrameActivePageName) {
       <span class="shared-page-frame-menu-text">Orders</span>
       <span class="shared-page-frame-menu-stage">Stage 5</span>
     </a>
-    <a class="shared-page-frame-menu-item shared-page-frame-menu-item-disabled" aria-disabled="true">
+    <a class="shared-page-frame-menu-item" href="/admin/admin-logs.html">
       <svg class="shared-icon" aria-hidden="true"><use href="#icon-logs"/></svg>
       <span class="shared-page-frame-menu-text">Logs</span>
-      <span class="shared-page-frame-menu-stage">Stage 3</span>
     </a>
   </nav>
   <header class="shared-page-frame-top-bar" id="adminPageFrameTopBar">
@@ -357,7 +356,35 @@ function adminOpenReasonDialog(adminOpenReasonDialogTitle, adminOpenReasonDialog
     adminOpenReasonDialogFieldMode, adminOpenReasonDialogCancelButton, adminOpenReasonDialogConfirmButton);
 }
 
-// ===== SECTION 9: HELPER FUNCTIONS =====
+// ===== SECTION 9: adminDownloadCSV =====
+
+// What it does: Start a CSV download and keep the Admin page open.
+// Input: The CSV endpoint with the current filter parameters.
+// Output: A download using the server's file name, or a corner error message.
+async function adminDownloadCSV(adminDownloadCSVWebAddress) {
+  try {
+    const adminDownloadCSVResponse = await sharedSendRequest("GET", adminDownloadCSVWebAddress);
+    const adminDownloadCSVDisposition = adminDownloadCSVResponse.headers.get("Content-Disposition") ?? "";
+    const adminDownloadCSVFileName = /\bfilename="?([^";]+)"?/i.exec(adminDownloadCSVDisposition)?.[1] ?? "admin.csv";
+    const adminDownloadCSVFile = await adminDownloadCSVResponse.blob();
+    const adminDownloadCSVFileWebAddress = URL.createObjectURL(adminDownloadCSVFile);
+
+    // Download the response bytes as supplied, including the UTF-8 start mark.
+    const adminDownloadCSVLink = document.createElement("a");
+    adminDownloadCSVLink.href = adminDownloadCSVFileWebAddress;
+    adminDownloadCSVLink.download = adminDownloadCSVFileName;
+    document.body.append(adminDownloadCSVLink);
+    adminDownloadCSVLink.click();
+    adminDownloadCSVLink.remove();
+
+    // What it does: Release the temporary file URL. Input: None. Output: The URL no longer holds the file.
+    window.setTimeout(() => URL.revokeObjectURL(adminDownloadCSVFileWebAddress), 1000);
+  } catch (adminDownloadCSVError) {
+    sharedShowMessage("ERROR", adminDownloadCSVError.message);
+  }
+}
+
+// ===== SECTION 10: HELPER FUNCTIONS =====
 
 // What it does: Close row menus on a page scroll or resize.
 // Input: The scroll or resize event.

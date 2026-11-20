@@ -4,6 +4,7 @@
 const sharedShowWelcomeUsernameText = document.getElementById("sharedShowWelcomeUsernameText");
 const sharedShowWelcomeRoleText = document.getElementById("sharedShowWelcomeRoleText");
 const sharedShowWelcomeNoticeMessage = document.getElementById("sharedShowWelcomeNoticeMessage");
+const sharedShowWelcomeStartPageLink = document.getElementById("sharedShowWelcomeStartPageLink");
 const sharedShowWelcomeLogoutButton = document.getElementById("sharedShowWelcomeLogoutButton");
 
 // ===== SECTION 2: PAGE STATE =====
@@ -45,11 +46,15 @@ async function sharedShowWelcome() {
     // Copy the name as text and use the approved role label.
     sharedShowWelcomeUsernameText.textContent = "Welcome, " + sharedViewSessionResponse.username;
     sharedShowWelcomeRoleText.textContent = "Role: " + sharedShowWelcomeRoleNameMap[sharedViewSessionResponse.role];
-    if (sharedReadPageParameter("sharedShowWelcomeNotice") === "ACCESS_DENIED") {
-      sharedShowWelcomeNoticeMessage.textContent = "You are not allowed to open that page.";
-      sharedShowWelcomeNoticeMessage.parentElement.hidden = false;
+    const sharedShowWelcomeStartPageWebAddress = sharedViewSessionResponse.sharedViewSessionNextPageWebAddress;
+    if (sharedShowWelcomeStartPageWebAddress !== window.location.pathname) {
+      sharedShowWelcomeStartPageLink.href = sharedShowWelcomeStartPageWebAddress;
+      sharedShowWelcomeStartPageLink.hidden = false;
     }
-    sharedShowWelcomeUsernameText.closest("main").hidden = false;
+    sharedShowWelcomeLogoutButton.parentElement.hidden = false;
+    if (sharedReadPageParameter("sharedShowWelcomeNotice") === "ACCESS_DENIED") {
+      sharedShowInlineMessage(sharedShowWelcomeNoticeMessage, "ERROR", "You are not allowed to open that page.");
+    }
   } catch (sharedViewSessionError) {
     // The request helper already directs an expired or revoked session to login.
     if (sharedViewSessionError.status !== 401) {

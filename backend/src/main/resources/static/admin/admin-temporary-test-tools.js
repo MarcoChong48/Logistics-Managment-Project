@@ -27,6 +27,22 @@ const adminTemporaryCreateWorkerWithActiveWorkButton =
   document.getElementById("adminTemporaryCreateWorkerWithActiveWorkButton");
 const adminTemporaryCreateWorkerWithActiveWorkResultText =
   document.getElementById("adminTemporaryCreateWorkerWithActiveWorkResultText");
+const adminTemporaryCreatePickingScanRowButton =
+  document.getElementById("adminTemporaryCreatePickingScanRowButton");
+const adminTemporaryCreatePickingScanRowResultText =
+  document.getElementById("adminTemporaryCreatePickingScanRowResultText");
+const adminTemporaryCreateOldLogRowButton =
+  document.getElementById("adminTemporaryCreateOldLogRowButton");
+const adminTemporaryCreateOldLogRowResultText =
+  document.getElementById("adminTemporaryCreateOldLogRowResultText");
+const adminTemporaryRunLogCleanupButton =
+  document.getElementById("adminTemporaryRunLogCleanupButton");
+const adminTemporaryRunLogCleanupResultText =
+  document.getElementById("adminTemporaryRunLogCleanupResultText");
+const adminTemporaryCreatePrivateValueLogRowButton =
+  document.getElementById("adminTemporaryCreatePrivateValueLogRowButton");
+const adminTemporaryCreatePrivateValueLogRowResultText =
+  document.getElementById("adminTemporaryCreatePrivateValueLogRowResultText");
 
 // ===== SECTION 2: PAGE STATE =====
 // The frame checks the Admin's session. The tool page also checks the dedicated mode endpoint.
@@ -70,6 +86,10 @@ adminTemporaryExpireTemporaryPasswordButton.addEventListener("click", adminTempo
 adminTemporarySetUserStatusButton.addEventListener("click", adminTemporarySetUserStatus);
 adminTemporaryCreateManyTestUserButton.addEventListener("click", adminTemporaryCreateManyTestUser);
 adminTemporaryCreateWorkerWithActiveWorkButton.addEventListener("click", adminTemporaryCreateWorkerWithActiveWork);
+adminTemporaryCreatePickingScanRowButton.addEventListener("click", adminTemporaryCreatePickingScanRow);
+adminTemporaryCreateOldLogRowButton.addEventListener("click", adminTemporaryCreateOldLogRow);
+adminTemporaryRunLogCleanupButton.addEventListener("click", adminTemporaryRunLogCleanup);
+adminTemporaryCreatePrivateValueLogRowButton.addEventListener("click", adminTemporaryCreatePrivateValueLogRow);
 
 // ===== SECTION 4: adminTemporaryCreateTestUser =====
 
@@ -222,4 +242,88 @@ async function adminTemporaryCreateWorkerWithActiveWork() {
       adminTemporaryCreateWorkerWithActiveWorkError.code + ": " + adminTemporaryCreateWorkerWithActiveWorkError.message;
   }
   adminTemporaryCreateWorkerWithActiveWorkResultText.hidden = false;
+}
+
+// ===== SECTION 10: adminTemporaryCreatePickingScanRow =====
+
+// TEMPORARY TEST CODE - remove before integration
+// Creates a sample order that is being picked, with six scan rows.
+// What it does: Create scans for a synthetic picking order.
+// Input: None.
+// Output: The server's message or its error in the tool's result line.
+async function adminTemporaryCreatePickingScanRow() {
+  // Send the body-free tool request and display its result as plain text.
+  try {
+    const adminTemporaryCreatePickingScanRowResponse = await sharedSendRequest(
+      "POST", "/api/admin/temporary-test/picking-scan-rows", undefined, adminTemporaryCreatePickingScanRowButton
+    );
+    adminTemporaryCreatePickingScanRowResultText.textContent = adminTemporaryCreatePickingScanRowResponse.message;
+  } catch (adminTemporaryCreatePickingScanRowError) {
+    adminTemporaryCreatePickingScanRowResultText.textContent = adminTemporaryCreatePickingScanRowError.code + ": "
+      + adminTemporaryCreatePickingScanRowError.message;
+  }
+  adminTemporaryCreatePickingScanRowResultText.hidden = false;
+}
+
+// ===== SECTION 11: adminTemporaryCreateOldLogRow =====
+
+// TEMPORARY TEST CODE - remove before integration
+// Adds log rows just older and just newer than the keeping times.
+// What it does: Replace the tagged retention fixtures.
+// Input: None.
+// Output: The server's message or its error in the tool's result line.
+async function adminTemporaryCreateOldLogRow() {
+  // Send the body-free tool request and display its result as plain text.
+  try {
+    const adminTemporaryCreateOldLogRowResponse = await sharedSendRequest(
+      "POST", "/api/admin/temporary-test/old-log-rows", undefined, adminTemporaryCreateOldLogRowButton
+    );
+    adminTemporaryCreateOldLogRowResultText.textContent = adminTemporaryCreateOldLogRowResponse.message;
+  } catch (adminTemporaryCreateOldLogRowError) {
+    adminTemporaryCreateOldLogRowResultText.textContent = adminTemporaryCreateOldLogRowError.code + ": "
+      + adminTemporaryCreateOldLogRowError.message;
+  }
+  adminTemporaryCreateOldLogRowResultText.hidden = false;
+}
+
+// ===== SECTION 12: adminTemporaryRunLogCleanup =====
+
+// TEMPORARY TEST CODE - remove before integration
+// Runs the daily clean-up of old log rows at once.
+// What it does: Run the same cleanup as the daily task.
+// Input: None.
+// Output: The server's message or its error in the tool's result line.
+async function adminTemporaryRunLogCleanup() {
+  // Send the body-free tool request and display its result as plain text.
+  try {
+    const adminTemporaryRunLogCleanupResponse = await sharedSendRequest(
+      "POST", "/api/admin/temporary-test/run-log-cleanup", undefined, adminTemporaryRunLogCleanupButton
+    );
+    adminTemporaryRunLogCleanupResultText.textContent = adminTemporaryRunLogCleanupResponse.message;
+  } catch (adminTemporaryRunLogCleanupError) {
+    adminTemporaryRunLogCleanupResultText.textContent = adminTemporaryRunLogCleanupError.code + ": "
+      + adminTemporaryRunLogCleanupError.message;
+  }
+  adminTemporaryRunLogCleanupResultText.hidden = false;
+}
+
+// ===== SECTION 13: adminTemporaryCreatePrivateValueLogRow =====
+
+// TEMPORARY TEST CODE - remove before integration
+// Adds one audit row and one security row that hold private test values.
+// What it does: Insert synthetic audit and security values for the privacy checks.
+// Input: None.
+// Output: The server's message or its error in the tool's result line.
+async function adminTemporaryCreatePrivateValueLogRow() {
+  // Send the body-free tool request and display its result as plain text.
+  try {
+    const adminTemporaryCreatePrivateValueLogRowResponse = await sharedSendRequest(
+      "POST", "/api/admin/temporary-test/private-value-log-rows", undefined, adminTemporaryCreatePrivateValueLogRowButton
+    );
+    adminTemporaryCreatePrivateValueLogRowResultText.textContent = adminTemporaryCreatePrivateValueLogRowResponse.message;
+  } catch (adminTemporaryCreatePrivateValueLogRowError) {
+    adminTemporaryCreatePrivateValueLogRowResultText.textContent = adminTemporaryCreatePrivateValueLogRowError.code + ": "
+      + adminTemporaryCreatePrivateValueLogRowError.message;
+  }
+  adminTemporaryCreatePrivateValueLogRowResultText.hidden = false;
 }

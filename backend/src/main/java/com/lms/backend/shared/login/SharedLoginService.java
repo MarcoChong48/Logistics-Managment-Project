@@ -162,7 +162,7 @@ public class SharedLoginService {
     /**
      * What it does: Changes the password and revokes all sessions issued with the old password.
      * Input: The current, new and confirmation passwords and the servlet request.
-     * Output: A message asking the user to sign in again, or the Stage 1 password error.
+     * Output: A message asking the user to sign in again, or an error for the field the user must correct.
      */
     public SharedMessageResponse sharedChangePassword(SharedChangePasswordRequest sharedChangePasswordRequest,
             HttpServletRequest sharedChangePasswordHttpRequest) {
@@ -386,7 +386,7 @@ public class SharedLoginService {
                     sharedSavePasswordFailureList.getFirst());
         }
         if (!sharedChangePasswordNewPassword.equals(sharedSavePasswordRequest.sharedChangePasswordConfirmPassword())) {
-            throw new SharedRuleException(HttpStatus.BAD_REQUEST, "SHARED_PASSWORD_RULE_FAILED",
+            throw new SharedRuleException(HttpStatus.BAD_REQUEST, "SHARED_CONFIRM_PASSWORD_DIFFERENT",
                     "The two new passwords are not the same.");
         }
         if (sharedChangePasswordNewPassword.equals(sharedChangePasswordCurrentPassword)) {

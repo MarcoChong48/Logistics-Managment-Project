@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Users - LMS Admin</title>
   <link rel="stylesheet" href="/shared/shared-common.css">
-  <script src="/shared/shared-common.js?v=2" defer></script>
-  <script src="/admin/admin-common.js?v=2" defer></script>
-  <script src="/admin/admin-users.js?v=2" defer></script>
+  <script src="/shared/shared-common.js?v=3" defer></script>
+  <script src="/admin/admin-common.js?v=3" defer></script>
+  <script src="/admin/admin-users.js?v=3" defer></script>
 </head>
 <body>
   <!-- Page frame: adminBuildPageFrame places this work area inside the frame. -->
@@ -18,7 +18,7 @@
         <p class="shared-page-subtitle" id="adminSearchUserTotalRowCountText" aria-live="polite"></p>
       </div>
       <div class="shared-page-header-actions">
-        <button type="button" class="shared-button">
+        <button type="button" class="shared-button" id="adminDownloadUserCSVButton">
           <svg class="shared-icon" aria-hidden="true"><use href="#icon-download"/></svg> Download CSV
         </button>
         <button type="button" class="shared-button shared-button-primary" id="adminCreateUserOpenButton"

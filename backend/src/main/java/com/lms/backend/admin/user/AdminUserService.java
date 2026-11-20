@@ -1,8 +1,12 @@
 package com.lms.backend.admin.user;
 
+import static com.lms.backend.admin.common.AdminCommonRule.ADMIN_CSV_MAXIMUM_ROW_COUNT;
 import static com.lms.backend.admin.common.AdminCommonRule.ADMIN_TABLE_PAGE_SIZE;
 import static com.lms.backend.admin.common.AdminCommonRule.adminCheckReasonText;
 import static com.lms.backend.admin.common.AdminCommonRule.adminCountPage;
+import static com.lms.backend.admin.common.AdminPrivateValueRule.adminHidePrivateValue;
+import static com.lms.backend.shared.csv.SharedCSVWriter.sharedWriteCSVDownload;
+import static com.lms.backend.shared.log.SharedAuditAction.SHARED_AUDIT_ACTION_CSV_DOWNLOADED;
 import static com.lms.backend.shared.log.SharedAuditAction.SHARED_AUDIT_ACTION_DELIVERY_WORKER_PROFILE_EDITED;
 import static com.lms.backend.shared.log.SharedAuditAction.SHARED_AUDIT_ACTION_USER_BANNED;
 import static com.lms.backend.shared.log.SharedAuditAction.SHARED_AUDIT_ACTION_USER_CREATED;
@@ -27,6 +31,7 @@ import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_PICKUP_L
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -40,6 +45,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -141,13 +147,7 @@ public class AdminUserService {
         // Time and filters are shared by the account query and the displayed lock flags.
         Instant adminSearchUserTime = Instant.now();
         Long adminSearchUserCurrentUserID = adminUserCurrentUserReader.sharedReadCurrentUser().userID();
-        SharedUserRole role = null;
-        if (adminSearchUserRole != null && !adminSearchUserRole.isEmpty()) {
-            role = adminReadRole(adminSearchUserRole);
-            if (role == null) {
-                throw adminRefuseInput("Choose a valid role.");
-            }
-        }
+        SharedUserRole role = adminReadSearchUserRole(adminSearchUserRole);
         boolean adminSearchUserIsLockedOnly = "LOCKED_NOW".equals(adminSearchUserAccountStatus);
         SharedAccountStatus accountStatus = adminReadSearchAccountStatus(adminSearchUserAccountStatus);
         String adminSearchUserKeywordText = adminSearchUserKeyword == null ? "" : adminSearchUserKeyword;
@@ -171,21 +171,8 @@ public class AdminUserService {
                     PageRequest.of(adminSearchUserActualPageNumber - 1, ADMIN_TABLE_PAGE_SIZE));
         }
 
-        // Attach last-login times in one query and copy only fields approved for the list.
-        Map<Long, Instant> adminSearchUserLastLoginTimeMap =
-                adminFindLastLoginTimes(adminSearchUserPage.getContent());
-        List<AdminSearchUserRow> adminSearchUserRowList = new ArrayList<>();
-        for (AppUser adminSearchUserAccount : adminSearchUserPage) {
-            adminSearchUserRowList.add(new AdminSearchUserRow(
-                    adminSearchUserAccount.userID, adminSearchUserAccount.username, adminSearchUserAccount.role,
-                    adminSearchUserAccount.accountStatus, adminSearchUserAccount.failedLoginCount,
-                    adminSearchUserAccount.lockUntil, adminSearchUserAccount.mustChangePassword,
-                    adminSearchUserAccount.createdTime,
-                    AdminUserRule.adminCheckLockedNowRule(adminSearchUserAccount.accountStatus,
-                            adminSearchUserAccount.lockUntil, adminSearchUserTime),
-                    adminSearchUserLastLoginTimeMap.get(adminSearchUserAccount.userID),
-                    adminSearchUserCurrentUserID.equals(adminSearchUserAccount.userID)));
-        }
+        List<AdminSearchUserRow> adminSearchUserRowList = adminReadUserRows(adminSearchUserPage.getContent(),
+                adminSearchUserCurrentUserID, adminSearchUserTime);
         return new AdminSearchUserResponse(adminSearchUserRowList, adminSearchUserActualPageNumber,
                 adminSearchUserTotalPageCount, adminSearchUserTotalRowCount);
     }
@@ -567,7 +554,100 @@ public class AdminUserService {
                 adminResetPasswordTemporaryPassword, temporaryPasswordExpiryTime);
     }
 
-    // ===== SECTION 15: HELPER FUNCTIONS =====
+    // ===== SECTION 15: adminDownloadUserCSV =====
+
+    /**
+     * What it does: Exports the account search results in username order and records the download.
+     * Input: The optional keyword, role and status filters.
+     * Output: The CSV attachment, limited to the first 10,000 matching accounts.
+     */
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
+    public ResponseEntity<byte[]> adminDownloadUserCSV(String adminSearchUserKeyword, String adminSearchUserRole,
+            String adminSearchUserAccountStatus) {
+        // Apply the same account filters and result mapping as the Users search.
+        Instant adminDownloadUserCSVTime = Instant.now();
+        Long actorUserID = adminUserCurrentUserReader.sharedReadCurrentUser().userID();
+        SharedUserRole role = adminReadSearchUserRole(adminSearchUserRole);
+        SharedAccountStatus accountStatus = adminReadSearchAccountStatus(adminSearchUserAccountStatus);
+        Page<AppUser> adminDownloadUserCSVPage = adminUserRepository.adminSearchUser(
+                Objects.toString(adminSearchUserKeyword, ""), role, accountStatus,
+                "LOCKED_NOW".equals(adminSearchUserAccountStatus), SharedAccountStatus.LOCKED, adminDownloadUserCSVTime,
+                PageRequest.of(0, ADMIN_CSV_MAXIMUM_ROW_COUNT));
+        List<List<Object>> adminDownloadUserCSVRowList = adminReadUserRows(adminDownloadUserCSVPage.getContent(),
+                actorUserID, adminDownloadUserCSVTime).stream()
+                .map(adminDownloadUserCSVRow -> Arrays.<Object>asList(adminDownloadUserCSVRow.userID(),
+                        adminDownloadUserCSVRow.username(), adminDownloadUserCSVRow.role(),
+                        adminDownloadUserCSVRow.accountStatus(), adminDownloadUserCSVRow.failedLoginCount(),
+                        adminDownloadUserCSVRow.lockUntil(), adminDownloadUserCSVRow.mustChangePassword(),
+                        adminDownloadUserCSVRow.createdTime(), adminDownloadUserCSVRow.adminSearchUserIsLockedNow(),
+                        adminDownloadUserCSVRow.adminSearchUserLastLoginTime(),
+                        adminDownloadUserCSVRow.adminSearchUserIsOwnAccount())).toList();
+
+        // Record only the applied filters and exported row count.
+        Map<String, String> adminDownloadUserCSVFilterMap = new LinkedHashMap<>();
+        if (adminSearchUserKeyword != null && !adminSearchUserKeyword.isEmpty()) {
+            adminDownloadUserCSVFilterMap.put("adminSearchUserKeyword", adminHidePrivateValue(adminSearchUserKeyword));
+        }
+        if (role != null) {
+            adminDownloadUserCSVFilterMap.put("adminSearchUserRole", role.name());
+        }
+        if (adminSearchUserAccountStatus != null && !adminSearchUserAccountStatus.isEmpty()) {
+            adminDownloadUserCSVFilterMap.put("adminSearchUserAccountStatus", adminSearchUserAccountStatus);
+        }
+        adminUserAuditLogWriter.sharedWriteAuditLog(actorUserID, SHARED_AUDIT_ACTION_CSV_DOWNLOADED, "SYSTEM",
+                "CSV_USERS", null, Map.of("rowCount", adminDownloadUserCSVRowList.size(),
+                        "filters", adminDownloadUserCSVFilterMap));
+
+        // The footer describes the subset when more rows matched than the export can include.
+        String adminDownloadUserCSVLimitMessage =
+                adminDownloadUserCSVPage.getTotalElements() > ADMIN_CSV_MAXIMUM_ROW_COUNT ? "Only the first 10000 users by username are included." : null;
+        return sharedWriteCSVDownload(List.of("userID", "username", "role", "accountStatus", "failedLoginCount",
+                "lockUntil", "mustChangePassword", "createdTime", "adminSearchUserIsLockedNow",
+                "adminSearchUserLastLoginTime", "adminSearchUserIsOwnAccount"), adminDownloadUserCSVRowList,
+                "admin-users", adminDownloadUserCSVTime, adminDownloadUserCSVLimitMessage);
+    }
+
+    // ===== SECTION 16: HELPER FUNCTIONS =====
+
+    /**
+     * What it does: Validates an optional Users search role filter.
+     * Input: The supplied role word, which may be empty.
+     * Output: The role, null for all roles, or 400 for an unsupported role.
+     */
+    private SharedUserRole adminReadSearchUserRole(String adminReadSearchUserRoleText) {
+        if (adminReadSearchUserRoleText == null || adminReadSearchUserRoleText.isEmpty()) {
+            return null;
+        }
+        SharedUserRole role = adminReadRole(adminReadSearchUserRoleText);
+        if (role == null) {
+            throw adminRefuseInput("Choose a valid role.");
+        }
+        return role;
+    }
+
+    /**
+     * What it does: Builds the safe account rows shared by the screen and CSV.
+     * Input: The matched accounts, current Admin ID and time of the search.
+     * Output: The account rows in the repository's order.
+     */
+    private List<AdminSearchUserRow> adminReadUserRows(List<AppUser> adminReadUserRowsAccountList,
+            Long adminReadUserRowsCurrentUserID, Instant adminReadUserRowsTime) {
+        // Attach last-login times in one query and copy only the approved fields.
+        Map<Long, Instant> adminReadUserRowsLastLoginTimeMap = adminFindLastLoginTimes(adminReadUserRowsAccountList);
+        List<AdminSearchUserRow> adminReadUserRowsResultList = new ArrayList<>();
+        for (AppUser adminReadUserRowsAccount : adminReadUserRowsAccountList) {
+            adminReadUserRowsResultList.add(new AdminSearchUserRow(adminReadUserRowsAccount.userID,
+                    adminReadUserRowsAccount.username, adminReadUserRowsAccount.role,
+                    adminReadUserRowsAccount.accountStatus, adminReadUserRowsAccount.failedLoginCount,
+                    adminReadUserRowsAccount.lockUntil, adminReadUserRowsAccount.mustChangePassword,
+                    adminReadUserRowsAccount.createdTime,
+                    AdminUserRule.adminCheckLockedNowRule(adminReadUserRowsAccount.accountStatus,
+                            adminReadUserRowsAccount.lockUntil, adminReadUserRowsTime),
+                    adminReadUserRowsLastLoginTimeMap.get(adminReadUserRowsAccount.userID),
+                    adminReadUserRowsCurrentUserID.equals(adminReadUserRowsAccount.userID)));
+        }
+        return adminReadUserRowsResultList;
+    }
 
     /**
      * What it does: Reads a case-sensitive role word without exposing deserialization errors.

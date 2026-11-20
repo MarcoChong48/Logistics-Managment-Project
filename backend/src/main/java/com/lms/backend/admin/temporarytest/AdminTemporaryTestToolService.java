@@ -1,5 +1,5 @@
 // TEMPORARY TEST CODE - remove before integration
-// Local fixtures exercise account, session, pagination and active-work rules.
+// Local fixtures exercise accounts, sessions, active work, log privacy and retention.
 package com.lms.backend.admin.temporarytest;
 
 import static com.lms.backend.shared.login.SharedLoginRule.SHARED_TEMPORARY_PASSWORD_VALID_HOURS;
@@ -32,8 +32,10 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.lms.backend.admin.log.AdminLogCleanupTask;
 import com.lms.backend.shared.database.AppUser;
 import com.lms.backend.shared.database.AppUserRepository;
+import com.lms.backend.shared.database.PickingScanHistoryRepository;
 import com.lms.backend.shared.error.SharedMessageResponse;
 import com.lms.backend.shared.error.SharedRuleException;
 import com.lms.backend.shared.log.SharedSecurityEvent;
@@ -54,23 +56,29 @@ public class AdminTemporaryTestToolService {
     private final PasswordEncoder adminTemporaryCreateTestUserPasswordEncoder;
     private final SharedSecurityLogWriter adminTemporaryCreateTestUserLogWriter;
     private final TransactionTemplate adminTemporaryCreateTestUserTransaction;
+    private final AdminLogCleanupTask adminTemporaryRunLogCleanupTask;
+    private final PickingScanHistoryRepository adminTemporaryCreateOldLogRowPickingScanRepository;
 
     /**
      * What it does: Receives the database and password helpers for the local test tools.
-     * Input: The repositories, encoder, transaction manager and security log writer.
+     * Input: Database and password helpers, the security log writer and the scheduled cleanup task.
      * Output: A test tools service that only loads in test mode.
      */
     public AdminTemporaryTestToolService(AppUserRepository adminTemporaryTestUserRepository,
             JdbcClient adminTemporaryCreateTestUserDatabase,
             PasswordEncoder adminTemporaryCreateTestUserPasswordEncoder,
             SharedSecurityLogWriter adminTemporaryCreateTestUserLogWriter,
-            PlatformTransactionManager adminTemporaryCreateTestUserTransactionManager) {
+            PlatformTransactionManager adminTemporaryCreateTestUserTransactionManager,
+            AdminLogCleanupTask adminTemporaryRunLogCleanupTask,
+            PickingScanHistoryRepository adminTemporaryCreateOldLogRowPickingScanRepository) {
         this.adminTemporaryTestUserRepository = adminTemporaryTestUserRepository;
         this.adminTemporaryCreateTestUserDatabase = adminTemporaryCreateTestUserDatabase;
         this.adminTemporaryCreateTestUserPasswordEncoder = adminTemporaryCreateTestUserPasswordEncoder;
         this.adminTemporaryCreateTestUserLogWriter = adminTemporaryCreateTestUserLogWriter;
         this.adminTemporaryCreateTestUserTransaction =
                 new TransactionTemplate(adminTemporaryCreateTestUserTransactionManager);
+        this.adminTemporaryRunLogCleanupTask = adminTemporaryRunLogCleanupTask;
+        this.adminTemporaryCreateOldLogRowPickingScanRepository = adminTemporaryCreateOldLogRowPickingScanRepository;
     }
 
     // ===== SECTION 2: adminTemporaryViewTestMode =====
@@ -331,7 +339,187 @@ public class AdminTemporaryTestToolService {
                 + " | Open pickup list order: " + adminTemporaryCreateWorkerWithActiveWorkReadyForPickupReference + ".");
     }
 
-    // ===== SECTION 9: adminTemporaryCreateSampleOrder =====
+    // ===== SECTION 9: adminTemporaryCreatePickingScanRow =====
+
+    // TEMPORARY TEST CODE - remove before integration
+    // Stage 3 uses accepted, reversed and rejected scans to verify read-only history and exports.
+    /**
+     * What it does: Adds five scans to the builder's one accepted mug scan.
+     * Input: None.
+     * Output: A shared message with the order reference.
+     */
+    @Transactional
+    public SharedMessageResponse adminTemporaryCreatePickingScanRow() {
+        String orderReference = adminTemporaryCreateSampleOrder(SharedOrderStatus.PICKING, null, null, null);
+
+        // Add the accepted scans with their trusted item IDs, then refer to the new pen scan from its reversal.
+        adminTemporaryCreateTestUserDatabase.sql("""
+                WITH task AS (
+                    SELECT picking.picking_task_id, assignment.worker_user_id, picking.order_id
+                    FROM customer_order orders
+                    JOIN picking_task picking ON picking.order_id = orders.order_id
+                    JOIN picking_assignment_history assignment ON assignment.picking_task_id = picking.picking_task_id
+                    WHERE orders.order_reference = :orderReference AND assignment.ended_at IS NULL
+                ), accepted AS (
+                    INSERT INTO picking_scan_history
+                        (picking_task_id, worker_user_id, order_item_id, scanned_identifier, result)
+                    SELECT task.picking_task_id, task.worker_user_id, item.order_item_id, product.sku, 'ACCEPTED'
+                    FROM task JOIN order_item item ON item.order_id = task.order_id
+                    JOIN product ON product.product_id = item.product_id
+                    RETURNING picking_task_id, worker_user_id, order_item_id, scanned_identifier, scan_id
+                )
+                INSERT INTO picking_scan_history
+                    (picking_task_id, worker_user_id, order_item_id, scanned_identifier, result, reason,
+                     original_scan_id)
+                SELECT picking_task_id, worker_user_id, order_item_id, scanned_identifier, 'REVERSED',
+                       'picked by mistake', scan_id
+                FROM accepted WHERE scanned_identifier LIKE 'TEST-PEN-%'
+                UNION ALL
+                SELECT picking_task_id, worker_user_id, NULL, 'PRIVATE-PHONE-MARKER', 'REJECTED',
+                       'not part of this order, call 5550 0000 1234', NULL
+                FROM task
+                UNION ALL
+                SELECT picking_task_id, worker_user_id, NULL, '=1+1', 'REJECTED', '=1+1', NULL FROM task
+                """).param("orderReference", orderReference).update();
+
+        // Keep the durable quantity consistent with the mug scans. The pen scan was reversed.
+        adminTemporaryCreateTestUserDatabase.sql("""
+                UPDATE order_item item SET picked_quantity = 2
+                FROM customer_order orders, product
+                WHERE item.order_id = orders.order_id AND item.product_id = product.product_id
+                  AND orders.order_reference = :orderReference AND product.sku LIKE 'TEST-MUG-%'
+                """).param("orderReference", orderReference).update();
+        return new SharedMessageResponse("Created picking scan rows for " + orderReference + ".");
+    }
+
+    // ===== SECTION 10: adminTemporaryCreateOldLogRow =====
+
+    // TEMPORARY TEST CODE - remove before integration
+    // Stage 3 checks repeatable fixtures and the retention rule for originals of newer reversals.
+    /**
+     * What it does: Replaces the tagged retention fixtures, using a synthetic picking task.
+     * Input: None.
+     * Output: A shared message confirming the inserted counts.
+     */
+    @Transactional
+    public SharedMessageResponse adminTemporaryCreateOldLogRow() {
+        // Serialize fixture creation with another press or a scheduled cleanup.
+        adminTemporaryCreateOldLogRowPickingScanRepository.adminLockLogCleanup();
+        // Reuse the last fixture's picking task while its tagged rows still exist.
+        String orderReference = adminTemporaryCreateTestUserDatabase.sql("""
+                SELECT orders.order_reference
+                FROM picking_scan_history scan
+                JOIN picking_task task ON task.picking_task_id = scan.picking_task_id
+                JOIN customer_order orders ON orders.order_id = task.order_id
+                WHERE scan.reason = 'TEMPORARY-OLD-ROW'
+                ORDER BY scan.scan_id DESC LIMIT 1
+                """).query(String.class).optional().orElseGet(
+                        () -> adminTemporaryCreateSampleOrder(SharedOrderStatus.PICKING, null, null, null));
+
+        // Remove only the tagged fixtures, with reversals first to preserve the foreign key.
+        adminTemporaryCreateTestUserDatabase.sql(
+                "DELETE FROM security_log WHERE details = 'TEMPORARY-OLD-ROW'").update();
+        adminTemporaryCreateTestUserDatabase.sql("""
+                DELETE FROM picking_scan_history WHERE reason = 'TEMPORARY-OLD-ROW' AND original_scan_id IS NOT NULL
+                """).update();
+        adminTemporaryCreateTestUserDatabase.sql(
+                "DELETE FROM picking_scan_history WHERE reason = 'TEMPORARY-OLD-ROW'").update();
+        adminTemporaryCreateTestUserDatabase.sql("DELETE FROM audit_log WHERE action = 'TEMPORARY_OLD_ROW'").update();
+
+        adminTemporaryCreateTestUserDatabase.sql("""
+                INSERT INTO security_log (event_type, event_time, result, details)
+                SELECT 'LOGIN_FAILURE', NOW() - age, 'FAILURE', 'TEMPORARY-OLD-ROW'
+                FROM (VALUES (INTERVAL '91 days'), (INTERVAL '91 days'),
+                             (INTERVAL '89 days'), (INTERVAL '89 days')) AS fixture(age)
+                """).update();
+        adminTemporaryCreateTestUserDatabase.sql("""
+                INSERT INTO audit_log (action, target_type, target_id, event_time, result)
+                VALUES ('TEMPORARY_OLD_ROW', 'LOG', 'LOG_CLEANUP', NOW() - INTERVAL '3 years 1 day', 'SUCCESS'),
+                       ('TEMPORARY_OLD_ROW', 'LOG', 'LOG_CLEANUP', NOW() - INTERVAL '3 years' + INTERVAL '1 day',
+                        'SUCCESS')
+                """).update();
+        adminTemporaryCreateOldLogRow(orderReference);
+        return new SharedMessageResponse("Created 4 security log rows, 5 picking scan rows and 2 audit log rows.");
+    }
+
+    /**
+     * What it does: Creates three aged accepted scans plus two reversals with different ages.
+     * Input: The synthetic picking order reference.
+     * Output: None. The caller owns the transaction.
+     */
+    private void adminTemporaryCreateOldLogRow(String orderReference) {
+        // Carry each original's ID into the reversal. Only the 95-day scan has a kept reversal.
+        adminTemporaryCreateTestUserDatabase.sql("""
+                WITH task AS (
+                    SELECT scan.picking_task_id, scan.worker_user_id, scan.order_item_id, scan.scanned_identifier
+                    FROM picking_scan_history scan
+                    JOIN picking_task picking ON picking.picking_task_id = scan.picking_task_id
+                    JOIN customer_order orders ON orders.order_id = picking.order_id
+                    WHERE orders.order_reference = :orderReference AND scan.result = 'ACCEPTED'
+                    ORDER BY scan.scan_time DESC, scan.scan_id DESC LIMIT 1
+                ), originals AS (
+                    INSERT INTO picking_scan_history
+                        (picking_task_id, worker_user_id, order_item_id, scanned_identifier, scan_time, result, reason)
+                    SELECT task.*, NOW() - age, 'ACCEPTED', 'TEMPORARY-OLD-ROW'
+                    FROM task CROSS JOIN (VALUES (INTERVAL '91 days'), (INTERVAL '95 days'),
+                                                 (INTERVAL '89 days')) AS fixture(age)
+                    RETURNING picking_task_id, worker_user_id, order_item_id, scanned_identifier, scan_time, scan_id
+                )
+                INSERT INTO picking_scan_history
+                    (picking_task_id, worker_user_id, order_item_id, scanned_identifier, scan_time,
+                     result, reason, original_scan_id)
+                SELECT picking_task_id, worker_user_id, order_item_id, scanned_identifier,
+                       CASE WHEN scan_time = NOW() - INTERVAL '91 days' THEN scan_time
+                            ELSE NOW() - INTERVAL '10 days' END,
+                       'REVERSED', 'TEMPORARY-OLD-ROW', scan_id
+                FROM originals WHERE scan_time < NOW() - INTERVAL '90 days'
+                """).param("orderReference", orderReference).update();
+    }
+
+    // ===== SECTION 11: adminTemporaryRunLogCleanup =====
+
+    // TEMPORARY TEST CODE - remove before integration
+    // Stage 3 runs the exact scheduled cleanup on demand.
+    /**
+     * What it does: Runs log cleanup now using its own transaction.
+     * Input: None.
+     * Output: A shared completion message or an error if cleanup failed.
+     */
+    public SharedMessageResponse adminTemporaryRunLogCleanup() {
+        adminTemporaryRunLogCleanupTask.adminRunLogCleanup();
+        return new SharedMessageResponse("Log clean-up finished.");
+    }
+
+    // ===== SECTION 12: adminTemporaryCreatePrivateValueLogRow =====
+
+    // TEMPORARY TEST CODE - remove before integration
+    // Only synthetic markers are inserted directly to exercise log filtering.
+    /**
+     * What it does: Inserts the synthetic private values specified for Stage 3.
+     * Input: None.
+     * Output: A shared completion message.
+     */
+    @Transactional
+    public SharedMessageResponse adminTemporaryCreatePrivateValueLogRow() {
+        // Bypass ordinary log writers so the read-side privacy filter receives the raw synthetic values.
+        adminTemporaryCreateTestUserDatabase.sql("""
+                INSERT INTO audit_log (action, target_type, target_id, new_value, result)
+                VALUES ('TEMPORARY_PRIVATE_VALUE_ROW', 'LOG', 'TEMPORARY_PRIVATE_VALUE_ROW',
+                        jsonb_build_object('phone', 'PRIVATE-PHONE-MARKER', 'address', 'PRIVATE-ADDRESS-MARKER',
+                                           'recipientName', 'PRIVATE-RECIPIENT-MARKER',
+                                           'passwordHash', 'PRIVATE-PASSWORD-MARKER', 'note', 'call 5550 0000 1234'),
+                        'SUCCESS')
+                """).update();
+        adminTemporaryCreateTestUserDatabase.sql("""
+                INSERT INTO security_log (event_type, result, details)
+                VALUES ('TEMPORARY_PRIVATE_VALUE_ROW', 'SUCCESS',
+                        'call 5550 0000 1234 or 9123-4567 about order TEST-0001 on 2026-11-10')
+                """).update();
+        return new SharedMessageResponse(
+                "Created one audit log row and one security log row with private test values.");
+    }
+
+    // ===== SECTION 13: adminTemporaryCreateSampleOrder =====
 
     // TEMPORARY TEST CODE - remove before integration
     // Stage 2 builds matching order, stock, picking and pickup fixtures in one transaction.
@@ -550,7 +738,7 @@ public class AdminTemporaryTestToolService {
         return orderReference;
     }
 
-    // ===== SECTION 10: HELPER FUNCTIONS =====
+    // ===== SECTION 14: HELPER FUNCTIONS =====
 
     // TEMPORARY TEST CODE - remove before integration
     // Stage 1 locks the named account before applying a test change to it.

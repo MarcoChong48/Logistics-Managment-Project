@@ -1,6 +1,6 @@
 # Admin system setup
 
-This branch adds the Admin system to the team's PostgreSQL baseline. It includes the shared login, Admin user management, and the local test tools through Stage 2.
+This branch builds on the team's PostgreSQL baseline. It includes shared login and role checks, Admin user management, read-only logs, CSV exports, retention, and local test tools through Stage 3.
 
 ## Start the local stack
 
@@ -15,7 +15,9 @@ This branch adds the Admin system to the team's PostgreSQL baseline. It includes
 
 4. When the database is healthy, open the [sign-in page](http://127.0.0.1:8081/). Use the bootstrap username and temporary password you set in `.env`. Change the temporary password when prompted. The temporary password expires after 24 hours. Once a usable Admin account exists, the saved password is used on subsequent starts.
 
-The Compose stack binds the app to `127.0.0.1:8081`. Use synthetic data with the `admintest` profile. From the dashboard, open **Users** to manage accounts or **Test tools** to create fixtures. The [health endpoint](http://127.0.0.1:8081/api/shared/health) reports the database connection and table count without requiring sign-in.
+The Compose stack binds the app to `127.0.0.1:8081`. Use synthetic data with the `admintest` profile. Open **Users** to manage accounts and **Logs** to search the audit log, security log and picking scans. Use **Test tools** to create fixtures. The [health endpoint](http://127.0.0.1:8081/api/shared/health) reports the database connection and table count without requiring sign-in.
+
+The first log retention run is scheduled for five minutes after startup. In **Test tools → Stage 3**, you can create tagged synthetic log rows and run cleanup immediately. **Logs** shows the latest run and deletion counts. Use the [team integration guide](TEAM_GUIDE.md) to build a role behind shared sign-in.
 
 ## Verify the setup
 
