@@ -86,13 +86,13 @@ public class ClientOrderService {
             return json.readValue(prior.responseBody(), ClientCreateOrderResponse.class);
         }
 
-        // Lock product rows first (price and status), then inventory rows, each in product ID order.
+        // Snapshot the current price and listing. Availability here is only a preflight check.
         List<Product> orderedProducts = products.findByProductIdInOrderByProductIdAsc(quantities.keySet());
         if (orderedProducts.size() != quantities.size()) {
             throw new SharedRuleException(HttpStatus.NOT_FOUND, "CLIENT_ORDER_PRODUCT_NOT_FOUND",
                     "One or more selected products do not exist.");
         }
-        Map<Long, Inventory> balances = inventory.findByProductIdInOrderByProductIdAsc(quantities.keySet()).stream()
+        Map<Long, Inventory> balances = inventory.findAllById(quantities.keySet()).stream()
                 .collect(Collectors.toMap(balance -> balance.productId, Function.identity()));
 
         BigDecimal total = BigDecimal.ZERO;
@@ -107,7 +107,6 @@ public class ClientOrderService {
                 throw new SharedRuleException(HttpStatus.CONFLICT, "CLIENT_ORDER_STOCK_UNAVAILABLE",
                         "There is not enough stock for one or more selected products.");
             }
-            balance.reservedStock += quantity;
             total = total.add(product.currentPrice.multiply(BigDecimal.valueOf(quantity)));
         }
         if (total.compareTo(MAX_ORDER_TOTAL) > 0) {
@@ -127,9 +126,7 @@ public class ClientOrderService {
         orderWrites.insertInitialDeliveryDetail(order.orderID, recipient, phone, address);
         for (Product product : orderedProducts) {
             int quantity = quantities.get(product.productId);
-            long itemId = orderWrites.insertItem(order.orderID, product.productId, quantity, product.currentPrice);
-            orderWrites.insertHeldReservation(itemId, quantity);
-            orderWrites.insertReservationMovement(product.productId, clientId, quantity, order.orderReference);
+            orderWrites.insertItem(order.orderID, product.productId, quantity, product.currentPrice);
         }
         var response = new ClientCreateOrderResponse(order.orderReference, INITIAL_STATUS, total, order.paymentDeadline);
         idempotency.insertCompleted(clientId, key, fingerprint, order.orderID, json.writeValueAsString(response));

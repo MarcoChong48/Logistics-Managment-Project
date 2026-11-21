@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -62,6 +63,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.jayway.jsonpath.JsonPath;
 import com.lms.backend.BackendApplication;
+import com.lms.backend.client.order.CheckoutProviderVerification.Outcome;
+import com.lms.backend.client.order.CheckoutProviderVerification.VerifiedCheckout;
 import com.lms.backend.shared.database.AppUser;
 import com.lms.backend.shared.database.AppUserRepository;
 import com.lms.backend.shared.database.ClientOrderIdempotencyRepository;
@@ -116,6 +119,9 @@ class ClientOrderApiTest {
     @Autowired
     private ClientOrderReleaseService releases;
 
+    @Autowired
+    private ClientCheckoutService checkouts;
+
     // Keep fixtures in the test transaction instead of committing separate audit rows.
     @MockitoBean
     private SharedSecurityLogWriter securityLogWriter;
@@ -130,7 +136,7 @@ class ClientOrderApiTest {
     private final List<Long> fixtureProducts = new ArrayList<>();
 
     @Test
-    void createsAndReservesASingleProductForTheSignedInClient() throws Exception {
+    void createsAStockNeutralOrderForTheSignedInClient() throws Exception {
         AppUser owner = createUser(SharedUserRole.CLIENT);
         AppUser otherClient = createUser(SharedUserRole.CLIENT);
         Product product = createProduct("19.90", "ACTIVE", 8, 2);
@@ -168,17 +174,17 @@ class ClientOrderApiTest {
                   AND address_text = 'Flat A, 12 Nathan Road, Kowloon, Hong Kong'
                 """).param("id", saved.orderId()).query(Long.class).single());
         assertEquals(1L, database.sql("""
-                SELECT count(*) FROM order_item oi JOIN stock_reservation sr USING (order_item_id)
+                SELECT count(*) FROM order_item oi
                 WHERE oi.order_id = :id AND oi.product_id = :productId AND oi.quantity = 3
-                  AND oi.unit_price = 19.90 AND oi.picked_quantity = 0 AND sr.quantity = 3
-                  AND sr.status = 'HELD' AND sr.payment_id IS NULL
+                  AND oi.unit_price = 19.90 AND oi.picked_quantity = 0
                 """).param("id", saved.orderId()).param("productId", product.productId).query(Long.class).single());
-        assertEquals(1L, database.sql("""
+        assertEquals(0L, database.sql("""
                 SELECT count(*) FROM stock_movement WHERE product_id = :productId AND actor_user_id = :actorId
                   AND quantity_delta = 0 AND reserved_delta = 3 AND movement_type = 'RESERVE' AND reason = :reference
                 """).param("productId", product.productId).param("actorId", owner.userID)
                 .param("reference", reference).query(Long.class).single());
-        assertEquals(5, reservedStock(product));
+        assertEquals(0L, countReservations(reference, "HELD"));
+        assertEquals(2, reservedStock(product));
         assertEquals(8, database.sql("SELECT physical_stock FROM inventory WHERE product_id = :id")
                 .param("id", product.productId).query(Integer.class).single());
         assertEquals(0L, database.sql("SELECT count(*) FROM payment WHERE order_id = :id")
@@ -186,7 +192,7 @@ class ClientOrderApiTest {
     }
 
     @Test
-    void createsOneItemAndReservationPerProductUsingDatabasePrices() throws Exception {
+    void createsOneItemPerProductUsingDatabasePricesWithoutReserving() throws Exception {
         AppUser owner = createUser(SharedUserRole.CLIENT);
         Product first = createProduct("10.10", "ACTIVE", 6, 0);
         Product second = createProduct("2.25", "ACTIVE", 6, 0);
@@ -197,12 +203,11 @@ class ClientOrderApiTest {
         assertEquals(List.of(new BigDecimal("10.10"), new BigDecimal("2.25")), database.sql("""
                 SELECT oi.unit_price FROM order_item oi
                 JOIN customer_order co USING (order_id)
-                JOIN stock_reservation sr USING (order_item_id)
-                WHERE co.client_user_id = :clientId AND sr.quantity = oi.quantity AND sr.status = 'HELD'
+                WHERE co.client_user_id = :clientId
                 ORDER BY oi.product_id
                 """).param("clientId", owner.userID).query(BigDecimal.class).list());
-        assertEquals(2, reservedStock(first));
-        assertEquals(3, reservedStock(second));
+        assertEquals(0, reservedStock(first));
+        assertEquals(0, reservedStock(second));
     }
 
     @ParameterizedTest
@@ -334,11 +339,13 @@ class ClientOrderApiTest {
 
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    void rollsBackPersistedOrderAndStockWhenALaterDatabaseWriteFails() throws Exception {
+    void rollsBackCheckoutAndStockWhenALaterDatabaseWriteFails() throws Exception {
         Product first = createProduct("4.00", "ACTIVE", 8, 1);
         Product second = createProduct("5.00", "ACTIVE", 5, 0);
         AppUser owner = createUser(SharedUserRole.CLIENT);
-        // The second write violates the real nonzero movement constraint after the first item has been persisted.
+        var session = signIn(owner);
+        String reference = createOrder(session, item(second, 2) + "," + item(first, 3));
+        // The second movement violates the database constraint after the checkout and holds have been written.
         doAnswer(call -> {
             database.sql("""
                     INSERT INTO stock_movement (product_id, movement_type, quantity_delta, reserved_delta)
@@ -348,7 +355,7 @@ class ClientOrderApiTest {
         }).when(orderWrites).insertReservationMovement(eq(second.productId.longValue()), eq(owner.userID.longValue()),
                 eq(2), anyString());
 
-        var result = submit(signIn(owner), request(item(second, 2) + "," + item(first, 3)))
+        var result = checkout(session, reference)
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$.code").value("SHARED_UNEXPECTED_ERROR"))
@@ -356,8 +363,9 @@ class ClientOrderApiTest {
                         .value(matchesPattern("Something went wrong\\. Reference: [0-9a-f-]{36}")))
                 .andReturn();
         assertInstanceOf(DataIntegrityViolationException.class, result.getResolvedException());
-        assertEquals(0L, countOrders(owner));
-        assertEquals(0L, countForProducts("SELECT count(*) FROM order_item WHERE product_id IN (:ids)"));
+        assertEquals(1L, countOrders(owner));
+        assertEquals(0L, countCheckouts(reference));
+        assertEquals(0L, countReservations(reference, "HELD"));
         assertEquals(0L, countForProducts("SELECT count(*) FROM stock_movement WHERE product_id IN (:ids)"));
         assertEquals(1, reservedStock(first));
         assertEquals(0, reservedStock(second));
@@ -372,21 +380,21 @@ class ClientOrderApiTest {
         AppUser secondClient = createUser(SharedUserRole.CLIENT);
         var firstSession = signIn(firstClient);
         var secondSession = signIn(secondClient);
+        String firstOrder = createOrder(firstSession, item(first, 3) + "," + item(second, 1));
+        String secondOrder = createOrder(secondSession, item(second, 1) + "," + item(first, 3));
         CountDownLatch ready = new CountDownLatch(2);
         CountDownLatch start = new CountDownLatch(1);
         try (var workers = Executors.newFixedThreadPool(2)) {
-            var left = workers.submit(() -> submitWhenReady(ready, start, firstSession,
-                    request(item(first, 3) + "," + item(second, 1))));
-            var right = workers.submit(() -> submitWhenReady(ready, start, secondSession,
-                    request(item(second, 1) + "," + item(first, 3))));
+            var left = workers.submit(() -> checkoutWhenReady(ready, start, firstSession, firstOrder));
+            var right = workers.submit(() -> checkoutWhenReady(ready, start, secondSession, secondOrder));
             boolean bothReady = ready.await(5, TimeUnit.SECONDS);
             start.countDown();
             assertTrue(bothReady);
-            assertEquals(List.of(201, 409),
+            assertEquals(List.of(200, 409),
                     Stream.of(left.get(15, TimeUnit.SECONDS), right.get(15, TimeUnit.SECONDS)).sorted().toList());
         }
-        assertEquals(1L, countOrders(firstClient) + countOrders(secondClient));
-        assertEquals(2L, countForProducts("SELECT count(*) FROM order_item WHERE product_id IN (:ids)"));
+        assertEquals(2L, countOrders(firstClient) + countOrders(secondClient));
+        assertEquals(1L, countCheckouts(firstOrder) + countCheckouts(secondOrder));
         assertEquals(2L, countForProducts("SELECT count(*) FROM stock_movement WHERE product_id IN (:ids)"));
         assertEquals(3, reservedStock(first));
         assertEquals(1, reservedStock(second));
@@ -397,7 +405,7 @@ class ClientOrderApiTest {
         Product product = createProduct("4.00", "ACTIVE", 8, 1);
         AppUser owner = createUser(SharedUserRole.CLIENT);
         var session = signIn(owner);
-        String reference = createOrder(session, item(product, 3));
+        String reference = createReservedOrder(session, item(product, 3));
 
         cancel(session, reference).andExpect(status().isOk())
                 .andExpect(jsonPath("$.orderReference").value(reference))
@@ -408,6 +416,8 @@ class ClientOrderApiTest {
         assertEquals(1, reservedStock(product));
         assertEquals("CANCELLED", orderStatus(reference));
         assertEquals(1L, countReservations(reference, "RELEASED"));
+        assertTrue(entryClosedWhilePending(reference));
+        checkout(session, reference).andExpect(status().isConflict());
         assertEquals(1L, database.sql("""
                 SELECT count(*) FROM stock_movement WHERE product_id = :productId
                     AND movement_type = 'RELEASE' AND reserved_delta = -3 AND quantity_delta = 0
@@ -419,7 +429,7 @@ class ClientOrderApiTest {
     @Test
     void rejectsOtherClientsAnonymousUsersAndAdminsOnCancellation() throws Exception {
         Product product = createProduct("4.00", "ACTIVE", 8, 0);
-        String reference = createOrder(signIn(createUser(SharedUserRole.CLIENT)), item(product, 3));
+        String reference = createReservedOrder(signIn(createUser(SharedUserRole.CLIENT)), item(product, 3));
         String path = ORDERS + "/" + reference + "/cancel";
 
         cancel(signIn(createUser(SharedUserRole.CLIENT)), reference)
@@ -432,15 +442,13 @@ class ClientOrderApiTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"accepted", "acceptedAt", "picking", "consumed"})
-    void protectsOrdersWithPaymentOrFulfillmentEvidence(String protectedBy) throws Exception {
+    @ValueSource(strings = {"picking", "consumed"})
+    void protectsOrdersWhereFulfillmentHasStarted(String protectedBy) throws Exception {
         Product product = createProduct("4.00", "ACTIVE", 8, 0);
         var owner = signIn(createUser(SharedUserRole.CLIENT));
-        String reference = createOrder(owner, item(product, 3));
+        String reference = createReservedOrder(owner, item(product, 3));
         long id = orderId(reference);
         String sql = switch (protectedBy) {
-            case "accepted" -> "INSERT INTO payment (order_id, amount, payment_status) VALUES (:id, 12, 'ACCEPTED')";
-            case "acceptedAt" -> "INSERT INTO payment (order_id, amount, accepted_at) VALUES (:id, 12, NOW())";
             case "picking" -> "INSERT INTO picking_task (order_id, task_status) VALUES (:id, 'IN_PROGRESS')";
             case "consumed" -> """
                     UPDATE stock_reservation sr SET status = 'CONSUMED', consumed_at = NOW()
@@ -466,7 +474,7 @@ class ClientOrderApiTest {
     void expiresDueOrdersAndBarsPaymentAtTheDeadlineBeforeTheSweep() throws Exception {
         Product product = createProduct("4.00", "ACTIVE", 8, 0);
         var session = signIn(createUser(SharedUserRole.CLIENT));
-        String reference = createOrder(session, item(product, 3));
+        String reference = createReservedOrder(session, item(product, 3));
         long id = orderId(reference);
         var future = orders.findById(id).orElseThrow();
         assertTrue(future.canAcceptPaymentAt(future.paymentDeadline.minusSeconds(1)));
@@ -483,6 +491,7 @@ class ClientOrderApiTest {
         assertFalse(orders.findById(id).orElseThrow().canAcceptPaymentAt(future.paymentDeadline.minusSeconds(1)));
         assertEquals(0, reservedStock(product));
         assertEquals(1L, countReservations(reference, "RELEASED"));
+        assertTrue(entryClosedWhilePending(reference));
         assertEquals(1L, database.sql("""
                 SELECT count(*) FROM stock_movement WHERE movement_type = 'RELEASE'
                     AND actor_user_id IS NULL AND reason = :reason
@@ -495,7 +504,7 @@ class ClientOrderApiTest {
         Product first = createProduct("4.00", "ACTIVE", 8, 1);
         Product second = createProduct("5.00", "ACTIVE", 8, 2);
         var session = signIn(createUser(SharedUserRole.CLIENT));
-        String reference = createOrder(session, item(second, 2) + "," + item(first, 3));
+        String reference = createReservedOrder(session, item(second, 2) + "," + item(first, 3));
         long id = orderId(reference);
         makeOverdue(id);
 
@@ -530,19 +539,19 @@ class ClientOrderApiTest {
 
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    void cancellationAndCreationCanShareTheSameProductLocks() throws Exception {
+    void cancellationAndCheckoutCanShareTheSameProductLocks() throws Exception {
         Product first = createProduct("4.00", "ACTIVE", 6, 1);
         Product second = createProduct("5.00", "ACTIVE", 6, 1);
         var owner = signIn(createUser(SharedUserRole.CLIENT));
         AppUser otherClient = createUser(SharedUserRole.CLIENT);
         var otherSession = signIn(otherClient);
-        String reference = createOrder(owner, item(second, 2) + "," + item(first, 2));
+        String reference = createReservedOrder(owner, item(second, 2) + "," + item(first, 2));
+        String otherOrder = createOrder(otherSession, item(first, 3) + "," + item(second, 3));
 
         CountDownLatch ready = new CountDownLatch(2);
         CountDownLatch start = new CountDownLatch(1);
         try (var workers = Executors.newFixedThreadPool(2)) {
-            var creation = workers.submit(() -> submitWhenReady(ready, start, otherSession,
-                    request(item(first, 3) + "," + item(second, 3))));
+            var newCheckout = workers.submit(() -> checkoutWhenReady(ready, start, otherSession, otherOrder));
             var cancellation = workers.submit(() -> {
                 ready.countDown();
                 assertTrue(start.await(5, TimeUnit.SECONDS));
@@ -551,7 +560,7 @@ class ClientOrderApiTest {
             boolean bothReady = ready.await(5, TimeUnit.SECONDS);
             start.countDown();
             assertTrue(bothReady);
-            assertEquals(201, creation.get(20, TimeUnit.SECONDS));
+            assertEquals(200, newCheckout.get(20, TimeUnit.SECONDS));
             assertEquals(200, cancellation.get(20, TimeUnit.SECONDS));
         }
         assertEquals("CANCELLED", orderStatus(reference));
@@ -567,12 +576,13 @@ class ClientOrderApiTest {
         Product first = createProduct("4.00", "ACTIVE", 8, 0);
         Product second = createProduct("5.00", "ACTIVE", 8, 0);
         var session = signIn(createUser(SharedUserRole.CLIENT));
-        String reference = createOrder(session, item(first, 3) + "," + item(second, 2));
+        String reference = createReservedOrder(session, item(first, 3) + "," + item(second, 2));
         setReservedStock(second, 1);
 
         cancel(session, reference).andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.code").value("SHARED_UNEXPECTED_ERROR"));
         assertEquals("AWAITING_PAYMENT", orderStatus(reference));
+        assertFalse(entryClosedWhilePending(reference));
         assertEquals(2L, countReservations(reference, "HELD"));
         assertEquals(0L, countReservations(reference, "RELEASED"));
         assertEquals(0L, countForProducts("""
@@ -588,8 +598,8 @@ class ClientOrderApiTest {
         Product first = createProduct("4.00", "ACTIVE", 8, 0);
         Product second = createProduct("5.00", "ACTIVE", 8, 0);
         var session = signIn(createUser(SharedUserRole.CLIENT));
-        String retry = createOrder(session, item(first, 3));
-        String healthy = createOrder(session, item(second, 2));
+        String retry = createReservedOrder(session, item(first, 3));
+        String healthy = createReservedOrder(session, item(second, 2));
         makeOverdue(orderId(retry));
         makeOverdue(orderId(healthy));
         setReservedStock(first, 2);
@@ -637,8 +647,8 @@ class ClientOrderApiTest {
                 .andReturn().getResponse().getContentAsString();
         assertEquals(response, replay);
         assertEquals(1L, countOrders(owner));
-        assertEquals(1, reservedStock(first));
-        assertEquals(2, reservedStock(second));
+        assertEquals(0, reservedStock(first));
+        assertEquals(0, reservedStock(second));
     }
 
     @ParameterizedTest
@@ -659,7 +669,7 @@ class ClientOrderApiTest {
         postWithKey(session, "original-order", modified).andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("CLIENT_ORDER_IDEMPOTENCY_KEY_CONFLICT"));
         assertEquals(1L, countOrders(owner));
-        assertEquals(1, reservedStock(product));
+        assertEquals(0, reservedStock(product));
     }
 
     @Test
@@ -675,7 +685,7 @@ class ClientOrderApiTest {
         assertNotEquals(JsonPath.<String>read(left, "$.orderReference"), JsonPath.<String>read(right, "$.orderReference"));
         assertEquals(1L, countOrders(first));
         assertEquals(1L, countOrders(second));
-        assertEquals(4, reservedStock(product));
+        assertEquals(0, reservedStock(product));
     }
 
     @ParameterizedTest
@@ -714,7 +724,7 @@ class ClientOrderApiTest {
 
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    void simultaneousRequestsWaitForTheSameKeyAndReserveOnlyOnce() throws Exception {
+    void simultaneousCreateRequestsWaitForTheSameKeyWithoutReserving() throws Exception {
         Product product = createProduct("4.00", "ACTIVE", 3, 0);
         AppUser owner = createUser(SharedUserRole.CLIENT);
         var firstSession = signIn(owner);
@@ -749,8 +759,8 @@ class ClientOrderApiTest {
             }
         }
         assertEquals(1L, countOrders(owner));
-        assertEquals(1L, countForProducts("SELECT count(*) FROM stock_movement WHERE product_id IN (:ids)"));
-        assertEquals(3, reservedStock(product));
+        assertEquals(0L, countForProducts("SELECT count(*) FROM stock_movement WHERE product_id IN (:ids)"));
+        assertEquals(0, reservedStock(product));
     }
 
     @Test
@@ -773,7 +783,7 @@ class ClientOrderApiTest {
         assertEquals(0, reservedStock(product));
         postWithKey(session, key, body).andExpect(status().isCreated());
         assertEquals(1L, countOrders(owner));
-        assertEquals(2, reservedStock(product));
+        assertEquals(0, reservedStock(product));
     }
 
     @ParameterizedTest
@@ -801,6 +811,8 @@ class ClientOrderApiTest {
         assertEquals(original, replay);
         assertEquals(1L, countOrders(owner));
         assertEquals(0, reservedStock(product));
+        assertEquals(0L, countReservations(reference, "RELEASED"));
+        assertEquals(0L, countCheckouts(reference));
     }
 
     @Test
@@ -827,7 +839,369 @@ class ClientOrderApiTest {
             SecurityContextHolder.clearContext();
         }
         assertEquals(1L, countOrders(owner));
-        assertEquals(1, reservedStock(product));
+        assertEquals(0, reservedStock(product));
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void checkoutUsesTheSavedAmountAndCreatesOnePaymentLinkedHold() throws Exception {
+        Product product = createProduct("19.90", "ACTIVE", 8, 1);
+        var owner = signIn(createUser(SharedUserRole.CLIENT));
+        String reference = createOrder(owner, item(product, 3));
+        database.sql("UPDATE product SET current_price = 40 WHERE product_id = :id")
+                .param("id", product.productId).update();
+
+        var first = checkout(owner, reference).andExpect(status().isOk())
+                .andExpect(jsonPath("$.amountHkd").value(59.70))
+                .andExpect(jsonPath("$.providerCheckoutAvailable").value(false)).andReturn();
+        Number returnedId = JsonPath.read(first.getResponse().getContentAsString(), "$.checkoutId");
+        long checkoutId = returnedId.longValue();
+        assertEquals(checkoutId, checkoutId(owner, reference));
+        assertEquals(1L, countCheckouts(reference));
+        assertEquals(1L, database.sql("""
+                SELECT count(*) FROM stock_reservation
+                WHERE payment_id = :id AND status = 'HELD' AND quantity = 3
+                """).param("id", checkoutId).query(Long.class).single());
+        assertEquals(4, reservedStock(product));
+        assertEquals("AWAITING_PAYMENT", orderStatus(reference));
+        assertTrue(database.sql("""
+                SELECT checkout_expires_at = created_at + INTERVAL '30 minutes'
+                FROM payment WHERE payment_id = :id
+                """).param("id", checkoutId).query(Boolean.class).single());
+    }
+
+    @Test
+    void checkoutRequiresTheOwnerAndCsrf() throws Exception {
+        Product product = createProduct("4.00", "ACTIVE", 8, 0);
+        var owner = signIn(createUser(SharedUserRole.CLIENT));
+        String reference = createOrder(owner, item(product, 3));
+        String path = ORDERS + "/" + reference + "/checkout";
+
+        checkout(signIn(createUser(SharedUserRole.CLIENT)), reference).andExpect(status().isNotFound());
+        checkout(signIn(createUser(SharedUserRole.ADMIN)), reference).andExpect(status().isForbidden());
+        mvc.perform(post(path).servletPath(path)).andExpect(status().isUnauthorized());
+        mvc.perform(post(path).servletPath(path).session(owner.session()))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("SHARED_SECURITY_TOKEN_INVALID"));
+        assertEquals(0L, countCheckouts(reference));
+        assertEquals(0, reservedStock(product));
+    }
+
+    @Test
+    void browserCannotSubmitAPaymentSuccessResult() throws Exception {
+        Product product = createProduct("4.00", "ACTIVE", 8, 0);
+        var owner = signIn(createUser(SharedUserRole.CLIENT));
+        String reference = createReservedOrder(owner, item(product, 3));
+        String path = ORDERS + "/" + reference + "/payment/success";
+
+        mvc.perform(post(path).servletPath(path).session(owner.session())
+                .header(owner.csrfHeader(), owner.csrfToken())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"CAPTURED\",\"amountHkd\":12.00}"))
+                .andExpect(status().isNotFound());
+        assertEquals("AWAITING_PAYMENT", orderStatus(reference));
+        assertEquals(1L, countReservations(reference, "HELD"));
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void concurrentRequestsForTheSameOrderReuseOneCheckout() throws Exception {
+        Product product = createProduct("4.00", "ACTIVE", 3, 0);
+        AppUser client = createUser(SharedUserRole.CLIENT);
+        var leftSession = signIn(client);
+        var rightSession = signIn(client);
+        String reference = createOrder(leftSession, item(product, 3));
+        CountDownLatch start = new CountDownLatch(1);
+        try (var workers = Executors.newFixedThreadPool(2)) {
+            var left = workers.submit(() -> {
+                assertTrue(start.await(5, TimeUnit.SECONDS));
+                return checkoutId(leftSession, reference);
+            });
+            var right = workers.submit(() -> {
+                assertTrue(start.await(5, TimeUnit.SECONDS));
+                return checkoutId(rightSession, reference);
+            });
+            start.countDown();
+            assertEquals(left.get(15, TimeUnit.SECONDS), right.get(15, TimeUnit.SECONDS));
+        }
+        assertEquals(1L, countCheckouts(reference));
+        assertEquals(1L, countReservations(reference, "HELD"));
+        assertEquals(3, reservedStock(product));
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void declineAndLocalTimeoutPreserveHoldsUntilUnpaidClosure() throws Exception {
+        Product product = createProduct("4.00", "ACTIVE", 8, 0);
+        var owner = signIn(createUser(SharedUserRole.CLIENT));
+        String reference = createOrder(owner, item(product, 3));
+        long first = checkoutId(owner, reference);
+
+        reconcile(first, Outcome.CARD_DECLINED);
+        assertEquals(first, checkoutId(owner, reference));
+        assertEquals(3, reservedStock(product));
+
+        makeCheckoutWindowElapsed(first);
+        releases.expireIfDue(orderId(reference));
+        checkout(owner, reference).andExpect(status().isConflict());
+        assertEquals(3, reservedStock(product));
+        assertEquals("AWAITING_PAYMENT", orderStatus(reference));
+
+        reconcile(first, Outcome.ENDED_UNPAID);
+        reconcile(first, Outcome.ENDED_UNPAID);
+        assertEquals(0, reservedStock(product));
+        assertEquals(1L, countReservations(reference, "RELEASED"));
+        long second = checkoutId(owner, reference);
+        assertNotEquals(first, second);
+        reconcile(first, Outcome.ENDED_UNPAID);
+        assertEquals(3, reservedStock(product));
+        assertEquals(2L, countCheckouts(reference));
+        assertEquals(1L, countReservations(reference, "HELD"));
+        assertEquals(1L, countReservations(reference, "RELEASED"));
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void lateCaptureForAnEndedAttemptLeavesTheNextCheckoutIntact() throws Exception {
+        Product product = createProduct("4.00", "ACTIVE", 8, 0);
+        var owner = signIn(createUser(SharedUserRole.CLIENT));
+        String reference = createOrder(owner, item(product, 3));
+        long first = checkoutId(owner, reference);
+        reconcile(first, Outcome.ENDED_UNPAID);
+        long second = checkoutId(owner, reference);
+
+        capture(first, "sandbox-old-" + first, "12.00");
+        assertRequestedRefund(first);
+        assertEquals("AWAITING_PAYMENT", orderStatus(reference));
+        assertEquals(second, checkoutId(owner, reference));
+        assertEquals(3, reservedStock(product));
+        assertEquals(1L, countReservations(reference, "HELD"));
+
+        capture(second, "sandbox-current-" + second, "12.00");
+        assertEquals("READY_FOR_PICKING", orderStatus(reference));
+        assertEquals(3, reservedStock(product));
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void checkoutIsCappedByTheOriginalOrderDeadline() throws Exception {
+        Product product = createProduct("4.00", "ACTIVE", 8, 0);
+        var owner = signIn(createUser(SharedUserRole.CLIENT));
+        String reference = createOrder(owner, item(product, 3));
+        long id = orderId(reference);
+        database.sql("""
+                UPDATE customer_order SET created_at = NOW() - INTERVAL '23 hours 50 minutes',
+                    payment_deadline = NOW() + INTERVAL '10 minutes' WHERE order_id = :id
+                """).param("id", id).update();
+        Instant deadline = orders.findById(id).orElseThrow().paymentDeadline;
+        var checkout = checkout(owner, reference).andExpect(status().isOk()).andReturn();
+        String expiresAt = JsonPath.read(checkout.getResponse().getContentAsString(), "$.checkoutExpiresAt");
+        assertEquals(deadline, Instant.parse(expiresAt));
+        assertEquals(deadline, orders.findById(id).orElseThrow().paymentDeadline);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"cancelled", "expired", "before-expiry-sweep"})
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void lateCaptureCreatesOneFullRefundObligationWithoutRestoringStock(String closure) throws Exception {
+        Product product = createProduct("4.00", "ACTIVE", 8, 0);
+        var owner = signIn(createUser(SharedUserRole.CLIENT));
+        String reference = createOrder(owner, item(product, 3));
+        long checkoutId = checkoutId(owner, reference);
+        long orderId = orderId(reference);
+        switch (closure) {
+            case "cancelled" -> cancel(owner, reference).andExpect(status().isOk());
+            case "expired" -> {
+                makeOverdue(orderId);
+                releases.expireIfDue(orderId);
+            }
+            case "before-expiry-sweep" -> makeOverdue(orderId);
+            default -> throw new AssertionError(closure);
+        }
+
+        capture(checkoutId, "sandbox-late-" + checkoutId, "12.00");
+        if (closure.equals("before-expiry-sweep")) {
+            assertEquals("AWAITING_PAYMENT", orderStatus(reference));
+            releases.expireIfDue(orderId);
+        }
+        capture(checkoutId, "sandbox-late-" + checkoutId, "12.00");
+        reconcile(checkoutId, Outcome.ENDED_UNPAID);
+        assertEquals("CANCELLED", orderStatus(reference));
+        assertEquals(0, reservedStock(product));
+        assertEquals(1L, countReservations(reference, "RELEASED"));
+        assertRequestedRefund(checkoutId);
+        assertTrue(database.sql("""
+                SELECT payment_status = 'REFUND_REQUIRED' AND accepted_at IS NULL
+                FROM payment WHERE payment_id = :id
+                """).param("id", checkoutId).query(Boolean.class).single());
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void captureMustMatchTheSavedOrderTotalEvenWhenItMatchesTheAttempt() throws Exception {
+        Product product = createProduct("4.00", "ACTIVE", 8, 0);
+        var owner = signIn(createUser(SharedUserRole.CLIENT));
+        String reference = createOrder(owner, item(product, 3));
+        long checkoutId = checkoutId(owner, reference);
+        database.sql("UPDATE payment SET amount = 15.50 WHERE payment_id = :id")
+                .param("id", checkoutId).update();
+
+        capture(checkoutId, "sandbox-mismatch-" + checkoutId, "15.50");
+        capture(checkoutId, "sandbox-mismatch-" + checkoutId, "15.50");
+        assertEquals("AWAITING_PAYMENT", orderStatus(reference));
+        assertRequestedRefund(checkoutId, "15.50");
+        cancel(owner, reference).andExpect(status().isOk());
+        assertEquals(0, reservedStock(product));
+        assertRequestedRefund(checkoutId, "15.50");
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void paidOwnerCanCancelBeforePickingEvenWhenATaskIsPending() throws Exception {
+        Product product = createProduct("4.00", "ACTIVE", 8, 0);
+        var owner = signIn(createUser(SharedUserRole.CLIENT));
+        String reference = createOrder(owner, item(product, 3));
+        long checkoutId = checkoutId(owner, reference);
+        makeCheckoutWindowElapsed(checkoutId);
+        capture(checkoutId, "sandbox-paid-" + checkoutId, "12.00");
+        assertEquals("READY_FOR_PICKING", orderStatus(reference));
+        assertEquals(3, reservedStock(product));
+        assertEquals(0L, database.sql("SELECT count(*) FROM picking_task WHERE order_id = :id")
+                .param("id", orderId(reference)).query(Long.class).single());
+        database.sql("INSERT INTO picking_task (order_id) VALUES (:id)").param("id", orderId(reference)).update();
+
+        cancel(owner, reference).andExpect(status().isOk());
+        cancel(owner, reference).andExpect(status().isOk());
+        capture(checkoutId, "sandbox-paid-" + checkoutId, "12.00");
+        assertEquals("CANCELLED", orderStatus(reference));
+        assertEquals(0, reservedStock(product));
+        assertEquals(1L, countReservations(reference, "RELEASED"));
+        assertRequestedRefund(checkoutId);
+        assertTrue(database.sql("""
+                SELECT payment_status = 'ACCEPTED' AND accepted_at IS NOT NULL
+                FROM payment WHERE payment_id = :id
+                """).param("id", checkoutId).query(Boolean.class).single());
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void concurrentCaptureAndCancellationLeaveOneRefundAndRelease() throws Exception {
+        Product product = createProduct("4.00", "ACTIVE", 8, 0);
+        var owner = signIn(createUser(SharedUserRole.CLIENT));
+        String reference = createOrder(owner, item(product, 3));
+        long checkoutId = checkoutId(owner, reference);
+        CountDownLatch start = new CountDownLatch(1);
+        try (var workers = Executors.newFixedThreadPool(2)) {
+            var payment = workers.submit(() -> {
+                assertTrue(start.await(5, TimeUnit.SECONDS));
+                capture(checkoutId, "sandbox-race-" + checkoutId, "12.00");
+                return null;
+            });
+            var cancellation = workers.submit(() -> {
+                assertTrue(start.await(5, TimeUnit.SECONDS));
+                cancel(owner, reference).andExpect(status().isOk());
+                return null;
+            });
+            start.countDown();
+            payment.get(15, TimeUnit.SECONDS);
+            cancellation.get(15, TimeUnit.SECONDS);
+        }
+        assertEquals("CANCELLED", orderStatus(reference));
+        assertEquals(0, reservedStock(product));
+        assertEquals(1L, countReservations(reference, "RELEASED"));
+        assertRequestedRefund(checkoutId);
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void expiryCanFinishWhileProviderVerificationIsInFlight() throws Exception {
+        Product product = createProduct("4.00", "ACTIVE", 8, 0);
+        var owner = signIn(createUser(SharedUserRole.CLIENT));
+        String reference = createOrder(owner, item(product, 3));
+        long checkoutId = checkoutId(owner, reference);
+        long orderId = orderId(reference);
+        var providerStarted = new CountDownLatch(1);
+        var verified = new CompletableFuture<VerifiedCheckout>();
+        try (var workers = Executors.newSingleThreadExecutor()) {
+            var payment = workers.submit(() -> checkouts.reconcile(checkoutId, id -> {
+                providerStarted.countDown();
+                return verified.join();
+            }));
+            try {
+                assertTrue(providerStarted.await(5, TimeUnit.SECONDS));
+                makeOverdue(orderId);
+                releases.expireIfDue(orderId);
+                assertEquals("CANCELLED", orderStatus(reference));
+                assertEquals(0, reservedStock(product));
+            } finally {
+                verified.complete(new VerifiedCheckout(Outcome.CAPTURED, "sandbox-expiry-" + checkoutId,
+                        new BigDecimal("12.00"), "HKD"));
+            }
+            payment.get(15, TimeUnit.SECONDS);
+        }
+        assertEquals("CANCELLED", orderStatus(reference));
+        assertEquals(0, reservedStock(product));
+        assertEquals(1L, countReservations(reference, "RELEASED"));
+        assertRequestedRefund(checkoutId);
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void legacyUnlinkedHoldBlocksCheckoutForTheWholeOrderEvenWithEnoughStock() throws Exception {
+        Product heldProduct = createProduct("4.00", "ACTIVE", 8, 0);
+        Product otherProduct = createProduct("5.00", "ACTIVE", 8, 0);
+        var owner = signIn(createUser(SharedUserRole.CLIENT));
+        String reference = createOrder(owner, item(heldProduct, 3) + "," + item(otherProduct, 2));
+        long orderId = orderId(reference);
+        long legacyHoldId = database.sql("""
+                INSERT INTO stock_reservation (order_item_id, quantity)
+                SELECT order_item_id, quantity FROM order_item WHERE order_id = :id AND product_id = :product
+                RETURNING reservation_id
+                """).param("id", orderId).param("product", heldProduct.productId).query(Long.class).single();
+        setReservedStock(heldProduct, 3);
+
+        for (int retry = 0; retry < 2; retry++) {
+            checkout(owner, reference).andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.code").value("CLIENT_ORDER_CHECKOUT_NOT_AVAILABLE"))
+                    .andExpect(jsonPath("$.message").value("Existing stock holds require reconciliation before checkout."));
+        }
+
+        assertEquals(0L, countCheckouts(reference));
+        assertEquals(List.of(legacyHoldId), database.sql("""
+                SELECT sr.reservation_id FROM stock_reservation sr JOIN order_item oi USING (order_item_id)
+                WHERE oi.order_id = :id
+                """).param("id", orderId).query(Long.class).list());
+        assertTrue(database.sql("""
+                SELECT status = 'HELD' AND payment_id IS NULL AND quantity = 3
+                    AND released_at IS NULL AND consumed_at IS NULL
+                FROM stock_reservation WHERE reservation_id = :id
+                """).param("id", legacyHoldId).query(Boolean.class).single());
+        assertEquals(3, reservedStock(heldProduct));
+        assertEquals(0, reservedStock(otherProduct));
+        assertEquals(0L, countForProducts("SELECT count(*) FROM stock_movement WHERE product_id IN (:ids)"));
+        assertEquals("AWAITING_PAYMENT", orderStatus(reference));
+    }
+
+    @Test
+    void legacyUnlinkedHoldIsLeftForAuditedReconciliation() throws Exception {
+        Product product = createProduct("4.00", "ACTIVE", 8, 0);
+        var owner = signIn(createUser(SharedUserRole.CLIENT));
+        String reference = createOrder(owner, item(product, 3));
+        long id = orderId(reference);
+        database.sql("""
+                INSERT INTO stock_reservation (order_item_id, quantity)
+                SELECT order_item_id, quantity FROM order_item WHERE order_id = :id
+                """).param("id", id).update();
+        setReservedStock(product, 3);
+        checkout(owner, reference).andExpect(status().isConflict());
+        assertEquals(0L, countCheckouts(reference));
+        var order = orders.findById(id).orElseThrow();
+        order.createdTime = releaseRows.databaseTime().minus(Duration.ofHours(25));
+        order.paymentDeadline = order.createdTime.plus(Duration.ofHours(24));
+        orders.flush();
+        releases.expireIfDue(id);
+        assertEquals("AWAITING_PAYMENT", orderStatus(reference));
+        assertEquals(1L, countReservations(reference, "HELD"));
+        assertEquals(3, reservedStock(product));
     }
 
     @AfterEach
@@ -847,6 +1221,19 @@ class ClientOrderApiTest {
                     DELETE FROM stock_reservation WHERE order_item_id IN (
                         SELECT oi.order_item_id FROM order_item oi JOIN customer_order co USING (order_id)
                         WHERE co.client_user_id IN (:ids))
+                    """).param("ids", fixtureUsers).update();
+            database.sql("""
+                    DELETE FROM refund WHERE payment_id IN (
+                        SELECT payment_id FROM payment JOIN customer_order USING (order_id)
+                        WHERE client_user_id IN (:ids))
+                    """).param("ids", fixtureUsers).update();
+            database.sql("""
+                    DELETE FROM payment WHERE order_id IN (
+                        SELECT order_id FROM customer_order WHERE client_user_id IN (:ids))
+                    """).param("ids", fixtureUsers).update();
+            database.sql("""
+                    DELETE FROM picking_task WHERE order_id IN (
+                        SELECT order_id FROM customer_order WHERE client_user_id IN (:ids))
                     """).param("ids", fixtureUsers).update();
             database.sql("""
                     DELETE FROM order_delivery_detail WHERE order_id IN (
@@ -914,6 +1301,65 @@ class ClientOrderApiTest {
         return JsonPath.read(response.getResponse().getContentAsString(), "$.orderReference");
     }
 
+    private ResultActions checkout(OrderSession session, String reference) throws Exception {
+        String path = ORDERS + "/" + reference + "/checkout";
+        return mvc.perform(post(path).servletPath(path).session(session.session())
+                .header(session.csrfHeader(), session.csrfToken()));
+    }
+
+    private long checkoutId(OrderSession session, String reference) throws Exception {
+        var result = checkout(session, reference).andExpect(status().isOk()).andReturn();
+        Number id = JsonPath.read(result.getResponse().getContentAsString(), "$.checkoutId");
+        return id.longValue();
+    }
+
+    private String createReservedOrder(OrderSession session, String items) throws Exception {
+        String reference = createOrder(session, items);
+        checkoutId(session, reference);
+        return reference;
+    }
+
+    private long countCheckouts(String reference) {
+        return database.sql("SELECT count(*) FROM payment WHERE order_id = :id")
+                .param("id", orderId(reference)).query(Long.class).single();
+    }
+
+    private void makeCheckoutWindowElapsed(long checkoutId) {
+        database.sql("""
+                UPDATE payment SET created_at = NOW() - INTERVAL '40 minutes',
+                    checkout_expires_at = NOW() - INTERVAL '10 minutes' WHERE payment_id = :id
+                """).param("id", checkoutId).update();
+    }
+
+    private void reconcile(long checkoutId, Outcome outcome) {
+        checkouts.reconcile(checkoutId, id -> new VerifiedCheckout(outcome, null, null, null));
+    }
+
+    private void capture(long checkoutId, String providerReference, String amount) {
+        checkouts.reconcile(checkoutId, id ->
+                new VerifiedCheckout(Outcome.CAPTURED, providerReference, new BigDecimal(amount), "HKD"));
+    }
+
+    private void assertRequestedRefund(long checkoutId) {
+        assertRequestedRefund(checkoutId, "12.00");
+    }
+
+    private void assertRequestedRefund(long checkoutId, String amountHkd) {
+        assertEquals(List.of("REQUESTED"), database.sql("""
+                SELECT refund_status FROM refund WHERE payment_id = :id AND amount = :amount
+                    AND provider_reference IS NULL AND completed_at IS NULL
+                """).param("id", checkoutId).param("amount", new BigDecimal(amountHkd)).query(String.class).list());
+        assertEquals(1L, database.sql("SELECT count(*) FROM refund WHERE payment_id = :id")
+                .param("id", checkoutId).query(Long.class).single());
+    }
+
+    private boolean entryClosedWhilePending(String reference) {
+        return database.sql("""
+                SELECT ended_at IS NOT NULL AND payment_status = 'PENDING' AND accepted_at IS NULL
+                FROM payment WHERE order_id = :id
+                """).param("id", orderId(reference)).query(Boolean.class).single();
+    }
+
     private long orderId(String reference) {
         return database.sql("SELECT order_id FROM customer_order WHERE order_reference = :ref")
                 .param("ref", reference).query(Long.class).single();
@@ -961,11 +1407,11 @@ class ClientOrderApiTest {
                 .param("id", product.productId).query(Integer.class).single();
     }
 
-    private int submitWhenReady(CountDownLatch ready, CountDownLatch start, OrderSession session, String body)
+    private int checkoutWhenReady(CountDownLatch ready, CountDownLatch start, OrderSession session, String reference)
             throws Exception {
         ready.countDown();
         assertTrue(start.await(5, TimeUnit.SECONDS));
-        return submit(session, body).andReturn().getResponse().getStatus();
+        return checkout(session, reference).andReturn().getResponse().getStatus();
     }
 
     private ResultActions submit(OrderSession session, String body) throws Exception {

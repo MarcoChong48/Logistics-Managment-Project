@@ -25,6 +25,10 @@ public interface CustomerOrderRepository extends JpaRepository<CustomerOrder, Lo
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<CustomerOrder> findByOrderReferenceAndClientUserID(String orderReference, Long clientUserID);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT o FROM CustomerOrder o WHERE o.orderID = :orderId")
+    Optional<CustomerOrder> findOrderForPaymentChange(@Param("orderId") long orderId);
+
     @Query(value = "SELECT * FROM customer_order WHERE order_id = :orderId FOR UPDATE SKIP LOCKED",
             nativeQuery = true)
     Optional<CustomerOrder> findUnlockedOrderForExpiry(@Param("orderId") long orderId);

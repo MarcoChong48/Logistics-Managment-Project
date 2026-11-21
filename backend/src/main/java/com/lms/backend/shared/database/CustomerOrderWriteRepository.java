@@ -26,25 +26,25 @@ public class CustomerOrderWriteRepository {
                 .update();
     }
 
-    public long insertItem(long orderId, long productId, int quantity, BigDecimal unitPrice) {
-        return database.sql("""
+    public void insertItem(long orderId, long productId, int quantity, BigDecimal unitPrice) {
+        database.sql("""
                 INSERT INTO order_item (order_id, product_id, quantity, unit_price)
                 VALUES (:orderId, :productId, :quantity, :unitPrice)
-                RETURNING order_item_id
                 """)
                 .param("orderId", orderId)
                 .param("productId", productId)
                 .param("quantity", quantity)
                 .param("unitPrice", unitPrice)
-                .query(Long.class).single();
+                .update();
     }
 
-    public void insertHeldReservation(long orderItemId, int quantity) {
+    public void insertHeldReservation(long orderItemId, long paymentId, int quantity) {
         database.sql("""
-                INSERT INTO stock_reservation (order_item_id, quantity, status)
-                VALUES (:orderItemId, :quantity, 'HELD')
+                INSERT INTO stock_reservation (order_item_id, payment_id, quantity, status)
+                VALUES (:orderItemId, :paymentId, :quantity, 'HELD')
                 """)
                 .param("orderItemId", orderItemId)
+                .param("paymentId", paymentId)
                 .param("quantity", quantity)
                 .update();
     }

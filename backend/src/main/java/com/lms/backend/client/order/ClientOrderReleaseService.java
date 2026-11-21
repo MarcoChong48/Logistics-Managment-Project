@@ -1,20 +1,13 @@
 package com.lms.backend.client.order;
 
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.lms.backend.shared.database.CheckoutPaymentRepository;
 import com.lms.backend.shared.database.CustomerOrder;
 import com.lms.backend.shared.database.CustomerOrderReleaseRepository;
 import com.lms.backend.shared.database.CustomerOrderRepository;
-import com.lms.backend.shared.database.Inventory;
-import com.lms.backend.shared.database.InventoryRepository;
-import com.lms.backend.shared.database.ProductRepository;
 import com.lms.backend.shared.error.SharedRuleException;
 import com.lms.backend.shared.login.SharedCurrentUserReader;
 import com.lms.backend.shared.value.SharedOrderStatus;
@@ -28,16 +21,17 @@ public class ClientOrderReleaseService {
     private final SharedCurrentUserReader currentUser;
     private final CustomerOrderRepository orders;
     private final CustomerOrderReleaseRepository releases;
-    private final ProductRepository products;
-    private final InventoryRepository inventory;
+    private final CheckoutPaymentRepository payments;
+    private final ClientOrderReservations reservations;
 
     public ClientOrderReleaseService(SharedCurrentUserReader currentUser, CustomerOrderRepository orders,
-            CustomerOrderReleaseRepository releases, ProductRepository products, InventoryRepository inventory) {
+            CustomerOrderReleaseRepository releases, CheckoutPaymentRepository payments,
+            ClientOrderReservations reservations) {
         this.currentUser = currentUser;
         this.orders = orders;
         this.releases = releases;
-        this.products = products;
-        this.inventory = inventory;
+        this.payments = payments;
+        this.reservations = reservations;
     }
 
     @Transactional
@@ -47,13 +41,16 @@ public class ClientOrderReleaseService {
                 .orElseThrow(() -> new SharedRuleException(HttpStatus.NOT_FOUND, "CLIENT_ORDER_NOT_FOUND",
                         "Order was not found."));
         if (!SharedOrderStatus.CANCELLED.name().equals(order.orderStatus)) {
-            if (!order.isAwaitingPayment() || releases.hasPaymentOrFulfillment(order.orderID)) {
+            boolean cancellableStatus = order.isAwaitingPayment()
+                    || SharedOrderStatus.READY_FOR_PICKING.name().equals(order.orderStatus);
+            if (!cancellableStatus || releases.hasFulfillmentStarted(order.orderID)) {
                 throw new SharedRuleException(HttpStatus.CONFLICT, "CLIENT_ORDER_CANCELLATION_NOT_ALLOWED",
-                        "Only unpaid orders awaiting payment can be cancelled.");
+                        "Only orders awaiting payment or ready for picking can be cancelled before picking starts.");
             }
-            String reason = order.canAcceptPaymentAt(releases.databaseTime()) ? CLIENT_CANCELLED
-                    : PAYMENT_DEADLINE_EXPIRED;
-            release(order, clientId, reason);
+            for (var accepted : payments.findAccepted(order.orderID)) {
+                payments.requestFullRefund(accepted.paymentId(), accepted.amountHkd());
+            }
+            cancelAndRelease(order, clientId, CLIENT_CANCELLED);
         }
         return new ClientCancelOrderResponse(order.orderReference, SharedOrderStatus.CANCELLED);
     }
@@ -62,32 +59,17 @@ public class ClientOrderReleaseService {
     public void expireIfDue(long orderId) {
         CustomerOrder order = orders.findUnlockedOrderForExpiry(orderId).orElse(null);
         if (order == null || !order.isAwaitingPayment() || order.canAcceptPaymentAt(releases.databaseTime())
-                || releases.hasPaymentOrFulfillment(orderId)) {
+                || releases.hasFulfillmentStarted(orderId) || !payments.findAccepted(orderId).isEmpty()
+                || releases.hasUnlinkedHeldReservations(orderId)) {
             return;
         }
-        release(order, null, PAYMENT_DEADLINE_EXPIRED);
+        cancelAndRelease(order, null, PAYMENT_DEADLINE_EXPIRED);
     }
 
-    private void release(CustomerOrder order, Long actorUserId, String reason) {
-        // With the existing order locked, follow Create Order's product and inventory lock order.
-        List<Long> productIds = releases.findOrderProductIds(order.orderID);
-        if (!productIds.isEmpty()) {
-            products.findByProductIdInOrderByProductIdAsc(productIds);
-            Map<Long, Inventory> balances = inventory.findByProductIdInOrderByProductIdAsc(productIds).stream()
-                    .collect(Collectors.toMap(balance -> balance.productId, Function.identity()));
-            for (var hold : releases.lockHeldReservations(order.orderID)) {
-                Inventory balance = balances.get(hold.productId());
-                if (balance == null || balance.reservedStock < hold.quantity()) {
-                    throw new IllegalStateException("Inconsistent inventory for reservation " + hold.reservationId());
-                }
-                if (releases.markReleased(hold.reservationId()) != 1) {
-                    throw new IllegalStateException("Could not release reservation " + hold.reservationId());
-                }
-                balance.reservedStock -= hold.quantity();
-                releases.insertReleaseMovement(hold.productId(), actorUserId, hold.quantity(),
-                        reason + ": " + order.orderReference);
-            }
-        }
+    private void cancelAndRelease(CustomerOrder order, Long actorUserId, String reason) {
+        // Close entry while preserving any pending checkout for provider reconciliation.
+        payments.closePendingEntry(order.orderID);
+        reservations.release(order, null, actorUserId, reason);
         order.orderStatus = SharedOrderStatus.CANCELLED.name();
     }
 }

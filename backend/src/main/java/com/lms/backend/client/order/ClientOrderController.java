@@ -13,10 +13,13 @@ public class ClientOrderController {
 
     private final ClientOrderService orders;
     private final ClientOrderReleaseService releases;
+    private final ClientCheckoutService checkout;
 
-    public ClientOrderController(ClientOrderService orders, ClientOrderReleaseService releases) {
+    public ClientOrderController(ClientOrderService orders, ClientOrderReleaseService releases,
+            ClientCheckoutService checkout) {
         this.orders = orders;
         this.releases = releases;
+        this.checkout = checkout;
     }
 
     @PostMapping("/api/client/orders")
@@ -30,5 +33,10 @@ public class ClientOrderController {
     @PostMapping("/api/client/orders/{orderReference}/cancel")
     public ClientCancelOrderResponse cancelOrder(@PathVariable("orderReference") String orderReference) {
         return releases.cancelOwnOrder(orderReference);
+    }
+
+    @PostMapping("/api/client/orders/{orderReference}/checkout")
+    public ClientCheckoutResponse startCheckout(@PathVariable("orderReference") String orderReference) {
+        return checkout.startCheckout(orderReference);
     }
 }
