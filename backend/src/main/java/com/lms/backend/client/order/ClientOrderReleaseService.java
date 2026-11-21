@@ -41,9 +41,7 @@ public class ClientOrderReleaseService {
                 .orElseThrow(() -> new SharedRuleException(HttpStatus.NOT_FOUND, "CLIENT_ORDER_NOT_FOUND",
                         "Order was not found."));
         if (!SharedOrderStatus.CANCELLED.name().equals(order.orderStatus)) {
-            boolean cancellableStatus = order.isAwaitingPayment()
-                    || SharedOrderStatus.READY_FOR_PICKING.name().equals(order.orderStatus);
-            if (!cancellableStatus || releases.hasFulfillmentStarted(order.orderID)) {
+            if (!canCancelBeforePicking(order.orderID, order.orderStatus)) {
                 throw new SharedRuleException(HttpStatus.CONFLICT, "CLIENT_ORDER_CANCELLATION_NOT_ALLOWED",
                         "Only orders awaiting payment or ready for picking can be cancelled before picking starts.");
             }
@@ -53,6 +51,12 @@ public class ClientOrderReleaseService {
             cancelAndRelease(order, clientId, CLIENT_CANCELLED);
         }
         return new ClientCancelOrderResponse(order.orderReference, SharedOrderStatus.CANCELLED);
+    }
+
+    boolean canCancelBeforePicking(long orderId, String orderStatus) {
+        return (SharedOrderStatus.AWAITING_PAYMENT.name().equals(orderStatus)
+                || SharedOrderStatus.READY_FOR_PICKING.name().equals(orderStatus))
+                && !releases.hasFulfillmentStarted(orderId);
     }
 
     @Transactional(timeout = 15)

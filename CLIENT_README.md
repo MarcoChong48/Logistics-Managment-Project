@@ -110,6 +110,36 @@ Create Order hashes the validated request with SHA-256 using a versioned encodin
 
 The optional fifth argument to `sharedSendRequest()` adds the key alongside the existing session credentials and CSRF header. Generate one key for each intended order and preserve it with that order's payload, including across a page reload if retry is offered. After an ambiguous failure such as a timeout, use the same signed-in Client and resend the same payload with the same key. A new intended order needs a new key.
 
+## My Orders, Order Details and Order Tracking
+
+These GET APIs use the signed-in Client session, return `Cache-Control: no-store`, and make no workflow changes. Unknown and unowned orders return the same 404. `paymentDeadline` is returned only while the order is `AWAITING_PAYMENT` and is null for other statuses.
+
+```javascript
+const firstPage = await sharedSendRequest("GET", "/api/client/orders?limit=20")
+if (firstPage.nextCursor) {
+  await sharedSendRequest("GET", "/api/client/orders?limit=20&cursor=" + encodeURIComponent(firstPage.nextCursor))
+}
+if (firstPage.orders.length) {
+  const orderUrl = "/api/client/orders/" + encodeURIComponent(firstPage.orders[0].orderReference)
+  const details = await sharedSendRequest("GET", orderUrl)
+  const tracking = await sharedSendRequest("GET", orderUrl + "/tracking")
+}
+```
+
+`GET /api/client/orders` returns `orders` and `nextCursor`. Each row has `orderReference`, `createdAt`, `orderStatus`, `totalAmountHkd`, `paymentDeadline` and `itemSummary` with `productCount` and `totalQuantity`. The default page size is 20 and the allowed range is 1–50. An out-of-range or invalid limit returns 400. Results are newest first with a stable tie-breaker. Pass `nextCursor` unmodified to fetch the next page. A null cursor means there is no next page. A Client without orders receives `{"orders":[],"nextCursor":null}`. Payment and refund badges are available from the detail and tracking endpoints. A future list-level badge feature would need a bulk summary in this response.
+
+`GET /api/client/orders/{orderReference}` includes `items`, `deliveryDetails`, `paymentAttempts` and `canCancel` alongside the order reference, creation time, status, total and deadline. Items use saved quantities and `unitPriceHkd`. The schema has no order-time SKU or name snapshots, so `sku` and `name` come from the current catalogue with `labelSource: "CURRENT_CATALOGUE"`. Renamed or inactive items remain visible. The schema prevents deleting a product referenced by an order item. If imported legacy data lacks a catalogue row, the item still exposes its saved quantity and price with null labels and `labelSource: "UNAVAILABLE"`. `deliveryDetails` contains `version`, `recipientName`, `phone` and `address` from the highest persisted address version on this order, or is null when none was recorded. `canCancel` uses the same status and Start Picking rules as the cancel API. A pending picking task leaves cancellation available. This is a read snapshot and the cancel API rechecks eligibility under the order lock when called.
+
+In both details and tracking, `paymentAttempts` is an array ordered oldest first. Attempts include `status`, `createdAt`, `acceptedAt` and a `refunds` array. Each refund has `status`, `amountHkd`, `requestedAt` and `completedAt`. An order without an attempt returns `[]`. A refund is shown as `COMPLETED` only when both the persisted completion status and a valid completion timestamp are present. A `REQUESTED` refund remains separate from the main order status. Provider references are excluded.
+
+`GET /api/client/orders/{orderReference}/tracking` includes `orderStatus`, `statusLabel`, `currentStatusSince`, `historyComplete`, `progression`, `deliveryAttempts` and `paymentAttempts`. `progression` contains persisted activities in chronological order, including order placement, picking start, packing confirmation, package creation, known custody events, and delivery starts and outcomes. Each event has `type`, `occurredAt`, and optional `attemptNumber` and `cycleNumber`. A delivery attempt has its own start, end, outcome, client-safe `failureReason` and linked `deliveryAddressVersion`. Tracking does not repeat the address and contact fields. Driver notes, identity, package QR codes, proofs, and raw failure text are excluded. `attemptNumber` and `cycleNumber` are display ordinals. A cycle is only assigned when the attempt links to an observed pickup for the same parcel. Repeated pickup records for one known list share the first recorded pickup's cycle. Pickups without a list remain separate because the schema has no key to distinguish duplicates from separate collection events. Unknown or missing links produce a null cycle. `currentStatusSince` is null and `historyComplete` is false because the schema lacks exact transition history. A current state alone never adds a historical event.
+
+### Proposal for complete order history
+
+The current APIs require no schema migration or writer changes. For a later team milestone, agree an append-only status history table keyed by order and transition ID. Include previous and next status, database timestamp, source and an idempotency reference. The actor can be retained for internal audit. Keep order ownership joins and expose only approved fields to Clients. Warehouse, Delivery and Client/payment writers would append a transition while holding the same order-row lock and commit it with the status update. Record repeat delivery cycles separately. Leave older unknown transitions without fabricated dates. This proposal has no SQL migration or backfill in Milestone 6.
+
+Warehouse must persist picking start, packing confirmation and custody events. Delivery must persist each attempt with the address version actually used and link it to the same parcel's pickup event. For address approval, agree how writers distinguish a proposed version from the effective version before storing drafts as newer delivery details. The current schema has no effective-version flag. Client instructions record requests and approvals, which alone do not establish delivery events. Agree public reason codes before adding new mappings. The current read model recognizes delivery outcomes `IN_PROGRESS`, `FAILED` and `DELIVERED` and custody types `PICKED_UP` and `RETURNED_TO_WAREHOUSE`. Unknown outcomes display `UNKNOWN`, and unknown failed-delivery reasons use generic wording. Admin inspection found no shared status history or item name snapshots. Recheck the shared Product/OrderItem and security changes when the branches are integrated. [Admin Stage 4](https://github.com/MarcoChong48/Logistics-Managment-Project/commit/d3759e685496969f0c53b7237ee1e3169c178438)
+
 ## Verification and deployment limits
 
 - Automated verification uses PostgreSQL 18.1. PostgreSQL 17 and manual browser testing are pending.
