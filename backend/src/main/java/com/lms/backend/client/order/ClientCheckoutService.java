@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.function.Consumer;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -51,7 +52,7 @@ public class ClientCheckoutService {
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public ClientCheckoutResponse startCheckout(String orderReference) {
+    public ClientCheckoutResponse startCheckout(String orderReference, Consumer<BigDecimal> validateProviderAmount) {
         long clientId = currentUser.sharedReadCurrentUser().userID();
         CustomerOrder order = orders.findByOrderReferenceAndClientUserID(orderReference, clientId)
                 .orElseThrow(() -> new SharedRuleException(HttpStatus.NOT_FOUND, "CLIENT_ORDER_NOT_FOUND",
@@ -60,6 +61,7 @@ public class ClientCheckoutService {
         if (orderRows.hasFulfillmentStarted(order.orderID) || !payments.findAccepted(order.orderID).isEmpty()) {
             throw checkoutConflict("The order is no longer eligible for checkout.");
         }
+        validateProviderAmount.accept(order.totalAmount);
 
         var pending = payments.findPending(order.orderID);
         if (pending.size() > 1) {
@@ -139,6 +141,7 @@ public class ClientCheckoutService {
                 && payments.findAccepted(order.orderID).isEmpty() && !orderRows.hasFulfillmentStarted(order.orderID)
                 && orderRows.checkoutHoldsAllItems(order.orderID, attempt.paymentId());
         Instant acceptedAt = orderRows.databaseTime();
+        // Entry cutoff governs issuing checkout access. The locked order deadline governs payment acceptance.
         if (validAttempt && order.canAcceptPaymentAt(acceptedAt)) {
             payments.markAccepted(attempt.paymentId(), reference, acceptedAt);
             order.orderStatus = SharedOrderStatus.READY_FOR_PICKING.name();
@@ -160,6 +163,6 @@ public class ClientCheckoutService {
 
     private ClientCheckoutResponse response(CustomerOrder order, Attempt attempt) {
         return new ClientCheckoutResponse(attempt.paymentId(), order.orderReference, attempt.amountHkd(),
-                attempt.entryDeadline(), false);
+                attempt.entryDeadline(), false, null);
     }
 }

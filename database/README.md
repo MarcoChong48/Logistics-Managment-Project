@@ -134,3 +134,11 @@ docker compose exec db psql -U lms -d lms -c "\d public.client_order_idempotency
 ```
 
 Record the migration in the team’s operations log. The script creates the new table in one transaction. A repeat execution stops with an already-exists error and leaves the existing table and data intact. Existing orders and volumes are retained, and old orders have no replay record to backfill.
+
+## Stripe Sandbox foundation
+
+`05_client_stripe_sandbox.sql` adds a checkout-to-Session mapping and a durable webhook inbox keyed by event ID. It preserves existing order, payment, reservation and refund rows. The foundation requires `05` only when Stripe is enabled. For an isolated test database, apply `01`, `03`, `04`, then `05` with `psql -v ON_ERROR_STOP=1`. The resulting schema contains 30 tables. The normal Compose initialization still stops at `04`. Existing databases and volumes need no changes for Stripe-disabled operation.
+
+For a new isolated Stripe database, apply all four scripts in order. For an already-initialized isolated database, verify the server, confirm `04` is present, and check both `public.client_stripe_checkout` and `public.client_stripe_event` before applying `05`. If both are present, skip `05`. If only one is present, inspect the schema before proceeding. The migration adds no backfill and runs in one transaction. If any statement fails, PostgreSQL rolls back the entire migration when the `psql` session exits.
+
+For application rollback, disable Stripe and retain both tables. If any sessions have already been issued, stop new checkout issuance and arrange closure and reconciliation of those sessions and any refund obligations before retiring the adapter. If an urgent rollback takes the webhook offline, retain the stored identifiers and reconcile against the Sandbox before restoring checkout. Dropping the tables would erase the evidence needed to avoid duplicate Session creation and process missed events. This milestone includes no down migration.
