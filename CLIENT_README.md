@@ -188,6 +188,72 @@ Delivery v3.1 writes a placeholder row to `notification_outbox` in its own datab
 
 The typed payload, consumer, ID mappings and cross-module integration tests are pending. This milestone has no Delivery outbox consumer.
 
+## Client account settings and saved delivery defaults
+
+The account endpoints require a signed-in Client. They use the user ID from the shared session and return private data with `Cache-Control: no-store`. Both GETs are read-only, including when a profile row does not exist. PUT requires the shared CSRF header.
+
+| Request | Successful response |
+|---|---|
+| `GET /api/client/account` | HTTP 200 with `userId` as a decimal string, `username`, `createdAt` as a UTC timestamp, and `deliveryDefaults`. |
+| `GET /api/client/account/delivery-defaults` | HTTP 200 with `recipientName`, `contactPhone`, and `deliveryAddress`. A Client with no saved defaults receives three nulls. |
+| `PUT /api/client/account/delivery-defaults` | HTTP 200 with the stored values in the same shape as the defaults GET. Send all three fields. Use JSON `null` to clear any field or all three. |
+
+An account with all three defaults saved returns the following.
+
+~~~json
+{
+  "userId": "42",
+  "username": "client42",
+  "createdAt": "2026-11-01T10:00:00Z",
+  "deliveryDefaults": {
+    "recipientName": "Chan Tai Man",
+    "contactPhone": "+852 2345 6789",
+    "deliveryAddress": "Flat A, 12 Nathan Road, Kowloon, Hong Kong"
+  }
+}
+~~~
+
+Use the shared request helper to save or clear defaults.
+
+~~~javascript
+await sharedSendRequest("PUT", "/api/client/account/delivery-defaults", {
+  recipientName: "Chan Tai Man",
+  contactPhone: "+852 2345 6789",
+  deliveryAddress: "Flat A, 12 Nathan Road, Kowloon, Hong Kong"
+})
+
+await sharedSendRequest("PUT", "/api/client/account/delivery-defaults", {
+  recipientName: null, contactPhone: null, deliveryAddress: null
+})
+~~~
+
+PUT replaces the three values together. Omitted properties cause HTTP 400 and leave the stored values intact. Concurrent writes are serialized by the existing `client_profile` primary key. The last successful write in that database order wins for the entire set, regardless of request arrival or response order. Clearing stores `NULL` values on the profile row. No schema migration is required.
+
+Fields accept strings or null. Text is trimmed. Recipient names must be single-line, include a letter, and fit within 120 characters. Contact phones accept 7 to 15 ASCII digits with an optional leading `+` and single spaces or hyphens between digit groups, up to 40 characters. Addresses must include a letter or digit and fit within 1,000 characters. They may span multiple lines. The API validates the text shape. Address deliverability is unverified. Blank, missing, extra, invalid, and oversized fields return HTTP 400 with `CLIENT_DELIVERY_DEFAULTS_INVALID` when the JSON can be read. Empty or malformed JSON, duplicate property names, and extra content after the first JSON value return HTTP 400 with `SHARED_INPUT_INVALID`. Missing or expired sessions return HTTP 401. Other roles or invalid CSRF tokens return HTTP 403.
+
+Use the defaults GET to prefill the Client order form. Let the Client edit the values, then submit all three explicitly as `recipientName`, `contactPhone` and `deliveryAddress` in the existing Create Order request. Create Order always uses those submitted values and requires them even when a profile has defaults. It keeps an independent order delivery record. Updating or clearing defaults has no effect on older orders or Create Order retries.
+
+### Shared sign-in and password change
+
+The future Client Account Settings UI uses the same shared authentication endpoints as Admin. The shared request helper attaches the CSRF header on POST and PUT. If making requests directly, read it from the session response and obtain a fresh token after login or logout.
+
+| Existing endpoint | Contract |
+|---|---|
+| `GET /api/shared/session` | Returns `sharedViewSessionIsLoggedIn`, `userID`, `username`, `role`, `mustChangePassword`, `sharedViewSessionSecurityToken`, `sharedViewSessionSecurityTokenHeaderName`, `sharedViewSessionIdleTimeoutSeconds`, `sharedViewSessionTestModeIsEnabled` and `sharedViewSessionNextPageWebAddress`. Guests receive a token and null identity fields. |
+| `POST /api/shared/login` | Send `sharedLoginUserUsername` and `sharedLoginUserPassword` plus the CSRF header. Success starts a new session and returns `userID`, `username`, `role`, `mustChangePassword` and `sharedLoginUserNextPageWebAddress`. |
+| `POST /api/shared/logout` | Send the CSRF header with no JSON body. Success invalidates the session and returns `{"message":"You are logged out."}`. |
+| `POST /api/shared/change-password` | Send the current, new and confirmation passwords plus the CSRF header from a signed-in session. Success returns `{"message":"Password changed. Please log in again."}` and invalidates the current and other sessions issued under the old credentials. |
+
+~~~javascript
+await sharedSendRequest("POST", "/api/shared/change-password", {
+  sharedChangePasswordCurrentPassword: currentPassword,
+  sharedChangePasswordNewPassword: newPassword,
+  sharedChangePasswordConfirmPassword: confirmationPassword
+})
+~~~
+
+Use the shared change-password page for temporary-password sessions. Those sessions require a password change before accessing account settings. Public Client registration remains a gap to coordinate with Andrew in Shared Authentication. For local testing, an authorized Admin can provision a Client through the existing user management flow. [Admin account provisioning](https://github.com/MarcoChong48/Logistics-Managment-Project/blob/01fba08cac729d0ff3e136b5df0dc7d327cfeb1b/backend/src/main/java/com/lms/backend/admin/user/AdminUserController.java) · [Shared sign-in routes](https://github.com/MarcoChong48/Logistics-Managment-Project/blob/01fba08cac729d0ff3e136b5df0dc7d327cfeb1b/backend/src/main/java/com/lms/backend/shared/login/SharedLoginController.java)
+
 ## Verification and deployment limits
 
 - Automated verification uses PostgreSQL 18.1. PostgreSQL 17 and manual browser testing are pending.
