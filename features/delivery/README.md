@@ -1,4 +1,4 @@
-# LMS Delivery App v3.1
+# LMS Delivery App v3.2
 
 A Delivery Worker app for the Logistics Management System, with a local demo profile. The app uses the enhanced B direction, with an HTML, CSS and native JavaScript interface and a Java 21 / Spring Boot 4.1.2 JSON API. Supabase PostgreSQL uses the team v0.4 draft and Delivery extensions.
 
@@ -33,13 +33,15 @@ The Java/H2 launch is described below. The hosted database setup uses the Supaba
 | Page | Use |
 |---|---|
 | Overview | Check Delivery work and open the relevant page. |
-| Pickup | Claim a list, scan or enter a package QR code, report a pickup issue and close the list. |
+| Pickup | View your assigned lists, confirm a list at the warehouse, scan each package, report issues and close the list. |
 | My deliveries | Open an assigned package, start an attempt and record the outcome and proof. |
 | Return handoffs | Report a handoff and follow Warehouse receipt, client instructions, Admin approval and redelivery using saved backend status. |
 | Attempt history | Find earlier attempts and review outcome and proof metadata. An authorized worker on a current active attempt can preview its proof. |
 | Notifications | Review saved notifications and filter unread items. |
 | Decisions & integrations | Look up local decisions and integration boundaries. The developer handoff is in the [integration guide](docs/INTEGRATION.md). |
 | Test tools | In the demo profile, simulate external steps using labelled **Place holder** actions. |
+
+Delivery assigns each ready list to the active worker with the fewest current lists. In **Pickup**, scan or enter your assigned list QR code to confirm pickup. Scan each package separately to record collection. [Assignment and integration rules](docs/INTEGRATION.md)
 
 The workspace follows the shared design notes for menus, forms, dialogs and tables. The top bar shows the live session countdown. Use **Change password** to update your password and sign in again. The change also expires other sessions for the same account on their next API request.
 
@@ -123,7 +125,7 @@ For an offline H2 backup, stop the app and copy the whole `data` folder as one d
 
 ## Delivery features and integration status
 
-Implemented local Delivery work includes authenticated worker sessions, self-service password change, list claims, individual pickup, separate attempts, failure/return reporting, private signature/photo proof handling, ownership checks and safe request retries. Backend tests cover inventory deductions and restoration, transaction rollback, duplicate effects, damaged-stock holds and expiry summaries. Test tools demonstrates external handoffs using local records.
+Implemented local Delivery work includes authenticated worker sessions, self-service password change, automatic list assignment, list confirmation, individual pickup, separate attempts, failure/return reporting, private signature/photo proof handling, ownership checks and safe request retries. Backend tests cover inventory deductions and restoration, transaction rollback, duplicate effects, damaged-stock holds and expiry summaries. Test tools demonstrates external handoffs using local records.
 
 The 9 November source reorganization passed the production build, all 11 backend tests, 19 HTTP API checks, desktop and mobile viewport checks, and the UI signature workflow. The 5 November 2026 runnable package recorded **10 passing backend JUnit tests**, **19 passing HTTP API checks**, desktop/mobile Chrome checks and a complete UI signature delivery flow. The same release also has restart persistence and offline backup evidence. Those reports travel with this checkout for comparison. Camera hardware, the full U-02 workload, cloud services and live team integrations remain open verification items. [Testing guide](docs/TESTING.md)
 

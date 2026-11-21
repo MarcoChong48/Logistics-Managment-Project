@@ -11,7 +11,7 @@ function metric(name, page, value) {
 export default function render({ workspace }) {
   const { stats, tasks = [], reviewQueue = [] } = workspace;
   const nextPage = tasks.length ? 'deliveries' : 'pickup';
-  const nextLabel = tasks.length ? 'Open my deliveries' : 'View pickup lists';
+  const nextLabel = tasks.length ? 'Open my deliveries' : 'View my pickup lists';
   const rows = tasks.slice(0, 5).map(task => `<tr>
     <th scope="row" data-title="Order"><a href="#delivery-detail/${encodeURIComponent(task.id)}" data-delivery="details" data-package="${esc(task.id)}">${esc(task.orderReference)}</a></th>
     <td data-title="Package">${esc(task.id)}</td>
@@ -22,7 +22,7 @@ export default function render({ workspace }) {
     <div class="shared-grid-two">
       <section class="shared-card"><div class="shared-card-header"><h2 class="shared-card-title">Delivery workload</h2></div>
         <div class="shared-card-body">
-          ${metric('Ready pickup lists', 'pickup', stats?.readyLists)}
+          ${metric('Assigned lists to confirm', 'pickup', stats?.readyLists)}
           ${metric('Packages in transit', 'deliveries', stats?.inTransit)}
           ${metric('Delivered today', 'history', stats?.deliveredToday)}
           ${metric('Returns awaiting warehouse', 'returns', stats?.pendingReturns)}

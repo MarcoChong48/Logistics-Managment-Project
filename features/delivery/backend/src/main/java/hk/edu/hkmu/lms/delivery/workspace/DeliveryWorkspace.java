@@ -46,16 +46,23 @@ public class DeliveryWorkspace {
 
     @Transactional
     public Map<String,Object> workspace(String actor) {
-        lock(db);Map<String,Object> currentUser=access.user(actor);
+        lock(db);
+        Map<String,Object> currentUser = access.user(actor);
+        state.assignOpenLists();
         List<Map<String,Object>> lists=new ArrayList<>(),tasks=new ArrayList<>(),attempts=new ArrayList<>(),returns=new ArrayList<>(),notifications=new ArrayList<>(),demoPackages=new ArrayList<>();
-        for(Map<String,Object> list:db.queryForList("SELECT * FROM pickup_list WHERE list_status='OPEN' OR claimed_by=? ORDER BY created_at DESC,id",actor)) {
+        for (Map<String,Object> list : db.queryForList("""
+                SELECT * FROM pickup_list
+                WHERE (list_status='OPEN' AND assigned_to=?)
+                    OR (list_status<>'OPEN' AND claimed_by=?)
+                ORDER BY created_at DESC, id
+                """, actor, actor)) {
             List<Map<String,Object>> packages=new ArrayList<>();
             for(Map<String,Object> item:db.queryForList("SELECT * FROM pickup_item WHERE list_id=? ORDER BY package_id",text(list,"ID"))){
                 Map<String,Object> p=state.packageRow(text(item,"PACKAGE_ID"));
                 String summary=String.join(", ",state.items(text(p,"ORDER_ID")).stream().map(i->number(i,"QUANTITY")+" × "+text(i,"PRODUCT_NAME")).toList());
                 packages.add(fields("id",text(p,"ID"),"qrCode",text(p,"QR_CODE"),"orderReference",text(p,"ORDER_REFERENCE"),"status",text(p,"ORDER_STATUS"),"itemSummary",summary,"collectionOutcome",text(item,"COLLECTION_OUTCOME"),"cannotCollectReason",text(item,"REASON"),"holdReason",text(p,"HOLD_REASON")));
             }
-            lists.add(fields("id",text(list,"ID"),"qrCode",text(list,"QR_CODE"),"status",text(list,"LIST_STATUS"),"createdAt",text(list,"CREATED_AT"),"claimedBy",text(list,"CLAIMED_BY"),"claimedAt",text(list,"CLAIMED_AT"),"stale",stale(list),"packages",packages));
+            lists.add(fields("id",text(list,"ID"),"qrCode",text(list,"QR_CODE"),"status",text(list,"LIST_STATUS"),"createdAt",text(list,"CREATED_AT"),"assignedTo",text(list,"ASSIGNED_TO"),"claimedBy",text(list,"CLAIMED_BY"),"claimedAt",text(list,"CLAIMED_AT"),"stale",stale(list),"packages",packages));
         }
         for(Map<String,Object> p:db.queryForList("SELECT p.*,o.order_status,o.order_reference,o.client_id,o.payment_accepted FROM delivery_package p JOIN delivery_order o ON o.id=p.order_id WHERE p.holder_id=? AND p.custody='DELIVERY' ORDER BY p.id",actor)){
             String packageId=text(p,"ID");Map<String,Object> detail=requiredRow(db,"SELECT * FROM delivery_detail WHERE id=?",text(p,"DETAIL_ID"));
@@ -105,7 +112,7 @@ public class DeliveryWorkspace {
         }
         ZoneId hongKong=ZoneId.of("Asia/Hong_Kong");
         Instant today=LocalDate.now(clock.withZone(hongKong)).atStartOfDay(hongKong).toInstant();
-        Map<String,Object> stats=fields("readyLists",rowCount(db,"SELECT COUNT(*) FROM pickup_list WHERE list_status='OPEN'"),
+        Map<String,Object> stats=fields("readyLists",rowCount(db,"SELECT COUNT(*) FROM pickup_list WHERE list_status='OPEN' AND assigned_to=?",actor),
             "inTransit",rowCount(db,"SELECT COUNT(*) FROM delivery_package p JOIN delivery_order o ON o.id=p.order_id WHERE p.holder_id=? AND p.custody='DELIVERY' AND o.order_status IN ('SHIPPED','OUT_FOR_DELIVERY')",actor),
             "deliveredToday",rowCount(db,"SELECT COUNT(*) FROM delivery_attempt WHERE worker_id=? AND outcome='DELIVERED' AND ended_at>=?",actor,today.toString()),
             "pendingReturns",rowCount(db,"SELECT COUNT(*) FROM return_receipt WHERE reported_by=? AND receipt_status='AWAITING_WAREHOUSE'",actor),

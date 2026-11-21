@@ -1,6 +1,8 @@
 package hk.edu.hkmu.lms.delivery.fulfilment;
 
 import java.time.Clock;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -40,13 +42,63 @@ public class FulfilmentState {
     public boolean pendingCancellation(String id){return db.queryForObject("SELECT COUNT(*) FROM client_instruction WHERE package_id=? AND instruction_type='CANCEL' AND instruction_status='PENDING'",Integer.class,id)>0;}
     public Map<String,Object> latestReturn(Map<String,Object> p){if(text(p,"LAST_RETURN_ID")==null)throw ApiException.conflict("A recorded Warehouse return is required.");return requiredRow(db,"SELECT * FROM return_receipt WHERE id=? AND package_id=?",text(p,"LAST_RETURN_ID"),text(p,"ID"));}
     public void setStatus(Map<String,Object> p,String status){db.update("UPDATE delivery_order SET order_status=? WHERE id=?",status,text(p,"ORDER_ID"));}
-    public String makeList(List<String> packages){
+    public String makeList(List<String> packages) {
+        return makeList(packages, null);
+    }
+
+    public String makeList(List<String> packages, String previousWorker) {
         if(packages.isEmpty())return null;
         String list=newId("PL");
         for(String pkg:packages)if(db.queryForObject("SELECT COUNT(*) FROM pickup_item i JOIN pickup_list l ON l.id=i.list_id WHERE i.package_id=? AND l.list_status<>'CLOSED' AND i.collection_outcome IN ('PENDING','CANNOT_COLLECT')",Integer.class,pkg)>0)throw ApiException.conflict("The package is still on an active pickup list.");
         db.update("INSERT INTO pickup_list(id,qr_code,list_status,created_at,created_by) VALUES(?,?,?,?,?)",list,list,"OPEN",now(),"DEMO_WAREHOUSE");
         for(String pkg:packages)db.update("INSERT INTO pickup_item(list_id,package_id,collection_outcome) VALUES(?,?,?)",list,pkg,"PENDING");
+        assignOpenLists(list, previousWorker);
         return list;
+    }
+
+    // The caller holds the delivery mutation lock for assignment and confirmation.
+    public void assignOpenLists() {
+        assignOpenLists(null, null);
+    }
+
+    private void assignOpenLists(String replacementList, String previousWorker) {
+        db.update("""
+            UPDATE pickup_list SET assigned_to=NULL
+            WHERE list_status='OPEN' AND assigned_to IS NOT NULL
+              AND assigned_to NOT IN (
+                SELECT id FROM app_account WHERE role='DELIVERY' AND account_status='ACTIVE'
+            )
+            """);
+        List<String> pending = db.queryForList("""
+            SELECT id FROM pickup_list WHERE list_status='OPEN' AND assigned_to IS NULL
+            ORDER BY created_at, id
+            """, String.class);
+        if (pending.isEmpty()) return;
+
+        Map<String,Integer> workload = new HashMap<>();
+        for (Map<String,Object> worker : db.queryForList("""
+                SELECT a.id, COUNT(l.id) AS list_count
+                FROM app_account a
+                LEFT JOIN pickup_list l
+                    ON l.list_status<>'CLOSED' AND COALESCE(l.assigned_to, l.claimed_by)=a.id
+                WHERE a.role='DELIVERY' AND a.account_status='ACTIVE'
+                GROUP BY a.id
+                """)) {
+            workload.put(text(worker, "ID"), number(worker, "LIST_COUNT"));
+        }
+        if (workload.isEmpty()) return;
+
+        var ranking = Comparator.comparingInt((String worker) -> workload.get(worker)).thenComparing(Comparator.naturalOrder());
+        for (String list : pending) {
+            // Avoid sending a supervised replacement straight back to the previous worker.
+            String excluded = list.equals(replacementList) && workload.size() > 1 ? previousWorker : null;
+            String worker = workload.keySet().stream()
+                .filter(candidate -> !candidate.equals(excluded))
+                .min(ranking)
+                .orElseThrow();
+            db.update("UPDATE pickup_list SET assigned_to=? WHERE id=? AND list_status='OPEN' AND assigned_to IS NULL", worker, list);
+            workload.merge(worker, 1, Integer::sum);
+        }
     }
     public void movement(String sku,String pkg,String source,String type,int physical,int reserved,int unavailable,String actor){db.update("INSERT INTO stock_movement VALUES(?,?,?,?,?,?,?,?,?,?)",newId("MOV"),sku,pkg,source,type,physical,reserved,unavailable,actor,now());}
     public void custody(String pkg,String source,String type,String from,String to,String actor){db.update("INSERT INTO custody_event VALUES(?,?,?,?,?,?,?,?)",newId("CUS"),pkg,source,type,from,to,actor,now());}

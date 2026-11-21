@@ -23,7 +23,6 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import javax.imageio.ImageIO;
 import org.junit.jupiter.api.BeforeEach;
@@ -107,13 +106,59 @@ class DeliveryServiceTest {
         assertThat(text("SELECT custody FROM delivery_package WHERE id='PKG-1002'")).isEqualTo("WAREHOUSE");
     }
 
-    @Test void concurrentClaimsHaveOneWinner() throws Exception{
-        try(var executor=Executors.newFixedThreadPool(2)){
-            Callable<Boolean> ken=()->{try{action("ken","CLAIM","","qrCode","PL-1001");return true;}catch(ApiException ex){assertThat(ex.status()).isEqualTo(409);return false;}};
-            Callable<Boolean> mei=()->{try{action("mei","CLAIM","","qrCode","PL-1001");return true;}catch(ApiException ex){assertThat(ex.status()).isEqualTo(409);return false;}};
-            var results=executor.invokeAll(List.of(ken,mei));
-            assertThat(results.stream().filter(f->{try{return f.get();}catch(Exception ex){throw new RuntimeException(ex);}}).count()).isEqualTo(1);
+    @Test void concurrentConfirmationAllowsOnlyTheAssignedWorker() throws Exception {
+        try (var executor = Executors.newFixedThreadPool(2)) {
+            var confirm = executor.submit(() -> action("ken", "CLAIM", "", "qrCode", "PL-1001"));
+            var reject = executor.submit(() ->
+                expectStatus(403, () -> action("mei", "CLAIM", "", "qrCode", "PL-1001")));
+            confirm.get();
+            reject.get();
         }
+        assertThat(text("SELECT claimed_by FROM pickup_list WHERE id='PL-1001'")).isEqualTo("ken");
+    }
+
+    @Test void autoAssignmentBalancesExistingListsAndKeepsThemPrivate() {
+        db.update("""
+            INSERT INTO pickup_list(id,qr_code,list_status,created_at,created_by)
+            SELECT 'PL-1003','PL-1003','OPEN',created_at,created_by FROM pickup_list WHERE id='PL-1001'
+            """);
+        db.update("UPDATE pickup_item SET list_id='PL-1003' WHERE list_id='PL-1001' AND package_id='PKG-1002'");
+
+        // Viewing as Mei first still assigns two lists to Ken and one to Mei.
+        var mei = json.valueToTree(workspaceQuery.workspace("mei"));
+        var ken = json.valueToTree(workspaceQuery.workspace("ken"));
+        assertThat(mei.path("stats").path("readyLists").asInt()).isEqualTo(1);
+        assertThat(ken.path("stats").path("readyLists").asInt()).isEqualTo(2);
+        assertThat(mei.path("pickupLists").path(0).path("id").asText()).isEqualTo("PL-1002");
+        assertThat(ken.path("pickupLists").path(0).path("assignedTo").asText()).isEqualTo("ken");
+        assertThat(db.queryForList("SELECT assigned_to FROM pickup_list ORDER BY id", String.class))
+            .containsExactly("ken", "mei", "ken");
+        assertThat(number("SELECT COUNT(*) FROM pickup_list WHERE claimed_by IS NOT NULL")).isZero();
+        assertThat(number("SELECT COUNT(*) FROM stock_movement")).isZero();
+        expectStatus(403, () -> action("ken", "COLLECT", "PL-1001", "packageQrCode", "PKG-1001"));
+        expectStatus(403, () -> action("mei", "CLAIM", "", "qrCode", "PL-1001"));
+    }
+
+    @Test void disabledAssigneeReleasesOnlyUnconfirmedLists() {
+        action("ken", "CLAIM", "", "qrCode", "PL-1001");
+        action("mei", "CLAIM", "", "qrCode", "PL-1002");
+        db.update("""
+            INSERT INTO pickup_list(id,qr_code,list_status,created_at,created_by,assigned_to)
+            SELECT 'PL-1003','PL-1003','OPEN',created_at,created_by,'ken' FROM pickup_list WHERE id='PL-1001'
+            """);
+        db.update("UPDATE app_account SET account_status='INACTIVE' WHERE id='ken'");
+
+        var mei = json.valueToTree(workspaceQuery.workspace("mei"));
+        assertThat(mei.path("stats").path("readyLists").asInt()).isEqualTo(1);
+        assertThat(text("SELECT assigned_to FROM pickup_list WHERE id='PL-1003'")).isEqualTo("mei");
+        assertThat(text("SELECT claimed_by FROM pickup_list WHERE id='PL-1001'")).isEqualTo("ken");
+        assertThat(text("SELECT list_status FROM pickup_list WHERE id='PL-1001'")).isEqualTo("CLAIMED");
+    }
+
+    private void giveKenBothExistingLists() {
+        db.update("UPDATE app_account SET account_status='INACTIVE' WHERE id='mei'");
+        workspaceQuery.workspace("ken");
+        db.update("UPDATE app_account SET account_status='ACTIVE' WHERE id='mei'");
     }
 
     @Test void laterLineFailureRollsBackEarlierStockAndCustodyChanges(){
@@ -147,6 +192,7 @@ class DeliveryServiceTest {
     }
 
     @Test void failedDeliveryRequiresWarehouseClientAdminAndNewPickup(){
+        giveKenBothExistingLists();
         collected("ken","PKG-1001");action("ken","START","PKG-1001");
         expectStatus(400,()->action("ken","OUTCOME","PKG-1001","outcome","FAILED","reason","OTHER","note",""));
         action("ken","OUTCOME","PKG-1001","outcome","FAILED","reason","OTHER","note","Internal investigation detail");
@@ -195,6 +241,7 @@ class DeliveryServiceTest {
     }
 
     @Test void preAttemptReturnDoesNotInventAnAttemptAndCanBeCollectedAgain(){
+        giveKenBothExistingLists();
         collected("ken","PKG-1001");action("ken","RETURN","PKG-1001","reason","Vehicle problem before delivery");
         assertThat(number("SELECT COUNT(*) FROM delivery_attempt")).isZero();
         action("ken","DEMO_CONFIRM_RETURN","PKG-1001","condition","INTACT");

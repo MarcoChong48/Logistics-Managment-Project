@@ -47,16 +47,22 @@ public class PickupOperations {
         return transactions.command(actor, "DEMO_RELEASE", listId, body, () -> closeList(actor, listId, true));
     }
 
-    private String claimList(String actor,Map<String,Object> body) {
-        String qr=requiredText(body,"qrCode",80);
-        Map<String,Object> list=requiredRow(db,"SELECT * FROM pickup_list WHERE qr_code=?",qr);
-        if("CLOSED".equals(text(list,"LIST_STATUS")))throw ApiException.conflict("This pickup list is closed. Scan its current replacement list.");
-        String owner=text(list,"CLAIMED_BY");
-        if(owner!=null&&!owner.equals(actor))throw ApiException.conflict("Another delivery worker already claimed this list.");
-        if(actor.equals(owner))return "Your pickup list is ready to continue.";
-        db.update("UPDATE pickup_list SET list_status='CLAIMED',claimed_by=?,claimed_at=?,last_activity_at=? WHERE id=?",actor,now(),now(),text(list,"ID"));
-        state.audit(actor,"CLAIM",text(list,"ID"),"List claimed. Custody and stock unchanged.");
-        return "Pickup list claimed. Scan each package to record actual collection.";
+    private String claimList(String actor, Map<String,Object> body) {
+        String qr = requiredText(body, "qrCode", 80);
+        state.assignOpenLists();
+        Map<String,Object> list = requiredRow(db, "SELECT * FROM pickup_list WHERE qr_code=?", qr);
+        String status = text(list, "LIST_STATUS");
+        if ("CLOSED".equals(status)) throw ApiException.conflict("This pickup list is closed. Scan its current replacement list.");
+
+        if ("CLAIMED".equals(status)) {
+            if (!actor.equals(text(list, "CLAIMED_BY"))) throw ApiException.forbidden();
+            return "Your pickup list is ready to continue.";
+        }
+        if (!"OPEN".equals(status) || !actor.equals(text(list, "ASSIGNED_TO"))) throw ApiException.forbidden();
+
+        db.update("UPDATE pickup_list SET list_status='CLAIMED',claimed_by=?,claimed_at=?,last_activity_at=? WHERE id=?", actor, now(), now(), text(list, "ID"));
+        state.audit(actor, "CLAIM", text(list, "ID"), "Assigned list confirmed. Custody and stock unchanged.");
+        return "Pickup list confirmed. Scan each package to record actual collection.";
     }
 
     private String collectPackage(String actor,String listId,Map<String,Object> body) {
@@ -124,14 +130,14 @@ public class PickupOperations {
             if(state.eligible(p))eligible.add(packageId);
         }
         db.update("UPDATE pickup_list SET list_status='CLOSED',last_activity_at=? WHERE id=?",now(),listId);
-        String replacement=state.makeList(eligible);
+        String replacement=state.makeList(eligible, supervised ? text(list,"CLAIMED_BY") : null);
         state.audit(eventActor,supervised?"PLACE_HOLDER_RELEASE":"CLOSE_LIST",listId,supervised?"Place holder: Warehouse presence and Admin release simulated by "+actor:"Uncollected history preserved. Collected custody unchanged.");
         return (supervised?"Place holder: Warehouse presence and Admin release simulated. ":"Pickup list closed. ")+(replacement==null?"No eligible uncollected packages need a new list.":"Eligible packages are on "+replacement+".");
     }
     private Map<String,Object> collector(String actor,String id) {
         Map<String,Object> list=requiredRow(db,"SELECT * FROM pickup_list WHERE id=?",id);
         if("CLOSED".equals(text(list,"LIST_STATUS")))throw ApiException.conflict("This pickup list is closed. Refresh before scanning.");
-        if(!actor.equals(text(list,"CLAIMED_BY")))throw ApiException.forbidden();
+        if(!"CLAIMED".equals(text(list,"LIST_STATUS"))||!actor.equals(text(list,"CLAIMED_BY")))throw ApiException.forbidden();
         return list;
     }
     private void touch(String listId){db.update("UPDATE pickup_list SET last_activity_at=? WHERE id=?",now(),listId);}

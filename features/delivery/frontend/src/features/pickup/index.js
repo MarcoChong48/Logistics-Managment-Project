@@ -27,7 +27,7 @@ function qrLibrary() {
 
 function codeForm(listId = '') {
   const collect = Boolean(listId);
-  const action = collect ? 'Collect package' : 'Claim list';
+  const action = collect ? 'Collect package' : 'Confirm pickup list';
   const cameraLabel = collect ? `Scan package for pickup list ${listId}` : 'Scan pickup list with camera';
   return `<form class="shared-scan-box" data-pickup-form data-list="${esc(listId)}">
     <input class="shared-input" type="text" name="code" aria-label="${collect ? 'Package QR code' : 'Pickup list QR code'}"
@@ -39,10 +39,9 @@ function codeForm(listId = '') {
   </form>`;
 }
 
-function packageRow(item, list, mine) {
-  const closed = list.status === 'CLOSED';
+function packageRow(item, list, confirmed) {
   const state = item.collectionOutcome || item.status;
-  const canReport = mine && !closed && state === 'PENDING';
+  const canReport = confirmed && state === 'PENDING';
   const order = item.orderReference || item.id;
   const pickupState = state === 'PENDING' &&
     ['READY_FOR_PICKUP', 'READY_FOR_REDELIVERY'].includes(item.status) ? item.status : state;
@@ -68,35 +67,33 @@ function packageRow(item, list, mine) {
 }
 
 function pickupList(list, userId) {
-  const mine = Boolean(list.claimedBy && list.claimedBy === userId);
-  const closed = list.status === 'CLOSED';
+  const confirmed = list.status === 'CLAIMED' && list.claimedBy === userId;
+  const assigned = list.status === 'OPEN' && list.assignedTo === userId;
   const items = list.packages || [];
   const numberCollected = items.filter(item => item.collectionOutcome === 'COLLECTED').length;
-  const claimNote = mine ? 'Claimed by you' : list.claimedBy ? `Claimed by ${list.claimedBy}` : '';
+  let statusBadge = badge(list.status);
+  if (assigned) statusBadge = badge(list.status, 'blue', 'Assigned to you');
+  if (confirmed) statusBadge = badge(list.status, 'green', 'Pickup confirmed');
   return `<section class="shared-card" data-pickup-list="${esc(list.id)}">
     <div class="shared-card-header">
       <h2 class="shared-card-title" tabindex="-1">Pickup list <span class="shared-nowrap">${esc(list.id)}</span></h2>
       <div class="shared-card-actions">
-        ${!list.claimedBy && !closed ? `<button class="shared-button shared-button-small" type="button"
-          aria-label="Claim pickup list ${esc(list.id)}" data-pickup="claim" data-list="${esc(list.id)}"
-          data-code="${esc(list.qrCode)}">Claim list</button>` : ''}
-        ${mine && !closed ? `<button class="shared-button shared-button-small" type="button"
+        ${confirmed ? `<button class="shared-button shared-button-small" type="button"
           aria-label="Close pickup list ${esc(list.id)}" data-pickup="close" data-list="${esc(list.id)}">Close list</button>` : ''}
       </div>
     </div>
     <div class="shared-card-strip shared-button-row">
-      ${badge(list.status)}
+      ${statusBadge}
       ${list.stale ? '<span class="shared-flag shared-flag-problem">Review</span>' : ''}
-      ${claimNote ? `<span class="shared-muted">${esc(claimNote)}</span>` : ''}
       <span class="shared-muted">${numberCollected} of ${items.length} collected</span>
       ${list.createdAt ? `<span class="shared-muted">Created ${time(list.createdAt)}</span>` : ''}
     </div>
-    ${mine && !closed ? `<div class="shared-card-body">${codeForm(list.id)}</div>` : ''}
+    ${confirmed ? `<div class="shared-card-body">${codeForm(list.id)}</div>` : ''}
     ${items.length ? `<div class="shared-table-scroll">
       <table class="shared-table shared-table-work" aria-label="Packages in pickup list ${esc(list.id)}">
         <thead><tr><th scope="col">Order</th><th scope="col">Contents</th><th scope="col">State</th>
           <th class="shared-table-actions" scope="col">Actions</th></tr></thead>
-        <tbody>${items.map(item => packageRow(item, list, mine)).join('')}</tbody>
+        <tbody>${items.map(item => packageRow(item, list, confirmed)).join('')}</tbody>
       </table>
     </div>` : '<p class="shared-table-empty">No packages in this list.</p>'}
   </section>`;
@@ -104,16 +101,17 @@ function pickupList(list, userId) {
 
 export function renderPickup({ workspace }) {
   const lists = workspace.pickupLists || [];
-  return `${pageHeader('Pickup', `${lists.length} pickup ${lists.length === 1 ? 'list' : 'lists'}`)}
+  const refresh = '<button class="shared-button" type="button" data-action="refresh">Refresh</button>';
+  return `${pageHeader('Pickup', `${lists.length} pickup ${lists.length === 1 ? 'list' : 'lists'}`, refresh)}
     <section class="shared-card">
-      <div class="shared-card-header"><h2 class="shared-card-title">Claim a pickup list</h2></div>
+      <div class="shared-card-header"><h2 class="shared-card-title">Confirm a pickup list</h2></div>
       <div class="shared-card-body">
         ${codeForm()}
-        <p class="shared-note">Scan each package when you collect it.</p>
+        <p class="shared-note">Scan or enter your assigned list QR code at the warehouse. Then scan each package you collect.</p>
       </div>
     </section>
     ${lists.map(list => pickupList(list, workspace.user?.id)).join('') ||
-      '<section class="shared-card"><p class="shared-table-empty">No pickup lists available.</p></section>'}`;
+      '<section class="shared-card"><p class="shared-table-empty">No pickup lists assigned to you.</p></section>'}`;
 }
 
 function focusRecord(listId, packageId) {
@@ -227,13 +225,12 @@ function reportPickupIssue(ctx, listId, packageId) {
 }
 
 export function handlePickup(node, ctx) {
-  const { pickup, list, package: packageId, code } = node.dataset;
+  const { pickup, list, package: packageId } = node.dataset;
   if (node.matches('[data-pickup-form]')) return submitCode(ctx, new FormData(node).get('code'), list);
   if (!pickup || ctx.busy) return;
   if (pickup === 'camera') return camera(ctx, list);
-  if (pickup === 'claim') return submitCode(ctx, code, '');
   if (pickup === 'close') return ctx.confirm(`Close pickup list ${list}?`,
-    'Collected packages stay with you. Eligible uncollected packages return to the Warehouse queue.',
+    'Collected packages stay with you. The system assigns a new list for eligible uncollected packages.',
     `/api/pickup-lists/${encodeURIComponent(list)}/close`, {}, 'Close list', () => focusRecord(list));
   if (pickup === 'issue') return reportPickupIssue(ctx, list, packageId);
 }

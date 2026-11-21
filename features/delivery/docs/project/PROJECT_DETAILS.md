@@ -328,7 +328,7 @@ Controlled replacement verification after Admin chooses waiting: [UNDECIDED — 
 
 Warehouse selects ready packages and creates a pickup list and its QR.
 
-No normal delivery pre-assignment is required. The first Delivery worker to claim the list is its one collector. Claiming the list alone changes neither order status nor inventory nor actual package custody.
+In Delivery v3.2, the system assigns each ready list to the active Delivery worker with the fewest unfinished lists. For equal counts it uses worker account ID. Only the assigned worker confirms that list at the warehouse. Order status, inventory and actual custody update only after each accepted package scan.
 
 Each accepted package scan separately verifies list membership/eligibility, records worker/time/current handler, sets SHIPPED and applies the agreed stock movement. Reject duplicate or wrong-list scans.
 

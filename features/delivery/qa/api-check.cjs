@@ -175,10 +175,15 @@ async function makePng() {
     await expectStatus(response, 403, 'Mutation without CSRF');
   });
 
-  await step('Fresh seeded data has no private contacts in pickup-list rows', async () => {
+  await step('Each worker sees their own assigned list without private contacts', async () => {
     const workspace = await ken.workspace();
     assert.equal(workspace.mode, 'demo', 'Run this suite against the demo profile.');
     assert.equal(workspace.tasks.length, 0, 'Use a fresh database; the suite never resets existing work.');
+    const meiWorkspace = await mei.workspace();
+    assert.deepEqual(workspace.pickupLists.map(list => [list.id, list.assignedTo, list.claimedBy]), [['PL-1001', 'ken', null]]);
+    assert.deepEqual(meiWorkspace.pickupLists.map(list => [list.id, list.assignedTo, list.claimedBy]), [['PL-1002', 'mei', null]]);
+    assert.equal(workspace.stats.readyLists, 1);
+    assert.equal(meiWorkspace.stats.readyLists, 1);
     for (const id of ['PKG-1001', 'PKG-1002', 'PKG-1003']) {
       assert.equal(packageState(workspace, id).status, 'READY_FOR_PICKUP');
       assert.equal(packageState(workspace, id).custody, 'WAREHOUSE');
@@ -193,13 +198,14 @@ async function makePng() {
     assert.equal(attempts(await ken.workspace(), 'PKG-1001').length, 0);
   });
 
-  await step('Claim is exclusive and safe to retry; claim is not custody', async () => {
+  await step('Only the assigned worker can confirm the list and retry safely', async () => {
     const key = randomUUID();
     const fields = { qrCode: 'PL-1001', requestId: key };
+    await mei.post('/api/pickup-lists/claim', { qrCode: 'PL-1001' }, 403);
     const first = await (await ken.post('/api/pickup-lists/claim', fields)).json();
     assert.deepEqual(await (await ken.post('/api/pickup-lists/claim', fields)).json(), first);
     await ken.post('/api/pickup-lists/claim', { qrCode: 'PL-1002', requestId: key }, 409);
-    await mei.post('/api/pickup-lists/claim', { qrCode: 'PL-1001' }, 409);
+    await mei.post('/api/pickup-lists/claim', { qrCode: 'PL-1001' }, 403);
     const workspace = await ken.workspace();
     assert.equal(workspace.pickupLists.find(item => item.id === 'PL-1001').claimedBy, 'ken');
     assert.equal(packageState(workspace, 'PKG-1001').custody, 'WAREHOUSE');
@@ -347,13 +353,14 @@ async function makePng() {
     assert.equal(packageState(workspace, 'PKG-1003').custody, 'WAREHOUSE');
   });
 
-  await step('Concurrent claims of a replacement list select only one collector', async () => {
-    const replacement = newList(await ken.workspace(), 'PKG-1003', 'PL-1002');
+  await step('The replacement list can only be confirmed by its assigned collector', async () => {
+    const replacement = newList(await mei.workspace(), 'PKG-1003', 'PL-1002');
+    assert.equal(replacement.assignedTo, 'mei');
     const results = await Promise.all([
-      ken.post('/api/pickup-lists/claim', { qrCode: replacement.qrCode }, [200, 409]),
-      mei.post('/api/pickup-lists/claim', { qrCode: replacement.qrCode }, [200, 409]),
+      ken.post('/api/pickup-lists/claim', { qrCode: replacement.qrCode }, [200, 403]),
+      mei.post('/api/pickup-lists/claim', { qrCode: replacement.qrCode }, [200, 403]),
     ]);
-    assert.deepEqual(results.map(item => item.status()).sort(), [200, 409]);
+    assert.deepEqual(results.map(item => item.status()), [403, 200]);
     assert.equal(packageState(await ken.workspace(), 'PKG-1003').custody, 'WAREHOUSE');
   });
 

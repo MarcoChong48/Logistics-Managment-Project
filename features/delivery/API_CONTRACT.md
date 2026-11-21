@@ -23,8 +23,8 @@ The user authorized a working local demo with simple English comments. External 
 {
   "user":{"id":"ken","displayName":"Ken Tanaka","role":"DELIVERY"},
   "mode":"demo",
-  "stats":{"readyLists":2,"inTransit":0,"deliveredToday":0,"pendingReturns":0,"failedAttempts":0},
-  "pickupLists":[{"id":"PL-1001","qrCode":"PL-1001","status":"OPEN","createdAt":"ISO timestamp","claimedBy":null,"claimedAt":null,"stale":false,"packages":[{"id":"PKG-1001","qrCode":"PKG-1001","orderReference":"LMS-1001","status":"READY_FOR_PICKUP","itemSummary":"2 Mugs, 1 Notebook","collectionOutcome":"PENDING","cannotCollectReason":null}]}],
+  "stats":{"readyLists":1,"inTransit":0,"deliveredToday":0,"pendingReturns":0,"failedAttempts":0},
+  "pickupLists":[{"id":"PL-1001","qrCode":"PL-1001","status":"OPEN","createdAt":"ISO timestamp","assignedTo":"ken","claimedBy":null,"claimedAt":null,"stale":false,"packages":[{"id":"PKG-1001","qrCode":"PKG-1001","orderReference":"LMS-1001","status":"READY_FOR_PICKUP","itemSummary":"2 Mugs, 1 Notebook","collectionOutcome":"PENDING","cannotCollectReason":null}]}],
   "tasks":[{"id":"PKG-1001","qrCode":"PKG-1001","orderReference":"LMS-1001","status":"SHIPPED","custody":"DELIVERY","recipientName":"Chan Mei","phone":"+852 6123 4567","address":"Hong Kong demo address","products":[{"sku":"MUG-01","name":"Travel mug","quantity":2}],"attemptCount":0,"activeAttemptId":null,"canStart":true,"canDeliver":false,"canFail":false,"canReturn":true}],
   "attempts":[{"id":"ATT-1","packageId":"PKG-1001","orderReference":"LMS-1001","workerName":"Ken Tanaka","startedAt":"ISO timestamp","endedAt":null,"outcome":"IN_PROGRESS","reason":null,"note":null,"proofs":[{"id":"PROOF-1","type":"SIGNATURE","createdAt":"ISO timestamp","url":"/api/proofs/PROOF-1"}]}],
   "returns":[{"id":"RET-1","packageId":"PKG-1001","orderReference":"LMS-1001","reason":"Vehicle problem","status":"AWAITING_WAREHOUSE","createdAt":"ISO timestamp","receivedAt":null,"condition":null,"awaitingInstruction":false,"followUpStatus":null}],
@@ -36,14 +36,14 @@ The user authorized a working local demo with simple English comments. External 
 }
 ```
 
-`claimedBy` is a worker ID string or null. `tasks` only includes this worker's collected/active/return-pending packages. Contact/address is returned only while the worker actually handles an active delivery; Warehouse receipt and completed delivery revoke access. Pickup list rows never expose contact/address. History must not disclose other workers' private proof. Dashboard counts use authorized data. A `demoPackages` entry contains no recipient contact.
+`assignedTo` is the saved worker ID or null for older records. `claimedBy` identifies the worker who confirmed the list at the warehouse. An open list is visible to its assigned worker. `stats.readyLists` counts the current worker's assigned open lists awaiting confirmation. `tasks` only includes this worker's collected/active/return-pending packages. Contact/address is returned only while the worker actually handles an active delivery; Warehouse receipt and completed delivery revoke access. Pickup list rows never expose contact/address. History must not disclose other workers' private proof. Dashboard counts use authorized data. A `demoPackages` entry contains no recipient contact.
 
 Each return record includes the Warehouse receipt `status` and any receipt time and condition. `followUpStatus` is a read-only Delivery view of the latest received handoff. It is `AWAITING_CLIENT_INSTRUCTION`, `AWAITING_ADMIN_APPROVAL`, `READY_FOR_REDELIVERY`, `ON_HOLD`, `CANCELLED` or null. Older handoffs and pending Warehouse receipts keep their own receipt status and have a null projection. The client can use `awaitingInstruction` for older backend responses that omit the projection. Approval and pickup remain separate authorized operations.
 
 ## Delivery actions
 
-- `POST /api/pickup-lists/claim` `{qrCode,requestId}`: atomically claim one collector. Claim does not change physical custody/order stock.
-- `POST /api/pickup-lists/{listId}/collect` `{packageQrCode,requestId}`: require current collector, open list membership, packed/approved eligibility, not already collected this cycle. Atomically update order/custody/list item, reduce physical and reserved stock, save a custody event/movement.
+- `POST /api/pickup-lists/claim` `{qrCode,requestId}`: confirm pickup of the list assigned to the authenticated worker. A different worker receives 403. Confirmation updates the list and preserves stock and custody until each package is collected.
+- `POST /api/pickup-lists/{listId}/collect` `{packageQrCode,requestId}`: require the worker who confirmed the list, an active list entry, packed or approved eligibility and a pending collection in this cycle. Atomically update order/custody/list item, reduce physical and reserved stock, save a custody event/movement.
 - `POST /api/pickup-lists/{listId}/cannot-collect` `{packageId,reason,note,requestId}`: before pickup only; reason `VEHICLE_FULL`, `PACKAGING_DAMAGED`, `GOODS_DAMAGED`, `OTHER`; Other needs note. Damage creates a Warehouse hold, vehicle-full can be released on close. No customer attempt is invented.
 - `POST /api/pickup-lists/{listId}/close` `{requestId}`: preserve collected/uncollected history; release eligible uncollected packages for new lists.
 - `POST /api/packages/{packageId}/start` `{requestId}`: only actual holder with SHIPPED package can enter OUT_FOR_DELIVERY; create a new attempt tied to the current pickup and frozen delivery details.

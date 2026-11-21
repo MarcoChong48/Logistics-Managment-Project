@@ -1,5 +1,11 @@
 # Delivery verification
 
+## Delivery v3.2 pickup assignment verification on 20 November 2026
+
+- All 17 Maven tests passed. The assignment tests cover three ready lists across two workers, visibility and confirmation permissions, and reassignment of an unconfirmed list from an inactive account.
+- All 19 HTTP checks passed in Docker with PostgreSQL. Chrome passed assigned-list visibility, QR text entry and confirmation, individual collection, signature delivery, failed delivery and redelivery.
+- A Docker database seeded by v3.1 upgraded in place. The previously confirmed list stayed with its collector, the other open list was assigned to the other worker, and collection worked on the original list. The migration could run again. The updated H2 schema also ran twice against a v3.1 file with its original confirmation preserved.
+
 ## Delivery v3.0 Docker Compose verification on 20 November 2026
 
 - Compose configuration validated both the default loopback binding and an alternate host port. The backend built with Java 21 and Spring Boot 4.1.2. All 15 Maven tests passed.
@@ -76,7 +82,7 @@ Warehouse, Client and Admin actions used the labelled **Place holder** sandbox. 
 | ID | Action | Required observation | Result |
 |---|---|---|---|
 | D01 | Log in as Ken, then Mei in separate sessions. | Separate authenticated Delivery identities; invalid credentials fail; mutation without CSRF is rejected. | API/JUnit passed; browser login passed |
-| D02 | Both workers try to claim the same open list. | Exactly one collector; claim changes no custody or stock. | API/JUnit passed, including direct claim/stock and concurrency checks |
+| D02 | Two workers try to confirm the same assigned list. | Only the assigned worker can confirm. Stock and custody update on individual collection. | Docker API and JUnit concurrency checks passed |
 | D03 | Scan a valid package, then repeat the same request and then use another worker. | One pickup effect; duplicate is safe; other worker is denied. | API/JUnit passed, including exact physical/reserved stock and movement counts |
 | D04 | Scan an unknown QR, a wrong-list package or a released list entry. | Clear error, no state or stock change. | API unknown/wrong-list and JUnit stale-list rejection passed; JUnit also checks rollback on later item failure |
 | D05 | Mark Vehicle full or damaged packaging before pickup, then close the list. | Reasons retained; only eligible uncollected items released; damage held; no customer attempt created. | Partial: supervised release preserves collected custody/stock and rejects stale scans; individual cannot-collect reasons and normal close not exercised |

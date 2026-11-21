@@ -6,7 +6,7 @@ This walkthrough uses local demo data. Check the running interface for the seede
 
 1. Start Docker Desktop in Linux containers mode. From `features/delivery/`, run `docker compose up --build -d` followed by `docker compose ps`. When `db` is healthy and `backend` is running, open `http://127.0.0.1:8080`. [Launch instructions](../README.md#run-the-local-demo-with-docker-compose)
 2. Sign in as `ken` with `Delivery123!`.
-3. Use **Overview** to check the work waiting for you, then open **Pickup**. The examples use list `PL-1001` and package `PKG-1001`. Use the actual IDs shown in your demo.
+3. Open **Pickup** to see the lists assigned to you. In a fresh demo, Ken receives `PL-1001` and Mei receives `PL-1002`. This walkthrough uses `PKG-1001` on Ken’s list. Use the actual IDs shown in your demo, and select **Refresh** to load new assignments.
 4. Explain that the list and packed orders use **Place holder** Warehouse data. Open **Decisions & integrations** for the team decisions and external handoffs.
 
 The local store persists. Use a fresh separate demo data directory for an independent run if supported by the package; do not reset another person's saved work.
@@ -15,7 +15,7 @@ Run `docker compose down` from the same folder after testing. PostgreSQL records
 
 ## Normal delivery
 
-1. In **Pickup**, scan the list QR with the camera or enter it manually, then select **Claim list**. This assigns the collector. Collect each package separately.
+1. At the warehouse, scan your assigned list QR code in **Pickup**. For manual entry, enter the code and select **Confirm pickup list**. Once pickup is confirmed, collect each package separately.
 2. Scan or enter one package QR from that list. Wait for backend acceptance and the workspace refresh. The package becomes Shipped. The backend saves its actual holder and the pickup event.
 3. Try the same pickup again. It must not create another stock/custody effect.
 4. Open **My deliveries** and select **Start delivery** for that package. Confirm the action. That order becomes Out for delivery and a new attempt begins.
@@ -26,13 +26,13 @@ Run `docker compose down` from the same folder after testing. PostgreSQL records
 
 Use another eligible package so the successful order remains complete.
 
-1. Claim its list, collect the individual package and select **Start delivery**.
+1. Confirm the assigned list at the warehouse, collect the individual package and select **Start delivery**. If the list is already confirmed, scan the remaining package on that list.
 2. Open **Record outcome** and record a failure such as **Client not home**. Add an explanation for **Other**. The failed attempt stays in history, custody stays with the holder and stock quantities stay the same.
 3. In **Return handoffs**, report the return and check for **Waiting for Warehouse receipt**. Select **Refresh status** to load changes saved by another session.
 4. In **Test tools**, use the **Place holder** Warehouse action **Receive intact** for the package. This simulates the receipt that restores custody and physical and reserved stock. In **Return handoffs**, check for **Waiting for client**.
 5. In **Test tools**, use the **Place holder** Client action **Request redelivery**. In **Return handoffs**, check for **Waiting for Admin approval**.
 6. In **Test tools**, use the **Place holder** Admin action **Approve redelivery**. Approval freezes the instruction and delivery-detail version. In **Return handoffs**, check for **Ready for redelivery**. Warehouse retains custody until collection.
-7. In **Pickup**, claim the new eligible list and collect the same package again. The earlier pickup remains in history.
+7. The system assigns the new list. Sign in as the worker who received it, then confirm the list and collect the same package again. The earlier pickup remains in history.
 8. Start delivery again and record another outcome. In **Attempt history**, check for two separate attempts. Review any new local events in **Notifications**.
 
 ## Session and password
@@ -47,7 +47,7 @@ Use another eligible package so the successful order remains complete.
 - Submit a simulated CANCEL instruction instead of REDELIVER, then try approval: pending cancellation must block redelivery. Approved cancellation is final; a local event does not prove a provider refund.
 - Report a Vehicle full issue before collection: no failed customer visit should appear.
 - Return a SHIPPED package before Start Delivery: preserve the pickup/return history without inventing an attempt.
-- Log in as `mei` in a separate browser session: another worker cannot collect Ken's claimed list or view his private proof.
+- Sign in as `mei` in a separate browser session. Check that Mei sees her own lists. Try to confirm Ken’s list and verify that the request is denied.
 - Use **Receive damaged** in **Test tools**: the package stays held; it cannot silently become sellable or eligible for redelivery.
 
 ## What to say about external parts

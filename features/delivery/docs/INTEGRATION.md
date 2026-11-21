@@ -16,7 +16,7 @@ Demo `ken` and `mei` are both Delivery Workers. **Test tools** and its routes ar
 
 | Owner | Must provide | Delivery must preserve |
 |---|---|---|
-| Warehouse | Packed eligible package/list IDs and QR values; exact item contents; real return receipt actor/time/quantities/condition; holds and supervised uncollected-package release. | List claim versus physical pickup, original packing history, actual receipt and each custody cycle. |
+| Warehouse | Packed packages grouped into ready lists, package and list IDs and QR codes, item quantities, return receipts, holds and supervised release of uncollected packages. | Assignment, warehouse confirmation, physical pickup, packing history, actual receipt and each custody cycle. |
 | Client | Own-order authorization; current delivery-detail version; authenticated post-return instruction, supersession/cancellation status and request identity. | The exact request/version approved for the current return, not an arbitrary latest address. |
 | Admin | Current-role authorization; redelivery/cancellation approval tied to a valid receipt/instruction; reassignment actor/time/reason and supervised release. | Decision provenance and final cancellation. Reassignment alone does not prove possession. |
 | Database/shared services | Final schema, migrations, identifiers, locking/transaction rules, inventory allocation/movement model, outbox or equivalent durable event delivery. | Order/custody/list/stock agreement and duplicate-effect protection across modules. |
@@ -48,9 +48,9 @@ Use a stable pickup/return cycle or event identity. Duplicate rejection applies 
 
 ## Atomic effects and external messages
 
-Claiming a list assigns one collector without changing custody or stock. An accepted individual pickup consistently commits list outcome, order status, holder/custody event, inventory movement and physical/reserved deductions. An intact allocated Warehouse receipt restores actual physical and allocated reserved quantities together; failure alone does neither.
+Warehouse prepares and groups packages into ready lists. Delivery assigns each open list to the active Delivery worker with the fewest assigned or confirmed lists in progress. Ties use the worker account ID. Delivery saves the assignment when it prepares a replacement list or processes an unassigned open list. The assigned worker confirms the list at the warehouse, and the worker’s scan of each package records physical collection. An accepted individual pickup consistently commits list outcome, order status, holder/custody event, inventory movement and physical/reserved deductions. An intact allocated Warehouse receipt restores actual physical and allocated reserved quantities together; failure alone does neither.
 
-Mutations use a UUID `requestId`. Repeating the same actor/action/key/payload returns the previous success. Reusing the key with different data is rejected. Apply state/owner checks inside the transaction. Two workers must not both claim a list, and a stale scan must not collect a released entry.
+Mutations use a UUID `requestId`. Repeating the same actor/action/key/payload returns the previous success. Reusing the key with different data is rejected. Apply state/owner checks inside the transaction. Only the worker assigned to a list may confirm it, and a stale scan must not collect a released entry.
 
 External notification, payment and cloud calls are not part of a local database transaction. Persist the event/result needed to recover, then dispatch/reconcile with duplicate protection. A timeout is an unknown result until checked, not permission to repeat a charge/refund.
 

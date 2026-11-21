@@ -71,11 +71,11 @@ async function run() {
 
     const list = page.locator('[data-pickup-list="PL-1001"]');
     await list.waitFor();
-    if (!(await list.getByText('Claimed by you', { exact: true }).isVisible())) {
+    if (!(await list.getByText('Pickup confirmed', { exact: true }).isVisible())) {
       await page.getByLabel('Pickup list QR code', { exact: true }).fill('PL-1001');
-      await page.getByRole('button', { name: 'Claim list', exact: true }).click();
+      await page.getByRole('button', { name: 'Confirm pickup list', exact: true }).click();
     }
-    await list.getByText('Claimed by you', { exact: true }).waitFor();
+    await list.getByText('Pickup confirmed', { exact: true }).waitFor();
     await list.getByLabel('Package QR code', { exact: true }).fill(packageId);
     await list.getByRole('button', { name: 'Collect package for pickup list PL-1001', exact: true }).click();
     await list.getByRole('row').filter({ hasText: orderReference }).getByText('Collected', { exact: true }).waitFor();
@@ -124,7 +124,7 @@ async function run() {
     assert.equal(errors.length, 0, errors.join('\n'));
     return {
       status: 'passed',
-      pickupFallback: 'Camera permission denied, decoder loaded, manual claim and collection worked.',
+      pickupFallback: 'Camera permission denied, decoder loaded, manual confirmation and collection worked.',
       handoffStates: ['Waiting for Warehouse receipt', 'Waiting for client', 'Waiting for Admin approval', 'Ready for redelivery'],
       redeliveryPickup: 'A new pickup list contains the approved package.',
       notification: 'Unread event shows the standard failure reason.',
