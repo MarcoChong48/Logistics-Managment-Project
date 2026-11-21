@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Order - LMS Admin</title>
+  <link rel="stylesheet" href="/shared/shared-common.css">
+  <script src="/shared/shared-common.js?v=4" defer></script>
+  <script src="/admin/admin-common.js?v=4" defer></script>
+  <script src="/admin/admin-order-detail.js" defer></script>
+</head>
+<body>
+  <!-- Page frame and order heading -->
+  <main hidden>
+    <div class="shared-page-header">
+      <div class="shared-page-header-text">
+        <a class="shared-page-back" id="adminViewOrderBackLink" href="admin-orders.html">Back to orders</a>
+        <h1 class="shared-page-title">
+          <span id="adminViewOrderReferenceText">Order</span>
+        </h1>
+      </div>
+    </div>
+    <div class="shared-message-place" id="adminViewOrderMessage" aria-live="polite"></div>
+
+    <!-- Order facts and items -->
+    <section class="shared-card" id="adminViewOrderHeaderPanel" hidden>
+      <div class="shared-card-header">
+        <h2 class="shared-card-title">Order</h2>
+      </div>
+      <div class="shared-card-body">
+        <dl class="shared-fact-list">
+          <div class="shared-fact">
+            <dt class="shared-fact-label">Client</dt>
+            <dd class="shared-fact-value" id="adminViewOrderClientUsernameText"></dd>
+          </div>
+          <div class="shared-fact">
+            <dt class="shared-fact-label">Created</dt>
+            <dd class="shared-fact-value" id="adminViewOrderCreatedTimeText"></dd>
+          </div>
+          <div class="shared-fact" hidden>
+            <dt class="shared-fact-label">Payment deadline</dt>
+            <dd class="shared-fact-value" id="adminViewOrderPaymentDeadlineText"></dd>
+          </div>
+          <div class="shared-fact">
+            <dt class="shared-fact-label">Total</dt>
+            <dd class="shared-fact-value" id="adminViewOrderTotalAmountText"></dd>
+          </div>
+          <div class="shared-fact">
+            <dt class="shared-fact-label">Delivery details</dt>
+            <dd class="shared-fact-value"></dd>
+          </div>
+        </dl>
+        <p class="shared-note" id="adminViewOrderPrivacyNoteText">
+          Address, phone number, recipient name and delivery proof are not shown to Admin.
+        </p>
+      </div>
+    </section>
+
+    <section class="shared-card" hidden>
+      <div class="shared-card-header">
+        <h2 class="shared-card-title">Items</h2>
+      </div>
+      <div class="shared-table-scroll" role="region" aria-label="Items table">
+        <table class="shared-table">
+          <thead>
+            <tr>
+              <th scope="col">SKU</th>
+              <th scope="col">Product</th>
+              <th class="shared-table-number" scope="col">Quantity</th>
+              <th class="shared-table-number" scope="col">Picked</th>
+              <th class="shared-table-number" scope="col">Unit price</th>
+              <th class="shared-table-number" scope="col">Line total</th>
+            </tr>
+          </thead>
+          <tbody id="adminViewOrderItemTableBody"></tbody>
+          <tfoot>
+            <tr>
+              <th scope="row" colspan="5">Total</th>
+              <td class="shared-table-number" id="adminViewOrderItemTotalAmountText"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </section>
+
+    <!-- Payment and refund -->
+    <div class="shared-grid-two" hidden>
+      <section class="shared-card" id="adminViewOrderPaymentPanel">
+        <div class="shared-card-header">
+          <h2 class="shared-card-title">Payment</h2>
+        </div>
+        <div class="shared-table-scroll" hidden>
+          <table class="shared-table shared-table-work">
+            <thead>
+              <tr>
+                <th class="shared-table-number" scope="col">Amount</th>
+                <th scope="col">Status</th>
+                <th scope="col">Times</th>
+              </tr>
+            </thead>
+            <tbody id="adminViewOrderPaymentTableBody"></tbody>
+          </table>
+        </div>
+        <p class="shared-table-empty">No payment yet</p>
+      </section>
+      <section class="shared-card" id="adminViewOrderRefundPanel">
+        <div class="shared-card-header">
+          <h2 class="shared-card-title">Refund</h2>
+        </div>
+        <div class="shared-table-scroll" hidden>
+          <table class="shared-table shared-table-work admin-order-detail-read-only-table">
+            <thead>
+              <tr>
+                <th scope="col">Refund</th>
+                <th scope="col">Payment</th>
+                <th class="shared-table-number" scope="col">Amount</th>
+                <th scope="col">Status</th>
+                <th scope="col">Times</th>
+              </tr>
+            </thead>
+            <tbody id="adminViewOrderRefundTableBody"></tbody>
+          </table>
+        </div>
+        <p class="shared-table-empty">No refund</p>
+      </section>
+    </div>
+
+    <!-- Picking and delivery -->
+    <section class="shared-card" id="adminViewOrderPickingPanel" hidden>
+      <div class="shared-card-header">
+        <h2 class="shared-card-title">Picking</h2>
+      </div>
+      <div class="shared-card-body">
+        <dl class="shared-fact-list">
+          <div class="shared-fact">
+            <dt class="shared-fact-label">Task status</dt>
+            <dd class="shared-fact-value"></dd>
+          </div>
+          <div class="shared-fact">
+            <dt class="shared-fact-label">Started</dt>
+            <dd class="shared-fact-value"></dd>
+          </div>
+          <div class="shared-fact">
+            <dt class="shared-fact-label">Packing confirmed</dt>
+            <dd class="shared-fact-value"></dd>
+          </div>
+        </dl>
+      </div>
+      <h3 class="shared-card-part-title">Workers</h3>
+      <div class="shared-table-scroll" role="region" aria-label="Workers table" hidden>
+        <table class="shared-table">
+          <thead>
+            <tr>
+              <th scope="col">Worker</th>
+              <th class="shared-table-time" scope="col">Assigned</th>
+              <th class="shared-table-time" scope="col">Ended</th>
+            </tr>
+          </thead>
+          <tbody id="adminViewOrderPickingAssignmentTableBody"></tbody>
+        </table>
+      </div>
+      <p class="shared-table-empty">No rows found.</p>
+    </section>
+
+    <section class="shared-card" id="adminViewOrderPackagePanel" hidden>
+      <div class="shared-card-header">
+        <h2 class="shared-card-title">Delivery</h2>
+      </div>
+      <div class="shared-card-body">
+        <dl class="shared-fact-list">
+          <div class="shared-fact">
+            <dt class="shared-fact-label">Package code</dt>
+            <dd class="shared-fact-value"></dd>
+          </div>
+          <div class="shared-fact">
+            <dt class="shared-fact-label">Where it is</dt>
+            <dd class="shared-fact-value"></dd>
+          </div>
+          <div class="shared-fact">
+            <dt class="shared-fact-label">Held by</dt>
+            <dd class="shared-fact-value"></dd>
+          </div>
+          <div class="shared-fact">
+            <dt class="shared-fact-label">Responsible worker</dt>
+            <dd class="shared-fact-value"></dd>
+          </div>
+        </dl>
+      </div>
+      <h3 class="shared-card-part-title">Delivery attempts</h3>
+      <div class="shared-table-scroll" role="region" aria-label="Delivery attempts table" hidden>
+        <table class="shared-table">
+          <thead>
+            <tr>
+              <th scope="col">Worker</th>
+              <th class="shared-table-time" scope="col">Started</th>
+              <th class="shared-table-time" scope="col">Ended</th>
+              <th scope="col">Outcome</th>
+              <th scope="col">Reason</th>
+              <th class="shared-table-wrap" scope="col">Note</th>
+              <th scope="col">Proof</th>
+            </tr>
+          </thead>
+          <tbody id="adminViewOrderDeliveryAttemptTableBody"></tbody>
+        </table>
+      </div>
+      <p class="shared-table-empty">No rows found.</p>
+      <h3 class="shared-card-part-title">Client requests</h3>
+      <div class="shared-table-scroll" role="region" aria-label="Client requests table" hidden>
+        <table class="shared-table">
+          <thead>
+            <tr>
+              <th scope="col">Type</th>
+              <th scope="col">Status</th>
+              <th scope="col">Entered through</th>
+              <th class="shared-table-time" scope="col">Submitted</th>
+              <th scope="col">Decided by</th>
+              <th class="shared-table-time" scope="col">Decided</th>
+              <th class="shared-table-wrap" scope="col">Note</th>
+            </tr>
+          </thead>
+          <tbody id="adminViewOrderClientInstructionTableBody"></tbody>
+        </table>
+      </div>
+      <p class="shared-table-empty">No rows found.</p>
+    </section>
+
+    <!-- Shortage cases and timeline -->
+    <section class="shared-card" id="adminViewOrderShortageCasePanel" hidden>
+      <div class="shared-card-header">
+        <h2 class="shared-card-title">Shortage cases</h2>
+        <div class="shared-card-actions" hidden>
+          <a class="shared-button shared-button-small" id="adminViewOrderShortageCaseDecideLink">
+            Decide on Warehouse cases
+          </a>
+        </div>
+      </div>
+      <div class="shared-table-scroll" hidden>
+        <table class="shared-table shared-table-work admin-order-detail-read-only-table">
+          <thead>
+            <tr>
+              <th scope="col">Case</th>
+              <th scope="col">SKU</th>
+              <th class="shared-table-number" scope="col">Missing</th>
+              <th scope="col">Status</th>
+              <th scope="col">Decision</th>
+              <th scope="col">Times</th>
+            </tr>
+          </thead>
+          <tbody id="adminViewOrderShortageCaseTableBody"></tbody>
+        </table>
+      </div>
+      <p class="shared-table-empty">No shortage case</p>
+    </section>
+
+    <section class="shared-card" id="adminViewOrderTimelinePanel" hidden>
+      <div class="shared-card-header">
+        <h2 class="shared-card-title">Timeline</h2>
+      </div>
+      <div class="shared-card-body" id="adminViewOrderTimelineList"></div>
+    </section>
+  </main>
+</body>
+</html>

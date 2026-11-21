@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Warehouse cases - LMS Admin</title>
+  <link rel="stylesheet" href="/shared/shared-common.css">
+  <script src="/shared/shared-common.js?v=4" defer></script>
+  <script src="/admin/admin-common.js?v=4" defer></script>
+  <script src="/admin/admin-warehouse-cases.js" defer></script>
+</head>
+<body>
+  <!-- Page frame -->
+  <main hidden>
+    <div class="shared-page-header">
+      <div class="shared-page-header-text">
+        <h1 class="shared-page-title">Warehouse cases</h1>
+      </div>
+    </div>
+
+    <section class="shared-card" id="adminSearchShortageCasePanel">
+      <!-- Filter bar -->
+      <div class="shared-card-header">
+        <h2 class="shared-card-title">Shortage cases
+          <span class="shared-card-count" id="adminSearchShortageCaseTotalRowCountText" aria-live="polite"></span>
+        </h2>
+        <form class="shared-card-actions">
+          <span class="shared-select">
+            <select id="adminSearchShortageCaseCaseStatusSelect" aria-label="Case status">
+              <option value="OPEN_AND_WAITING">Open and waiting</option>
+              <option value="OPEN">Open</option>
+              <option value="WAITING_RESTOCK">Waiting restock</option>
+              <option value="CANCELLED">Cancelled</option>
+              <option value="RESOLVED">Resolved</option>
+            </select>
+            <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+          </span>
+          <button class="shared-button" type="submit" id="adminSearchShortageCaseSubmitButton">Search</button>
+          <button class="shared-button" type="button" id="adminDownloadShortageCaseCSVButton" disabled>
+            <svg class="shared-icon" aria-hidden="true"><use href="#icon-download"/></svg> Download CSV
+          </button>
+        </form>
+      </div>
+      <!-- Table -->
+      <div class="shared-table-scroll" role="region" aria-label="Shortage cases table" hidden>
+        <table class="shared-table shared-table-work">
+          <thead>
+            <tr><th scope="col">Order</th><th scope="col">Shortage</th><th scope="col">Reported</th>
+              <th scope="col">Status</th><th scope="col" class="shared-table-actions">Actions</th></tr>
+          </thead>
+          <tbody id="adminSearchShortageCaseResultTableBody"></tbody>
+        </table>
+      </div>
+      <p class="shared-table-empty" id="adminSearchShortageCaseEmptyMessage" hidden>No shortage cases found.</p>
+      <!-- Pager -->
+      <div class="shared-pager" id="adminSearchShortageCasePager" hidden></div>
+    </section>
+
+    <section class="shared-card" id="adminSearchPickingTaskPanel">
+      <div class="shared-card-header">
+        <h2 class="shared-card-title">Picking tasks in progress
+          <span class="shared-card-count" id="adminSearchPickingTaskTotalRowCountText" aria-live="polite"></span>
+        </h2>
+      </div>
+      <!-- Table -->
+      <div class="shared-table-scroll" role="region" aria-label="Picking tasks table" hidden>
+        <table class="shared-table shared-table-work">
+          <thead>
+            <tr><th scope="col">Order</th><th scope="col">Worker</th><th scope="col">Assigned</th>
+              <th scope="col">Started</th><th scope="col">Progress</th>
+              <th scope="col" class="shared-table-actions">Actions</th></tr>
+          </thead>
+          <tbody id="adminSearchPickingTaskResultTableBody"></tbody>
+        </table>
+      </div>
+      <p class="shared-table-empty" id="adminSearchPickingTaskEmptyMessage" hidden>No picking tasks found.</p>
+      <!-- Pager -->
+      <div class="shared-pager" id="adminSearchPickingTaskPager" hidden></div>
+    </section>
+  </main>
+
+  <!-- Pop-up windows -->
+  <dialog class="shared-dialog" id="adminDecideShortageCancelDialog" aria-labelledby="adminDecideShortageCancelDialogTitle">
+    <h2 class="shared-dialog-title" id="adminDecideShortageCancelDialogTitle"></h2>
+    <div class="shared-dialog-body">
+      <dl class="shared-decision-facts" id="adminDecideShortageCancelSummaryText">
+        <div class="shared-fact"><dt class="shared-fact-label">Payment</dt><dd class="shared-fact-value"></dd></div>
+        <div class="shared-fact"><dt class="shared-fact-label">Outcome</dt><dd class="shared-fact-value"></dd></div>
+      </dl>
+      <label class="shared-checkbox">
+        <input type="checkbox" id="adminDecideShortageCancelStockCorrectionIsConfirmedCheckbox">
+        <span>Warehouse has recorded the stock correction for this case</span>
+      </label>
+      <label class="shared-field">
+        <span class="shared-field-label">Reason</span>
+        <textarea class="shared-textarea" id="adminDecideShortageCancelReasonInput"></textarea>
+        <span class="shared-field-help">At least 5 characters.</span>
+      </label>
+      <div class="shared-message-place" aria-live="polite"></div>
+    </div>
+    <div class="shared-dialog-footer">
+      <button class="shared-button" type="button" id="adminDecideShortageCancelCancelButton">Close</button>
+      <button class="shared-button shared-button-danger-filled" type="button"
+        id="adminDecideShortageCancelConfirmButton" disabled></button>
+    </div>
+  </dialog>
+
+  <dialog class="shared-dialog" id="adminReassignPickingTaskDialog" aria-labelledby="adminReassignPickingTaskDialogTitle">
+    <h2 class="shared-dialog-title" id="adminReassignPickingTaskDialogTitle">
+      Reassign the picking task of order <span id="adminReassignPickingTaskOrderReferenceText"></span>
+    </h2>
+    <div class="shared-dialog-body">
+      <dl class="shared-fact-list">
+        <div class="shared-fact">
+          <dt class="shared-fact-label">Current worker</dt>
+          <dd class="shared-fact-value" id="adminReassignPickingTaskCurrentWorkerText"></dd>
+        </div>
+        <div class="shared-fact">
+          <dt class="shared-fact-label">Progress</dt>
+          <dd class="shared-fact-value" id="adminReassignPickingTaskProgressText"></dd>
+        </div>
+      </dl>
+      <label class="shared-field">
+        <span class="shared-field-label">New worker</span>
+        <span class="shared-select shared-select-wide">
+          <select id="adminReassignPickingTaskNewWorkerSelect"></select>
+          <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+        </span>
+      </label>
+      <label class="shared-field">
+        <span class="shared-field-label">Reason</span>
+        <textarea class="shared-textarea" id="adminReassignPickingTaskReasonInput"></textarea>
+        <span class="shared-field-help">At least 5 characters.</span>
+      </label>
+      <p class="shared-note" id="adminReassignPickingTaskNoteText">
+        The saved progress stays. The new worker must check the items against it before continuing.
+      </p>
+      <div class="shared-message-place" aria-live="polite"></div>
+    </div>
+    <div class="shared-dialog-footer">
+      <button class="shared-button" type="button" id="adminReassignPickingTaskCancelButton">Cancel</button>
+      <button class="shared-button shared-button-primary" type="button"
+        id="adminReassignPickingTaskConfirmButton" disabled>Reassign task</button>
+    </div>
+  </dialog>
+</body>
+</html>

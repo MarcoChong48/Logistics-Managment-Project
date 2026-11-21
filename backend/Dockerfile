@@ -37,7 +37,8 @@ CMD ["flock", "/flow-lock/lms_flow_check.lock", "sh", "-c", "\
     run_flow 'SharedLoginFlowCheckTest#checkS1T04+checkS1T05+checkS1T06+checkS1T07+checkS1T08+checkS1T09+checkS1T10+checkS1T11+checkS1T12+checkS1T13+checkS1T14+checkS1T15+checkS1T16+checkS1T17+checkS1T18+checkS1T20'; \
     for flow_class in AdminUserFlowCheckTest \
       AdminLogFlowCheckTest SharedChangePasswordFlowCheckTest SharedRoleProtectionFlowCheckTest \
-      AdminProductFlowCheckTest AdminSuperAdminFlowCheckTest; do \
+      AdminProductFlowCheckTest AdminSuperAdminFlowCheckTest AdminOrderFlowCheckTest \
+      AdminWarehouseCaseFlowCheckTest; do \
       run_flow \"$flow_class\"; \
     done; \
     awk 'BEGIN { rule=0; flow=0; } \

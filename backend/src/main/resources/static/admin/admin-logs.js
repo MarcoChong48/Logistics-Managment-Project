@@ -136,9 +136,16 @@ function adminSearchPickingScanHistory(adminSearchPickingScanHistoryRow) {
   const adminSearchPickingScanHistoryReasonValue = adminSearchPickingScanHistoryReason.hasChildNodes()
     ? adminSearchPickingScanHistoryReason : "-";
 
-  // The search response identifies the order by reference. The Orders page is built in Stage 5.
+  // Each scan has its own link ID, even when several scans refer to the same order.
+  const adminSearchPickingScanHistoryOrderLink = document.createElement("a");
+  adminSearchPickingScanHistoryOrderLink.id =
+    "adminSearchPickingScanHistoryOrderLink-" + adminSearchPickingScanHistoryRow.scanID;
+  adminSearchPickingScanHistoryOrderLink.href =
+    "admin-order-detail.html?orderID=" + encodeURIComponent(adminSearchPickingScanHistoryRow.orderID);
+  adminSearchPickingScanHistoryOrderLink.textContent =
+    adminSearchPickingScanHistoryRow.adminSearchPickingScanHistoryOrderReference;
   return adminShowLogTabBuildRow(adminSearchPickingScanHistoryRow.scanTime, [
-    [adminSearchPickingScanHistoryRow.adminSearchPickingScanHistoryOrderReference],
+    [adminSearchPickingScanHistoryOrderLink],
     [adminSearchPickingScanHistoryRow.adminSearchPickingScanHistoryWorkerUsername],
     [adminSearchPickingScanHistoryRow.scannedIdentifier],
     [adminSearchPickingScanHistoryRow.adminSearchPickingScanHistoryProductSKU],

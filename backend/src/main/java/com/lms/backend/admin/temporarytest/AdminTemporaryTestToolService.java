@@ -1,29 +1,41 @@
 // TEMPORARY TEST CODE - remove before integration
-// Local fixtures exercise accounts, sessions, active work, log privacy and retention.
+// Local fixtures exercise accounts, sessions, active work, logs, stock and orders.
 package com.lms.backend.admin.temporarytest;
 
 import static com.lms.backend.admin.user.AdminUserRule.adminCheckSuperAdminRule;
 import static com.lms.backend.shared.login.SharedLoginRule.SHARED_TEMPORARY_PASSWORD_VALID_HOURS;
+import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_ATTEMPT_OUTCOME_DELIVERED;
+import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_ATTEMPT_OUTCOME_FAILED;
+import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_ATTEMPT_OUTCOME_IN_PROGRESS;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_COLLECTION_OUTCOME_COLLECTED;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_COLLECTION_OUTCOME_PENDING;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_CUSTODY_EVENT_PICKED_UP;
+import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_CUSTODY_EVENT_RETURN_RECEIVED;
+import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_CUSTODY_EVENT_RETURN_REQUESTED;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_CUSTODY_STATUS_DELIVERY;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_CUSTODY_STATUS_WAREHOUSE;
+import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_FAILURE_REASON_CLIENT_NOT_HOME;
+import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_INSTRUCTION_STATUS_APPROVED;
+import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_INSTRUCTION_TYPE_REDELIVER;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_PAYMENT_STATUS_ACCEPTED;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_PICKING_TASK_STATUS_IN_PROGRESS;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_PICKING_TASK_STATUS_PACKED;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_PICKING_TASK_STATUS_PENDING;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_PICKUP_LIST_STATUS_CLOSED;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_PICKUP_LIST_STATUS_OPEN;
+import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_REFUND_STATUS_REQUESTED;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_RESERVATION_STATUS_CONSUMED;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_RESERVATION_STATUS_HELD;
+import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_RESERVATION_STATUS_RELEASED;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.StringJoiner;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -36,6 +48,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.lms.backend.admin.log.AdminLogCleanupTask;
+import com.lms.backend.admin.placeholder.AdminShortageInputPlaceholder;
 import com.lms.backend.shared.database.AppUser;
 import com.lms.backend.shared.database.AppUserRepository;
 import com.lms.backend.shared.database.PickingScanHistoryRepository;
@@ -43,8 +56,12 @@ import com.lms.backend.shared.error.SharedMessageResponse;
 import com.lms.backend.shared.error.SharedRuleException;
 import com.lms.backend.shared.log.SharedSecurityEvent;
 import com.lms.backend.shared.log.SharedSecurityLogWriter;
+import com.lms.backend.shared.login.SharedCurrentUserReader;
 import com.lms.backend.shared.login.SharedPasswordRule;
+import com.lms.backend.shared.value.SharedAccountStatus;
+import com.lms.backend.shared.value.SharedInstructionSource;
 import com.lms.backend.shared.value.SharedOrderStatus;
+import com.lms.backend.shared.value.SharedProofType;
 import com.lms.backend.shared.value.SharedScanResult;
 import com.lms.backend.shared.value.SharedUserRole;
 
@@ -118,10 +135,12 @@ public class AdminTemporaryTestToolService {
     private final AdminLogCleanupTask adminTemporaryRunLogCleanupTask;
     private final PickingScanHistoryRepository adminTemporaryCreateOldLogRowPickingScanRepository;
     private final String adminTemporarySetUserStatusBootstrapUsername;
+    private final SharedCurrentUserReader adminTemporaryCreateSampleOrderSetCurrentUserReader;
+    private final AdminShortageInputPlaceholder adminTemporaryCreateShortageReportInput;
 
     /**
      * What it does: Receives the database and password helpers for the local test tools.
-     * Input: Database and password helpers, the log writer, cleanup task and bootstrap Admin username.
+     * Input: Database and password helpers, the log writer, cleanup task, bootstrap Admin name and current user reader.
      * Output: A test tools service that only loads in test mode.
      */
     public AdminTemporaryTestToolService(AppUserRepository adminTemporaryTestUserRepository,
@@ -131,6 +150,8 @@ public class AdminTemporaryTestToolService {
             PlatformTransactionManager adminTemporaryCreateTestUserTransactionManager,
             AdminLogCleanupTask adminTemporaryRunLogCleanupTask,
             PickingScanHistoryRepository adminTemporaryCreateOldLogRowPickingScanRepository,
+            SharedCurrentUserReader adminTemporaryCreateSampleOrderSetCurrentUserReader,
+            AdminShortageInputPlaceholder adminTemporaryCreateShortageReportInput,
             @Value("${lms.shared.bootstrap-admin-username:}") String adminTemporarySetUserStatusBootstrapUsername) {
         this.adminTemporaryTestUserRepository = adminTemporaryTestUserRepository;
         this.adminTemporaryCreateTestUserDatabase = adminTemporaryCreateTestUserDatabase;
@@ -141,6 +162,8 @@ public class AdminTemporaryTestToolService {
         this.adminTemporaryRunLogCleanupTask = adminTemporaryRunLogCleanupTask;
         this.adminTemporaryCreateOldLogRowPickingScanRepository = adminTemporaryCreateOldLogRowPickingScanRepository;
         this.adminTemporarySetUserStatusBootstrapUsername = adminTemporarySetUserStatusBootstrapUsername;
+        this.adminTemporaryCreateSampleOrderSetCurrentUserReader = adminTemporaryCreateSampleOrderSetCurrentUserReader;
+        this.adminTemporaryCreateShortageReportInput = adminTemporaryCreateShortageReportInput;
     }
 
     // ===== SECTION 2: adminTemporaryViewTestMode =====
@@ -593,27 +616,180 @@ public class AdminTemporaryTestToolService {
                 "Created one audit log row and one security log row with private test values.");
     }
 
-    // ===== SECTION 13: adminTemporaryCreateSampleOrder =====
+    // ===== SECTION 13: adminTemporaryCreateSampleOrderSet =====
+
+    // TEMPORARY TEST CODE - remove before integration
+    // Stage 5 creates a complete set for Orders and its detail pages.
+    /**
+     * What it does: Creates one order in each of the ten statuses in the same transaction.
+     * Input: None. The signed-in Admin is the resolver of the sample redelivery request.
+     * Output: A shared message listing each new order reference and its status.
+     */
+    @Transactional
+    public SharedMessageResponse adminTemporaryCreateSampleOrderSet() {
+        Long adminTemporaryCreateSampleOrderSetAdminUserID = adminTemporaryCreateSampleOrderSetCurrentUserReader
+                .sharedReadCurrentUser().userID();
+        StringJoiner adminTemporaryCreateSampleOrderSetMessage = new StringJoiner(", ", "Created sample orders. ", ".");
+        for (SharedOrderStatus orderStatus : SharedOrderStatus.values()) {
+            String orderReference = adminTemporaryCreateSampleOrder(
+                    orderStatus, null, null, null, adminTemporaryCreateSampleOrderSetAdminUserID);
+            String adminTemporaryCreateSampleOrderSetStatusWord = orderStatus.name().replace('_', ' ')
+                    .toLowerCase(Locale.ROOT);
+            adminTemporaryCreateSampleOrderSetMessage.add(orderReference + " ("
+                    + Character.toUpperCase(adminTemporaryCreateSampleOrderSetStatusWord.charAt(0))
+                    + adminTemporaryCreateSampleOrderSetStatusWord.substring(1) + ")");
+        }
+        return new SharedMessageResponse(adminTemporaryCreateSampleOrderSetMessage.toString());
+    }
+
+    // ===== SECTION 14: adminTemporaryCreateShortageReport =====
+
+    // TEMPORARY TEST CODE - remove before integration
+    /**
+     * What it does: Reports a shortage of the mug on a new sample order, or the pen on a named sample order.
+     * Input: The status for a new order, the missing quantity, and an optional sample order reference.
+     * Output: The new case number and order reference, or a validation or shortage error.
+     */
+    @Transactional
+    public SharedMessageResponse adminTemporaryCreateShortageReport(
+            AdminTemporaryCreateShortageReportRequest adminTemporaryCreateShortageReportRequest) {
+        // With an order reference, keep the existing order and report its pen.
+        String orderReference = adminTemporaryCreateShortageReportRequest.adminTemporaryCreateShortageReportOrderReference();
+        boolean adminTemporaryCreateShortageReportIsNewOrder = orderReference == null || orderReference.isBlank();
+        SharedOrderStatus orderStatus = adminTemporaryCreateShortageReportRequest.adminTemporaryCreateShortageReportOrderStatus();
+        if (adminTemporaryCreateShortageReportIsNewOrder && orderStatus != SharedOrderStatus.AWAITING_PAYMENT
+                && orderStatus != SharedOrderStatus.PICKING && orderStatus != SharedOrderStatus.READY_FOR_PICKUP) {
+            throw new SharedRuleException(HttpStatus.BAD_REQUEST, "SHARED_INPUT_INVALID", "Choose a sample order status.");
+        }
+
+        // For a new order, the reporter is also the worker picked by the sample builder.
+        Long reportedByWorkerID = adminTemporaryCreateTestUser(SharedUserRole.WAREHOUSE_WORKER,
+                SharedPasswordRule.sharedCreateTemporaryPassword());
+        orderReference = adminTemporaryCreateShortageReportIsNewOrder
+                ? adminTemporaryCreateSampleOrder(orderStatus, null, reportedByWorkerID, null)
+                : orderReference.strip();
+        Long orderID = adminTemporaryCreateTestUserDatabase.sql("""
+                SELECT order_id FROM customer_order WHERE order_reference = :orderReference AND order_reference LIKE 'TEST-%'
+                """).param("orderReference", orderReference).query(Long.class).optional()
+                .orElseThrow(() -> new SharedRuleException(HttpStatus.NOT_FOUND, "SHARED_NOT_FOUND",
+                        "This sample order was not found."));
+
+        // Use only the sample SKU belonging to the selected order, then call the Warehouse input function.
+        Long productID = adminTemporaryCreateTestUserDatabase.sql("""
+                SELECT item.product_id FROM order_item item JOIN product USING (product_id)
+                WHERE item.order_id = :orderID AND product.sku LIKE :skuPattern
+                """).param("orderID", orderID)
+                .param("skuPattern", adminTemporaryCreateShortageReportIsNewOrder ? "TEST-MUG-%" : "TEST-PEN-%")
+                .query(Long.class).optional()
+                .orElseThrow(() -> new SharedRuleException(HttpStatus.NOT_FOUND, "SHARED_NOT_FOUND",
+                        "This sample order does not have the item to report."));
+        Integer missingQuantity = adminTemporaryCreateShortageReportRequest.adminTemporaryCreateShortageReportMissingQuantity();
+        long shortageCaseID = adminTemporaryCreateShortageReportInput.adminReceiveShortageReportPlaceholder(
+                orderID, productID, missingQuantity == null ? 1 : missingQuantity,
+                adminTemporaryCreateShortageReportIsNewOrder ? "1 mug cracked on shelf" : null, reportedByWorkerID);
+        return new SharedMessageResponse("Created shortage case " + shortageCaseID + " for order " + orderReference + ".");
+    }
+
+    // ===== SECTION 15: adminTemporaryResolveShortageCase =====
+
+    // TEMPORARY TEST CODE - remove before integration
+    /**
+     * What it does: Simulates a Warehouse Worker resolving a case after restock.
+     * Input: The case number.
+     * Output: A shared success message, or a shortage error.
+     */
+    @Transactional
+    public SharedMessageResponse adminTemporaryResolveShortageCase(
+            AdminTemporaryResolveShortageCaseRequest adminTemporaryResolveShortageCaseRequest) {
+        Long shortageCaseID = adminTemporaryResolveShortageCaseRequest.adminTemporaryResolveShortageCaseShortageCaseID();
+        if (shortageCaseID == null || shortageCaseID < 1) {
+            throw new SharedRuleException(HttpStatus.BAD_REQUEST, "SHARED_INPUT_INVALID", "Enter a case number.");
+        }
+
+        // The same Warehouse input validates and closes the case.
+        Long resolvedByWorkerID = adminTemporaryCreateTestUser(SharedUserRole.WAREHOUSE_WORKER,
+                SharedPasswordRule.sharedCreateTemporaryPassword());
+        adminTemporaryCreateShortageReportInput.adminReceiveShortageResolvedPlaceholder(shortageCaseID, resolvedByWorkerID);
+        return new SharedMessageResponse("Shortage case " + shortageCaseID + " was resolved.");
+    }
+
+    // ===== SECTION 16: adminTemporaryCreatePickingOrder =====
+
+    // TEMPORARY TEST CODE - remove before integration
+    /**
+     * What it does: Creates a sample order with its first accepted mug scan and assigned worker.
+     * Input: An optional active Warehouse Worker username.
+     * Output: The new order reference and the username, or a worker error.
+     */
+    @Transactional
+    public SharedMessageResponse adminTemporaryCreatePickingOrder(
+            AdminTemporaryCreatePickingOrderRequest adminTemporaryCreatePickingOrderRequest) {
+        String username = adminTemporaryCreatePickingOrderRequest.adminTemporaryCreatePickingOrderWorkerUsername();
+        Long warehouseWorkerUserID;
+        if (username == null || username.isBlank()) {
+            warehouseWorkerUserID = adminTemporaryCreateTestUser(SharedUserRole.WAREHOUSE_WORKER,
+                    SharedPasswordRule.sharedCreateTemporaryPassword());
+            username = adminTemporaryCreateTestUserDatabase.sql("SELECT username FROM app_user WHERE user_id = :userID")
+                    .param("userID", warehouseWorkerUserID).query(String.class).single();
+        } else {
+            AppUser adminTemporaryCreatePickingOrderWorker = adminTemporaryFindTestUser(username);
+            if (adminTemporaryCreatePickingOrderWorker.role != SharedUserRole.WAREHOUSE_WORKER
+                    || adminTemporaryCreatePickingOrderWorker.accountStatus != SharedAccountStatus.ACTIVE) {
+                throw new SharedRuleException(HttpStatus.CONFLICT, "ADMIN_WORKER_NOT_ALLOWED",
+                        "Choose an active Warehouse Worker.");
+            }
+            warehouseWorkerUserID = adminTemporaryCreatePickingOrderWorker.userID;
+            username = adminTemporaryCreatePickingOrderWorker.username;
+        }
+
+        String orderReference = adminTemporaryCreateSampleOrder(SharedOrderStatus.PICKING, null,
+                warehouseWorkerUserID, null);
+        return new SharedMessageResponse("Created picking order " + orderReference + " for " + username + ".");
+    }
+
+    // ===== SECTION 17: adminTemporaryCreateSampleOrder =====
 
     // TEMPORARY TEST CODE - remove before integration
     // Stage 2 builds matching order, stock, picking and pickup fixtures in one transaction.
     /**
-     * What it does: Builds a sample order at a status from awaiting payment through shipped.
+     * What it does: Builds an order fixture for the Stage 2 and Stage 3 tools.
      * Input: Status plus optional Client, Warehouse Worker and Delivery Worker account IDs.
      * Output: The order reference. The caller starts the transaction before creating the fixture.
      */
     private String adminTemporaryCreateSampleOrder(SharedOrderStatus orderStatus, Long clientUserID,
             Long warehouseWorkerUserID, Long deliveryWorkerUserID) {
+        return adminTemporaryCreateSampleOrder(orderStatus, clientUserID, warehouseWorkerUserID, deliveryWorkerUserID,
+                null);
+    }
+
+    // TEMPORARY TEST CODE - remove before integration
+    // Stage 5 extends the shared builder with delivery attempts, returns, proofs and refunds.
+    /**
+     * What it does: Builds the shared order fixture with the rows needed by the requested status.
+     * Input: Order status, optional client and worker IDs, and the Admin ID for an approved redelivery.
+     * Output: The order reference. The caller starts the transaction before creating the fixture.
+     * Placeholder: PI-05, the fixture uses the current shared status and type words.
+     */
+    private String adminTemporaryCreateSampleOrder(SharedOrderStatus orderStatus, Long clientUserID,
+            Long warehouseWorkerUserID, Long deliveryWorkerUserID, Long adminTemporaryCreateSampleOrderAdminUserID) {
         // Work out which steps this status has reached before inserting any rows.
+        // PLACEHOLDER INPUT PI-05
+        // From: The other roles.
+        // What: Status words written to shared order-related rows.
+        // How to use: Take shared words from SharedPlaceholderWord until the team fixes their values.
         String taskStatus = switch (orderStatus) {
-            case AWAITING_PAYMENT -> null;
+            case AWAITING_PAYMENT, CANCELLED -> null;
             case READY_FOR_PICKING -> SHARED_PICKING_TASK_STATUS_PENDING;
             case PICKING -> SHARED_PICKING_TASK_STATUS_IN_PROGRESS;
-            case READY_FOR_PICKUP, SHIPPED -> SHARED_PICKING_TASK_STATUS_PACKED;
-            default -> throw new IllegalArgumentException("This order status is not supported by the test tool.");
+            case READY_FOR_PICKUP, SHIPPED, OUT_FOR_DELIVERY, DELIVERY_FAILED, READY_FOR_REDELIVERY, DELIVERED ->
+                SHARED_PICKING_TASK_STATUS_PACKED;
         };
         boolean adminTemporaryCreateSampleOrderIsPicking = orderStatus == SharedOrderStatus.PICKING;
-        boolean adminTemporaryCreateSampleOrderIsShipped = orderStatus == SharedOrderStatus.SHIPPED;
+        boolean adminTemporaryCreateSampleOrderIsShipped = switch (orderStatus) {
+            case SHIPPED, OUT_FOR_DELIVERY, DELIVERY_FAILED, READY_FOR_REDELIVERY, DELIVERED -> true;
+            default -> false;
+        };
+        boolean adminTemporaryCreateSampleOrderIsDelivered = orderStatus == SharedOrderStatus.DELIVERED;
         boolean adminTemporaryCreateSampleOrderIsPacked = orderStatus == SharedOrderStatus.READY_FOR_PICKUP
                 || adminTemporaryCreateSampleOrderIsShipped;
         boolean adminTemporaryCreateSampleOrderHasAssignment = adminTemporaryCreateSampleOrderIsPicking
@@ -648,6 +824,22 @@ public class AdminTemporaryTestToolService {
         String adminTemporaryCreateSampleOrderMugSKU = "TEST-MUG-" + adminTemporaryCreateSampleOrderReferenceNumber;
         String adminTemporaryCreateSampleOrderPenSKU = "TEST-PEN-" + adminTemporaryCreateSampleOrderReferenceNumber;
 
+        // Give the delivered example a story over two days, with no events in the future.
+        OffsetDateTime adminTemporaryCreateSampleOrderCurrentTime = adminTemporaryCreateTestUserDatabase
+                .sql("SELECT NOW()").query(OffsetDateTime.class).single();
+        OffsetDateTime createdTime = adminTemporaryCreateSampleOrderIsDelivered
+                ? adminTemporaryCreateSampleOrderCurrentTime.minusHours(25)
+                : adminTemporaryCreateSampleOrderCurrentTime;
+        OffsetDateTime adminTemporaryCreateSampleOrderPaymentTime = adminTemporaryCreateSampleOrderIsDelivered
+                ? createdTime.plusMinutes(15) : createdTime;
+        OffsetDateTime adminTemporaryCreateSampleOrderPickingTime = adminTemporaryCreateSampleOrderIsDelivered
+                ? createdTime.plusHours(1) : createdTime;
+        OffsetDateTime adminTemporaryCreateSampleOrderPackingTime = adminTemporaryCreateSampleOrderIsDelivered
+                ? createdTime.plusHours(2) : createdTime;
+        OffsetDateTime adminTemporaryCreateSampleOrderPickupTime = adminTemporaryCreateSampleOrderIsDelivered
+                ? adminTemporaryCreateSampleOrderCurrentTime.minusMinutes(45)
+                : adminTemporaryCreateSampleOrderCurrentTime;
+
         // Add the catalogue and balances first so the order uses the products' saved unit prices.
         adminTemporaryCreateTestUserDatabase.sql("""
                 INSERT INTO product (sku, name, current_price)
@@ -662,8 +854,9 @@ public class AdminTemporaryTestToolService {
                 """).param("mugSKU", adminTemporaryCreateSampleOrderMugSKU)
                 .param("penSKU", adminTemporaryCreateSampleOrderPenSKU).update();
         Long orderID = adminTemporaryCreateTestUserDatabase.sql("""
-                INSERT INTO customer_order (order_reference, client_user_id, order_status, payment_deadline, total_amount)
-                SELECT :orderReference, :clientUserID, :orderStatus, NOW() + INTERVAL '24 hours',
+                INSERT INTO customer_order
+                    (order_reference, client_user_id, order_status, created_at, payment_deadline, total_amount)
+                SELECT :orderReference, :clientUserID, :orderStatus, :createdTime, :createdTime + INTERVAL '24 hours',
                        SUM(current_price * CASE WHEN sku = :mugSKU THEN 3 ELSE 1 END)
                 FROM product WHERE sku IN (:mugSKU, :penSKU)
                 RETURNING order_id
@@ -671,6 +864,7 @@ public class AdminTemporaryTestToolService {
                 .param("orderReference", orderReference)
                 .param("clientUserID", clientUserID)
                 .param("orderStatus", orderStatus.name())
+                .param("createdTime", createdTime)
                 .param("mugSKU", adminTemporaryCreateSampleOrderMugSKU)
                 .param("penSKU", adminTemporaryCreateSampleOrderPenSKU)
                 .query(Long.class).single();
@@ -688,26 +882,38 @@ public class AdminTemporaryTestToolService {
                 .param("pickedMugCount", adminTemporaryCreateSampleOrderIsPacked ? 3
                         : adminTemporaryCreateSampleOrderIsPicking ? 1 : 0)
                 .param("pickedPenCount", adminTemporaryCreateSampleOrderIsPacked ? 1 : 0).update();
-        adminTemporaryCreateTestUserDatabase.sql("""
-                INSERT INTO order_delivery_detail (order_id, version_no, recipient_name, phone, address_text)
-                VALUES (:orderID, 1, 'PRIVATE-RECIPIENT-MARKER', 'PRIVATE-PHONE-MARKER', 'PRIVATE-ADDRESS-MARKER')
-                """).param("orderID", orderID).update();
-        if (taskStatus == null) {
+        Long deliveryDetailID = adminTemporaryCreateTestUserDatabase.sql("""
+                INSERT INTO order_delivery_detail
+                    (order_id, version_no, recipient_name, phone, address_text, created_at)
+                VALUES (:orderID, 1, 'PRIVATE-RECIPIENT-MARKER', 'PRIVATE-PHONE-MARKER', 'PRIVATE-ADDRESS-MARKER',
+                        :createdTime)
+                RETURNING delivery_detail_id
+                """).param("orderID", orderID).param("createdTime", createdTime).query(Long.class).single();
+        if (orderStatus == SharedOrderStatus.AWAITING_PAYMENT) {
             return orderReference;
         }
 
-        // A paid order holds both item quantities and has a picking task.
+        // An accepted payment records the checkout. Cancellation releases both reservations and requests a refund.
         Long paymentID = adminTemporaryCreateTestUserDatabase.sql("""
-                INSERT INTO payment (order_id, amount, payment_status, accepted_at)
-                SELECT order_id, total_amount, :paymentStatus, NOW()
+                INSERT INTO payment (order_id, amount, payment_status, created_at, accepted_at)
+                SELECT order_id, total_amount, :paymentStatus, :paymentTime, :paymentTime
                 FROM customer_order WHERE order_id = :orderID
                 RETURNING payment_id
                 """).param("orderID", orderID).param("paymentStatus", SHARED_PAYMENT_STATUS_ACCEPTED)
+                .param("paymentTime", adminTemporaryCreateSampleOrderPaymentTime)
                 .query(Long.class).single();
+        if (orderStatus == SharedOrderStatus.CANCELLED) {
+            adminTemporaryCreateSampleOrderRefund(orderID, paymentID);
+            return orderReference;
+        }
+
+        // Non-cancelled paid orders hold both item quantities and have a picking task.
         adminTemporaryCreateTestUserDatabase.sql("""
-                INSERT INTO stock_reservation (order_item_id, payment_id, quantity, status)
-                SELECT order_item_id, :paymentID, quantity, :reservationStatus FROM order_item WHERE order_id = :orderID
+                INSERT INTO stock_reservation (order_item_id, payment_id, quantity, status, reserved_at)
+                SELECT order_item_id, :paymentID, quantity, :reservationStatus, :paymentTime
+                FROM order_item WHERE order_id = :orderID
                 """).param("paymentID", paymentID).param("reservationStatus", SHARED_RESERVATION_STATUS_HELD)
+                .param("paymentTime", adminTemporaryCreateSampleOrderPaymentTime)
                 .param("orderID", orderID).update();
         adminTemporaryCreateTestUserDatabase.sql("""
                 UPDATE inventory
@@ -718,10 +924,13 @@ public class AdminTemporaryTestToolService {
         Long pickingTaskID = adminTemporaryCreateTestUserDatabase.sql("""
                 INSERT INTO picking_task (order_id, task_status, start_time, confirm_packing_time)
                 VALUES (:orderID, :taskStatus,
-                        CASE WHEN :hasAssignment THEN NOW() END, CASE WHEN :isPacked THEN NOW() END)
+                        CASE WHEN :hasAssignment THEN CAST(:pickingTime AS timestamptz) END,
+                        CASE WHEN :isPacked THEN CAST(:packingTime AS timestamptz) END)
                 RETURNING picking_task_id
                 """).param("orderID", orderID).param("taskStatus", taskStatus)
                 .param("hasAssignment", adminTemporaryCreateSampleOrderHasAssignment)
+                .param("pickingTime", adminTemporaryCreateSampleOrderPickingTime)
+                .param("packingTime", adminTemporaryCreateSampleOrderPackingTime)
                 .param("isPacked", adminTemporaryCreateSampleOrderIsPacked).query(Long.class).single();
         if (!adminTemporaryCreateSampleOrderHasAssignment) {
             return orderReference;
@@ -729,22 +938,27 @@ public class AdminTemporaryTestToolService {
 
         // The first mug scan is accepted, and packing ends the assignment.
         adminTemporaryCreateTestUserDatabase.sql("""
-                INSERT INTO picking_assignment_history (picking_task_id, worker_user_id, ended_at)
-                VALUES (:pickingTaskID, :warehouseWorkerUserID, CASE WHEN :isPacked THEN NOW() END)
+                INSERT INTO picking_assignment_history (picking_task_id, worker_user_id, assigned_at, ended_at)
+                VALUES (:pickingTaskID, :warehouseWorkerUserID, :pickingTime,
+                        CASE WHEN :isPacked THEN CAST(:packingTime AS timestamptz) END)
                 """)
                 .param("pickingTaskID", pickingTaskID)
                 .param("warehouseWorkerUserID", warehouseWorkerUserID)
+                .param("pickingTime", adminTemporaryCreateSampleOrderPickingTime)
+                .param("packingTime", adminTemporaryCreateSampleOrderPackingTime)
                 .param("isPacked", adminTemporaryCreateSampleOrderIsPacked).update();
         adminTemporaryCreateTestUserDatabase.sql("""
                 INSERT INTO picking_scan_history
-                    (picking_task_id, order_item_id, worker_user_id, scanned_identifier, result)
-                SELECT :pickingTaskID, item.order_item_id, :warehouseWorkerUserID, product.sku, :scanResult
+                    (picking_task_id, order_item_id, worker_user_id, scanned_identifier, result, scan_time)
+                SELECT :pickingTaskID, item.order_item_id, :warehouseWorkerUserID, product.sku,
+                       :scanResult, :pickingTime
                 FROM order_item item JOIN product ON product.product_id = item.product_id
                 WHERE item.order_id = :orderID AND product.sku = :mugSKU
                 """)
                 .param("pickingTaskID", pickingTaskID)
                 .param("warehouseWorkerUserID", warehouseWorkerUserID)
                 .param("scanResult", SharedScanResult.ACCEPTED.name())
+                .param("pickingTime", adminTemporaryCreateSampleOrderPickingTime)
                 .param("orderID", orderID)
                 .param("mugSKU", adminTemporaryCreateSampleOrderMugSKU).update();
         if (!adminTemporaryCreateSampleOrderIsPacked) {
@@ -753,8 +967,9 @@ public class AdminTemporaryTestToolService {
 
         // Packing produces a parcel. Its custody changes only on collection.
         Long packageID = adminTemporaryCreateTestUserDatabase.sql("""
-                INSERT INTO delivery_package (order_id, package_qr_code, custody_status, current_handler_user_id)
-                VALUES (:orderID, :packageQRCode, :custodyStatus, :handlerUserID)
+                INSERT INTO delivery_package
+                    (order_id, package_qr_code, custody_status, current_handler_user_id, created_at)
+                VALUES (:orderID, :packageQRCode, :custodyStatus, :handlerUserID, :packingTime)
                 RETURNING package_id
                 """)
                 .param("orderID", orderID)
@@ -762,6 +977,7 @@ public class AdminTemporaryTestToolService {
                 .param("custodyStatus", adminTemporaryCreateSampleOrderIsShipped
                         ? SHARED_CUSTODY_STATUS_DELIVERY : SHARED_CUSTODY_STATUS_WAREHOUSE)
                 .param("handlerUserID", adminTemporaryCreateSampleOrderIsShipped ? deliveryWorkerUserID : null)
+                .param("packingTime", adminTemporaryCreateSampleOrderPackingTime)
                 .query(Long.class).single();
         if (!adminTemporaryCreateSampleOrderIsShipped) {
             return orderReference;
@@ -770,37 +986,42 @@ public class AdminTemporaryTestToolService {
         // Record the collected parcel and the custody event on a closed list.
         Long pickupListID = adminTemporaryCreateTestUserDatabase.sql("""
                 INSERT INTO pickup_list
-                    (list_qr_code, created_by_worker_id, status, claimed_by_delivery_user_id, claimed_at)
-                VALUES (:listQRCode, :warehouseWorkerUserID, :status, :deliveryWorkerUserID, NOW())
+                    (list_qr_code, created_by_worker_id, status, claimed_by_delivery_user_id, created_at, claimed_at)
+                VALUES (:listQRCode, :warehouseWorkerUserID, :status, :deliveryWorkerUserID, :pickupTime, :pickupTime)
                 RETURNING pickup_list_id
                 """)
                 .param("listQRCode", orderReference + "-LIST")
                 .param("warehouseWorkerUserID", warehouseWorkerUserID)
                 .param("status", SHARED_PICKUP_LIST_STATUS_CLOSED)
                 .param("deliveryWorkerUserID", deliveryWorkerUserID)
+                .param("pickupTime", adminTemporaryCreateSampleOrderPickupTime)
                 .query(Long.class).single();
         adminTemporaryCreateTestUserDatabase.sql("""
                 INSERT INTO pickup_list_item (pickup_list_id, package_id, collection_outcome, collected_at)
-                VALUES (:pickupListID, :packageID, :collectionOutcome, NOW())
+                VALUES (:pickupListID, :packageID, :collectionOutcome, :pickupTime)
                 """)
                 .param("pickupListID", pickupListID)
                 .param("packageID", packageID)
+                .param("pickupTime", adminTemporaryCreateSampleOrderPickupTime)
                 .param("collectionOutcome", SHARED_COLLECTION_OUTCOME_COLLECTED).update();
-        adminTemporaryCreateTestUserDatabase.sql("""
-                INSERT INTO package_custody_event (package_id, event_type, actor_user_id, pickup_list_id)
-                VALUES (:packageID, :eventType, :deliveryWorkerUserID, :pickupListID)
+        Long pickupCustodyEventID = adminTemporaryCreateTestUserDatabase.sql("""
+                INSERT INTO package_custody_event (package_id, event_type, actor_user_id, pickup_list_id, event_time)
+                VALUES (:packageID, :eventType, :deliveryWorkerUserID, :pickupListID, :pickupTime)
+                RETURNING custody_event_id
                 """)
                 .param("packageID", packageID)
                 .param("eventType", SHARED_CUSTODY_EVENT_PICKED_UP)
                 .param("deliveryWorkerUserID", deliveryWorkerUserID)
-                .param("pickupListID", pickupListID).update();
+                .param("pickupTime", adminTemporaryCreateSampleOrderPickupTime)
+                .param("pickupListID", pickupListID).query(Long.class).single();
 
         // The collected quantities leave the warehouse and no longer count as reserved.
         adminTemporaryCreateTestUserDatabase.sql("""
-                UPDATE stock_reservation SET status = :reservationStatus, consumed_at = NOW()
+                UPDATE stock_reservation SET status = :reservationStatus, consumed_at = :pickupTime
                 WHERE payment_id = :paymentID
                 """).param("reservationStatus", SHARED_RESERVATION_STATUS_CONSUMED)
-                .param("paymentID", paymentID).update();
+                .param("paymentID", paymentID)
+                .param("pickupTime", adminTemporaryCreateSampleOrderPickupTime).update();
         adminTemporaryCreateTestUserDatabase.sql("""
                 UPDATE inventory
                 SET physical_stock = physical_stock - item.quantity,
@@ -809,10 +1030,163 @@ public class AdminTemporaryTestToolService {
                 FROM order_item item
                 WHERE item.order_id = :orderID AND item.product_id = inventory.product_id
                 """).param("orderID", orderID).update();
+
+        // Orders beyond collection have a delivery attempt, and a redelivery example also has a recorded return.
+        if (orderStatus != SharedOrderStatus.SHIPPED) {
+            adminTemporaryCreateSampleDeliveryAttempt(orderStatus, packageID, deliveryDetailID, deliveryWorkerUserID,
+                    pickupCustodyEventID, adminTemporaryCreateSampleOrderCurrentTime);
+        }
+        if (orderStatus == SharedOrderStatus.READY_FOR_REDELIVERY) {
+            adminTemporaryCreateSampleRedelivery(orderID, paymentID, packageID, deliveryDetailID, clientUserID,
+                    warehouseWorkerUserID, deliveryWorkerUserID, adminTemporaryCreateSampleOrderAdminUserID);
+        }
         return orderReference;
     }
 
-    // ===== SECTION 14: HELPER FUNCTIONS =====
+    // ===== SECTION 18: HELPER FUNCTIONS =====
+
+    // TEMPORARY TEST CODE - remove before integration
+    // Stage 5 shows a cancelled order with a requested refund and released stock.
+    /**
+     * What it does: Records both released reservations and a full refund request for a cancelled sample order.
+     * Input: The order and its accepted payment.
+     * Output: None. Stock totals stay the same because the reservations are created directly in their released state.
+     * Placeholder: PI-05, the fixture uses the shared words for released reservations and refund requests.
+     */
+    private void adminTemporaryCreateSampleOrderRefund(Long orderID, Long paymentID) {
+        // PLACEHOLDER INPUT PI-05
+        // From: Warehouse and Payment.
+        // What: Released reservation and requested refund states.
+        // How to use: Take the current stored states from SharedPlaceholderWord.
+        adminTemporaryCreateTestUserDatabase.sql("""
+                INSERT INTO stock_reservation (order_item_id, payment_id, quantity, status, released_at)
+                SELECT order_item_id, :paymentID, quantity, :reservationStatus, NOW()
+                FROM order_item WHERE order_id = :orderID
+                """).param("paymentID", paymentID).param("reservationStatus", SHARED_RESERVATION_STATUS_RELEASED)
+                .param("orderID", orderID).update();
+        adminTemporaryCreateTestUserDatabase.sql("""
+                INSERT INTO refund (payment_id, amount, refund_status)
+                SELECT payment_id, amount, :refundStatus FROM payment WHERE payment_id = :paymentID
+                """).param("refundStatus", SHARED_REFUND_STATUS_REQUESTED).param("paymentID", paymentID).update();
+    }
+
+    // TEMPORARY TEST CODE - remove before integration
+    // Stage 5 gives each post-pickup example the appropriate attempt and proof rows.
+    /**
+     * What it does: Saves an in-progress, failed or successful attempt for a collected sample package.
+     * Input: Order status, package, delivery details version, assigned worker, pickup event and sample finish time.
+     * Output: None. A delivered sample includes one photo and one signature record.
+     * Placeholder: PI-05, the fixture uses the shared attempt outcomes and failure reason.
+     */
+    private void adminTemporaryCreateSampleDeliveryAttempt(SharedOrderStatus orderStatus, Long packageID,
+            Long deliveryDetailID, Long deliveryWorkerID, Long pickupCustodyEventID,
+            OffsetDateTime adminTemporaryCreateSampleDeliveryAttemptCurrentTime) {
+        // PLACEHOLDER INPUT PI-05
+        // From: Delivery.
+        // What: Attempt outcomes and failure reasons.
+        // How to use: Take the current stored words from SharedPlaceholderWord.
+        String outcome = switch (orderStatus) {
+            case OUT_FOR_DELIVERY -> SHARED_ATTEMPT_OUTCOME_IN_PROGRESS;
+            case DELIVERY_FAILED, READY_FOR_REDELIVERY -> SHARED_ATTEMPT_OUTCOME_FAILED;
+            case DELIVERED -> SHARED_ATTEMPT_OUTCOME_DELIVERED;
+            default -> throw new IllegalArgumentException("This order status does not have a sample attempt.");
+        };
+        OffsetDateTime startTime = orderStatus == SharedOrderStatus.DELIVERED
+                ? adminTemporaryCreateSampleDeliveryAttemptCurrentTime.minusMinutes(20)
+                : adminTemporaryCreateSampleDeliveryAttemptCurrentTime;
+        OffsetDateTime endTime = orderStatus == SharedOrderStatus.OUT_FOR_DELIVERY
+                ? null : adminTemporaryCreateSampleDeliveryAttemptCurrentTime;
+        boolean adminTemporaryCreateSampleDeliveryAttemptHasFailed =
+                SHARED_ATTEMPT_OUTCOME_FAILED.equals(outcome);
+        String failureReason = adminTemporaryCreateSampleDeliveryAttemptHasFailed
+                ? SHARED_FAILURE_REASON_CLIENT_NOT_HOME : null;
+        String internalNote = adminTemporaryCreateSampleDeliveryAttemptHasFailed
+                ? "Rang the bell twice, call 5550 0000 1234" : null;
+
+        // An attempt records the delivery-details version that the worker used and the collection behind it.
+        Long deliveryAttemptID = adminTemporaryCreateTestUserDatabase.sql("""
+                INSERT INTO delivery_attempt
+                    (package_id, delivery_detail_id, delivery_worker_user_id, pickup_custody_event_id,
+                     start_time, end_time, outcome, failure_reason, internal_note)
+                VALUES (:packageID, :deliveryDetailID, :deliveryWorkerID, :pickupCustodyEventID, :startTime, :endTime,
+                        :outcome, :failureReason, :internalNote)
+                RETURNING delivery_attempt_id
+                """).param("packageID", packageID).param("deliveryDetailID", deliveryDetailID)
+                .param("deliveryWorkerID", deliveryWorkerID).param("pickupCustodyEventID", pickupCustodyEventID)
+                .param("startTime", startTime).param("endTime", endTime).param("outcome", outcome)
+                .param("failureReason", failureReason).param("internalNote", internalNote).query(Long.class).single();
+
+        // The sample proof has a marker reference and no real attachment.
+        if (orderStatus == SharedOrderStatus.DELIVERED) {
+            adminTemporaryCreateTestUserDatabase.sql("""
+                    INSERT INTO delivery_proof (delivery_attempt_id, proof_type, proof_reference)
+                    VALUES (:deliveryAttemptID, :photoType, 'TEMPORARY-NO-FILE'),
+                           (:deliveryAttemptID, :signatureType, 'TEMPORARY-NO-FILE')
+                    """).param("deliveryAttemptID", deliveryAttemptID)
+                    .param("photoType", SharedProofType.PHOTO.name())
+                    .param("signatureType", SharedProofType.SIGNATURE.name()).update();
+        }
+    }
+
+    // TEMPORARY TEST CODE - remove before integration
+    // Stage 5 shows the return and approval history of a redelivery order.
+    /**
+     * What it does: Records the synthetic return of an intact package and the client's approved redelivery request.
+     * Input: The order, payment, package, delivery-details version, Client, both workers and resolving Admin.
+     * Output: None. The package is back in Warehouse and its original quantities are reserved again.
+     * Placeholder: PI-05, the fixture uses the currently shared custody, reservation and instruction words.
+     */
+    private void adminTemporaryCreateSampleRedelivery(Long orderID, Long paymentID, Long packageID,
+            Long deliveryDetailID, Long clientUserID, Long warehouseWorkerUserID, Long deliveryWorkerUserID,
+            Long resolvedByAdminID) {
+        // PLACEHOLDER INPUT PI-05
+        // From: Delivery, Warehouse and Client.
+        // What: Return event types, warehouse custody, held stock and approved redelivery states.
+        // How to use: Take the current stored words from SharedPlaceholderWord.
+        adminTemporaryCreateTestUserDatabase.sql("""
+                INSERT INTO package_custody_event (package_id, event_type, actor_user_id)
+                VALUES (:packageID, :eventType, :workerUserID)
+                """).param("packageID", packageID).param("eventType", SHARED_CUSTODY_EVENT_RETURN_REQUESTED)
+                .param("workerUserID", deliveryWorkerUserID).update();
+        Long returnCustodyEventID = adminTemporaryCreateTestUserDatabase.sql("""
+                INSERT INTO package_custody_event (package_id, event_type, actor_user_id)
+                VALUES (:packageID, :eventType, :workerUserID)
+                RETURNING custody_event_id
+                """).param("packageID", packageID).param("eventType", SHARED_CUSTODY_EVENT_RETURN_RECEIVED)
+                .param("workerUserID", warehouseWorkerUserID).query(Long.class).single();
+        adminTemporaryCreateTestUserDatabase.sql("""
+                UPDATE delivery_package SET custody_status = :custodyStatus, current_handler_user_id = NULL
+                WHERE package_id = :packageID
+                """).param("custodyStatus", SHARED_CUSTODY_STATUS_WAREHOUSE).param("packageID", packageID).update();
+
+        // An intact return restores the original allocation and adds back both inventory quantities.
+        adminTemporaryCreateTestUserDatabase.sql("""
+                UPDATE stock_reservation SET status = :reservationStatus, consumed_at = NULL
+                WHERE payment_id = :paymentID
+                """).param("reservationStatus", SHARED_RESERVATION_STATUS_HELD).param("paymentID", paymentID).update();
+        adminTemporaryCreateTestUserDatabase.sql("""
+                UPDATE inventory
+                SET physical_stock = physical_stock + item.quantity,
+                    reserved_stock = reserved_stock + item.quantity,
+                    updated_at = NOW()
+                FROM order_item item
+                WHERE item.order_id = :orderID AND item.product_id = inventory.product_id
+                """).param("orderID", orderID).update();
+
+        // The client asked through tracking and the current Admin stands in for the approver.
+        adminTemporaryCreateTestUserDatabase.sql("""
+                INSERT INTO client_instruction
+                    (order_id, client_user_id, delivery_detail_id, return_custody_event_id, instruction_type,
+                     status, source, resolved_by_admin_id, resolved_at)
+                VALUES (:orderID, :clientUserID, :deliveryDetailID, :returnCustodyEventID, :instructionType,
+                        :status, :source, :resolvedByAdminID, NOW())
+                """).param("orderID", orderID).param("clientUserID", clientUserID)
+                .param("deliveryDetailID", deliveryDetailID).param("returnCustodyEventID", returnCustodyEventID)
+                .param("instructionType", SHARED_INSTRUCTION_TYPE_REDELIVER)
+                .param("status", SHARED_INSTRUCTION_STATUS_APPROVED)
+                .param("source", SharedInstructionSource.TRACKING_PAGE.name())
+                .param("resolvedByAdminID", resolvedByAdminID).update();
+    }
 
     // TEMPORARY TEST CODE - remove before integration
     // Stage 1 locks the named account before applying a test change to it.

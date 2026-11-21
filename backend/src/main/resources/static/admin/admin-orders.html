@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Orders - LMS Admin</title>
+  <link rel="stylesheet" href="/shared/shared-common.css">
+  <script src="/shared/shared-common.js?v=4" defer></script>
+  <script src="/admin/admin-common.js?v=4" defer></script>
+  <script src="/admin/admin-orders.js" defer></script>
+</head>
+<body>
+  <!-- Page frame: adminBuildPageFrame places this work area inside the frame. -->
+  <main hidden>
+    <div class="shared-page-header">
+      <div class="shared-page-header-text">
+        <h1 class="shared-page-title">Orders</h1>
+        <p class="shared-page-subtitle" id="adminSearchOrderTotalRowCountText" aria-live="polite"></p>
+      </div>
+      <div class="shared-page-header-actions">
+        <button class="shared-button" type="button" id="adminDownloadOrderCSVButton" disabled>
+          <svg class="shared-icon" aria-hidden="true"><use href="#icon-download"/></svg>
+          Download CSV
+        </button>
+      </div>
+    </div>
+
+    <section class="shared-card">
+      <!-- Filter bar -->
+      <form class="shared-filter-bar">
+        <label class="shared-input-search">
+          <svg class="shared-icon" aria-hidden="true"><use href="#icon-search"/></svg>
+          <input type="search" id="adminSearchOrderKeywordInput" name="adminSearchOrderKeyword"
+            placeholder="Search order or client" aria-label="Search order or client">
+        </label>
+        <span class="shared-select">
+          <select id="adminSearchOrderOrderStatusSelect" name="adminSearchOrderOrderStatus" aria-label="Order status">
+            <option value="">All statuses</option>
+            <option value="AWAITING_PAYMENT">Awaiting payment</option>
+            <option value="READY_FOR_PICKING">Ready for picking</option>
+            <option value="PICKING">Picking</option>
+            <option value="READY_FOR_PICKUP">Ready for pickup</option>
+            <option value="SHIPPED">Shipped</option>
+            <option value="OUT_FOR_DELIVERY">Out for delivery</option>
+            <option value="DELIVERY_FAILED">Delivery failed</option>
+            <option value="READY_FOR_REDELIVERY">Ready for redelivery</option>
+            <option value="DELIVERED">Delivered</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
+          <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+        </span>
+        <span class="shared-filter-range">
+          <label class="shared-filter-label">
+            From
+            <input class="shared-input" type="datetime-local" id="adminSearchOrderCreatedFromTimeInput"
+              name="adminSearchOrderCreatedFromTime">
+          </label>
+          <label class="shared-filter-label">
+            To
+            <input class="shared-input" type="datetime-local" id="adminSearchOrderCreatedToTimeInput"
+              name="adminSearchOrderCreatedToTime">
+          </label>
+        </span>
+        <span class="shared-filter-buttons">
+          <button class="shared-button" type="submit" id="adminSearchOrderSubmitButton">Search</button>
+          <button class="shared-button shared-button-quiet" type="button" id="adminSearchOrderClearButton">
+            Clear
+          </button>
+        </span>
+      </form>
+
+      <!-- Table -->
+      <div class="shared-table-scroll" role="region" aria-label="Orders table" hidden>
+        <table class="shared-table" id="adminSearchOrderResultTable">
+          <thead>
+            <tr>
+              <th scope="col">Order</th>
+              <th scope="col">Client</th>
+              <th class="shared-table-time" scope="col">Created</th>
+              <th class="shared-table-number" scope="col">Total</th>
+              <th scope="col">Order status</th>
+              <th scope="col">Payment</th>
+              <th scope="col">Refund</th>
+            </tr>
+          </thead>
+          <tbody id="adminSearchOrderResultTableBody"></tbody>
+        </table>
+      </div>
+      <p class="shared-table-empty" id="adminSearchOrderEmptyMessage" hidden>No rows found.
+        <button class="shared-button shared-button-quiet" type="button">Clear filters</button>
+      </p>
+
+      <!-- Pager -->
+      <div class="shared-pager" id="adminSearchOrderPager" hidden></div>
+    </section>
+  </main>
+</body>
+</html>

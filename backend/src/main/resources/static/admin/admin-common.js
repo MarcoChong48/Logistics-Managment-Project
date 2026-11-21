@@ -74,10 +74,9 @@ async function adminBuildPageFrame(adminBuildPageFrameActivePageName) {
       <span class="shared-page-frame-menu-text">Dashboard</span>
     </a>
     <div class="shared-page-frame-menu-label">Work to do</div>
-    <a class="shared-page-frame-menu-item shared-page-frame-menu-item-disabled" aria-disabled="true">
+    <a class="shared-page-frame-menu-item" href="/admin/admin-warehouse-cases.html">
       <svg class="shared-icon" aria-hidden="true"><use href="#icon-warehouse"/></svg>
       <span class="shared-page-frame-menu-text">Warehouse cases</span>
-      <span class="shared-page-frame-menu-stage">Stage 6</span>
     </a>
     <a class="shared-page-frame-menu-item shared-page-frame-menu-item-disabled" aria-disabled="true">
       <svg class="shared-icon" aria-hidden="true"><use href="#icon-delivery"/></svg>
@@ -99,10 +98,9 @@ async function adminBuildPageFrame(adminBuildPageFrameActivePageName) {
       <span class="shared-page-frame-menu-text">Products</span>
     </a>
     <div class="shared-page-frame-menu-label">Look up</div>
-    <a class="shared-page-frame-menu-item shared-page-frame-menu-item-disabled" aria-disabled="true">
+    <a class="shared-page-frame-menu-item" href="/admin/admin-orders.html">
       <svg class="shared-icon" aria-hidden="true"><use href="#icon-orders"/></svg>
       <span class="shared-page-frame-menu-text">Orders</span>
-      <span class="shared-page-frame-menu-stage">Stage 5</span>
     </a>
     <a class="shared-page-frame-menu-item" href="/admin/admin-logs.html">
       <svg class="shared-icon" aria-hidden="true"><use href="#icon-logs"/></svg>
@@ -383,7 +381,57 @@ async function adminDownloadCSV(adminDownloadCSVWebAddress) {
   }
 }
 
-// ===== SECTION 10: HELPER FUNCTIONS =====
+// ===== SECTION 10: adminShowDecidedRow =====
+
+// What it does: Shows the saved outcome in the same work-table row after a successful decision.
+// Input: The row and decided cell, the server's response, and the window's line with named placeholders.
+// Output: The saved badge or worker, deciding Admin and time, plus focus on the row's order link.
+function adminShowDecidedRow(adminShowDecidedRowElement, adminShowDecidedRowCell, adminShowDecidedRowResponse,
+  adminShowDecidedRowLine) {
+  if (!adminShowDecidedRowElement?.isConnected) {
+    return;
+  }
+
+  // Read the outcome from the committed response, including its timestamp.
+  const adminShowDecidedRowMain = document.createElement("span");
+  adminShowDecidedRowMain.className = "shared-cell-main";
+  adminShowDecidedRowMain.append(adminShowDecidedRowResponse.adminDecidedRowStateWord
+    ? adminBuildStatusBadge(adminShowDecidedRowResponse.adminDecidedRowStateWord)
+    : adminShowDecidedRowResponse.adminDecidedRowWorkerUsername);
+
+  const adminShowDecidedRowTime = document.createElement("time");
+  adminShowDecidedRowTime.className = "shared-nowrap";
+  adminShowDecidedRowTime.dateTime = adminShowDecidedRowResponse.adminDecidedRowDecidedTime;
+  adminShowDecidedRowTime.textContent = sharedFormatTime(adminShowDecidedRowTime.dateTime);
+
+  const adminShowDecidedRowSub = document.createElement("span");
+  adminShowDecidedRowSub.className = "shared-cell-sub";
+  for (const adminShowDecidedRowPart of adminShowDecidedRowLine.split(/(\{admin\}|\{time\}|\{refundID\})/)) {
+    switch (adminShowDecidedRowPart) {
+      case "{admin}":
+        adminShowDecidedRowSub.append(adminShowDecidedRowResponse.adminDecidedRowDecidedByUsername);
+        break;
+      case "{time}":
+        adminShowDecidedRowSub.append(adminShowDecidedRowTime);
+        break;
+      case "{refundID}":
+        adminShowDecidedRowSub.append(String(adminShowDecidedRowResponse.refundID));
+        break;
+      default:
+        adminShowDecidedRowSub.append(adminShowDecidedRowPart);
+    }
+  }
+
+  // Keep both the row's position and a keyboard path after its buttons are gone.
+  adminShowDecidedRowCell.replaceChildren(adminShowDecidedRowMain, adminShowDecidedRowSub);
+  const adminShowDecidedRowEmpty = document.createElement("span");
+  adminShowDecidedRowEmpty.className = "shared-muted";
+  adminShowDecidedRowEmpty.textContent = "-";
+  adminShowDecidedRowElement.querySelector(".shared-table-actions").replaceChildren(adminShowDecidedRowEmpty);
+  adminShowDecidedRowElement.querySelector("th a").focus();
+}
+
+// ===== SECTION 11: HELPER FUNCTIONS =====
 
 // What it does: Close row menus on a page scroll or resize.
 // Input: The scroll or resize event.

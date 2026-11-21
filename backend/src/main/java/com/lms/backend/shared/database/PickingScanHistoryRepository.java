@@ -25,7 +25,7 @@ public interface PickingScanHistoryRepository extends JpaRepository<PickingScanH
                              THEN matchedProduct.SKU END,
                     (SELECT MIN(product.SKU) FROM Product product
                      WHERE LOWER(product.SKU) = LOWER(scan.scannedIdentifier)), '[unknown code]'),
-                scan.result, scan.reason, scan.originalScanID, matchedProduct.SKU
+                scan.result, scan.reason, scan.originalScanID, matchedProduct.SKU, customerOrder.orderID
             FROM PickingScanHistory scan
                 JOIN PickingTask task ON task.pickingTaskID = scan.pickingTaskID
                 JOIN CustomerOrder customerOrder ON customerOrder.orderID = task.orderID

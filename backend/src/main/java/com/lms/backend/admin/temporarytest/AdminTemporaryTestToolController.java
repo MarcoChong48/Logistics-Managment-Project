@@ -201,4 +201,60 @@ public class AdminTemporaryTestToolController {
             @RequestBody AdminTemporarySetProductStockRequest adminTemporarySetProductStockRequest) {
         return adminTemporaryViewTestModeService.adminTemporarySetProductStock(adminTemporarySetProductStockRequest);
     }
+
+    // ===== SECTION 14: POST /api/admin/temporary-test/sample-order-set =====
+
+    // TEMPORARY TEST CODE - remove before integration
+    // Stage 5 needs examples of all ten order statuses.
+    /**
+     * What it does: Creates a set of sample orders through the test service.
+     * Input: None.
+     * Output: A shared message listing the sample order references and statuses.
+     */
+    @PostMapping("/api/admin/temporary-test/sample-order-set")
+    public SharedMessageResponse adminTemporaryCreateSampleOrderSet() {
+        return adminTemporaryViewTestModeService.adminTemporaryCreateSampleOrderSet();
+    }
+
+    // ===== SECTION 15: POST /api/admin/temporary-test/shortage-report =====
+
+    // TEMPORARY TEST CODE - remove before integration
+    /**
+     * What it does: Sends a sample shortage report to the test service.
+     * Input: The order status, missing quantity, and an optional order reference.
+     * Output: The order reference and case number, or a shared error.
+     */
+    @PostMapping("/api/admin/temporary-test/shortage-report")
+    public SharedMessageResponse adminTemporaryCreateShortageReport(
+            @RequestBody AdminTemporaryCreateShortageReportRequest adminTemporaryCreateShortageReportRequest) {
+        return adminTemporaryViewTestModeService.adminTemporaryCreateShortageReport(adminTemporaryCreateShortageReportRequest);
+    }
+
+    // ===== SECTION 16: POST /api/admin/temporary-test/shortage-resolved =====
+
+    // TEMPORARY TEST CODE - remove before integration
+    /**
+     * What it does: Sends a simulated restock to the test service.
+     * Input: The case number.
+     * Output: A shared result message or a shortage error.
+     */
+    @PostMapping("/api/admin/temporary-test/shortage-resolved")
+    public SharedMessageResponse adminTemporaryResolveShortageCase(
+            @RequestBody AdminTemporaryResolveShortageCaseRequest adminTemporaryResolveShortageCaseRequest) {
+        return adminTemporaryViewTestModeService.adminTemporaryResolveShortageCase(adminTemporaryResolveShortageCaseRequest);
+    }
+
+    // ===== SECTION 17: POST /api/admin/temporary-test/picking-order =====
+
+    // TEMPORARY TEST CODE - remove before integration
+    /**
+     * What it does: Asks the test service for a picking fixture with one accepted scan.
+     * Input: The optional Warehouse Worker username.
+     * Output: The order reference and worker, or a shared error.
+     */
+    @PostMapping("/api/admin/temporary-test/picking-order")
+    public SharedMessageResponse adminTemporaryCreatePickingOrder(
+            @RequestBody AdminTemporaryCreatePickingOrderRequest adminTemporaryCreatePickingOrderRequest) {
+        return adminTemporaryViewTestModeService.adminTemporaryCreatePickingOrder(adminTemporaryCreatePickingOrderRequest);
+    }
 }

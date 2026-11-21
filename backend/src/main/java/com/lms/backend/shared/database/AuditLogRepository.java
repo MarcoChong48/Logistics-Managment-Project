@@ -55,6 +55,14 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
     Optional<AuditLog> findFirstByActionOrderByTimestampDescAuditIDDesc(String action);
 
     /**
+     * What it does: Reads the last recorded provider result for a refund.
+     * Input: The audit action, target type and refund ID as text.
+     * Output: The newest matching check or empty if there has been no check.
+     */
+    Optional<AuditLog> findFirstByActionAndTargetTypeAndTargetIDOrderByTimestampDescAuditIDDesc(
+            String action, String targetType, String targetID);
+
+    /**
      * What it does: Deletes audit rows strictly older than the retention time.
      * Input: The cut-off instant.
      * Output: The number of deleted rows.

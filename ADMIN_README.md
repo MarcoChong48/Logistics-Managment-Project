@@ -1,6 +1,6 @@
 # Admin system setup
 
-This branch builds on the team's PostgreSQL baseline. It includes shared login and role checks, Admin user management, read-only logs and retention, and the product catalogue through Stage 4.
+This branch builds on the team's PostgreSQL baseline. It includes shared login and role checks, user management, logs and retention, the product catalogue, Orders, and Warehouse cases through Stage 6.
 
 ## Start the local stack
 
@@ -19,6 +19,8 @@ The Compose stack binds the app to `127.0.0.1:8081`. Use synthetic data with the
 
 The first log retention run is scheduled for five minutes after startup. In **Test tools → Stage 3**, you can create tagged synthetic log rows and run cleanup immediately. **Logs** shows the latest run and deletion counts. Use the [team integration guide](TEAM_GUIDE.md) to build a role behind shared sign-in.
 
+To test Orders, use **Test tools → Stage 5 → Create sample order set**, then search for the returned references on **Orders**. Under **Test tools → Stage 6**, create a shortage report or a picking order to exercise the decisions and reassignment on **Warehouse cases**. The refund stand-in records a local request for paid cancellations.
+
 ## Verify the setup
 
 ```powershell
@@ -26,7 +28,7 @@ docker build --no-cache --target rule-check --progress plain ./backend
 docker compose exec db psql -U lms -d lms -c "\dt"
 ```
 
-To run the rule and HTTP flow checks through Stage 4, use a configured local `.env` and run:
+To run the rule and HTTP flow checks through Stage 6, use a configured local `.env` and run:
 
 ```powershell
 docker compose run --rm --build flow-check

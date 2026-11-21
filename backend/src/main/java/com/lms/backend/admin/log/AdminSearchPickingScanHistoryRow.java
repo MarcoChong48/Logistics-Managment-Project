@@ -9,6 +9,7 @@ public record AdminSearchPickingScanHistoryRow(
         Long scanID,
         Instant scanTime,
         Long pickingTaskID,
+        Long orderID,
         String adminSearchPickingScanHistoryOrderReference,
         Long workerUserID,
         String adminSearchPickingScanHistoryWorkerUsername,

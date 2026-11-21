@@ -27,7 +27,16 @@ public final class SharedAuditAction {
     public static final String SHARED_AUDIT_ACTION_PRODUCT_DEACTIVATED = "PRODUCT_DEACTIVATED";
     public static final String SHARED_AUDIT_ACTION_PRODUCT_IMPORTED = "PRODUCT_IMPORTED";
 
-    // ===== SECTION 4: CONSTRUCTOR =====
+    // ===== SECTION 4: WAREHOUSE ACTIONS =====
+
+    public static final String SHARED_AUDIT_ACTION_SHORTAGE_WAIT_DECIDED = "SHORTAGE_WAIT_DECIDED";
+    public static final String SHARED_AUDIT_ACTION_SHORTAGE_CANCEL_DECIDED = "SHORTAGE_CANCEL_DECIDED";
+    public static final String SHARED_AUDIT_ACTION_ORDER_CANCELLED_BY_ADMIN = "ORDER_CANCELLED_BY_ADMIN";
+    public static final String SHARED_AUDIT_ACTION_REFUND_REQUESTED = "REFUND_REQUESTED";
+    public static final String SHARED_AUDIT_ACTION_REFUND_STATUS_CHECKED = "REFUND_STATUS_CHECKED";
+    public static final String SHARED_AUDIT_ACTION_PICKING_TASK_REASSIGNED = "PICKING_TASK_REASSIGNED";
+
+    // ===== SECTION 5: CONSTRUCTOR =====
 
     /**
      * What it does: Keeps the fixed action words from being created as an object.

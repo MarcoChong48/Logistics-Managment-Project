@@ -50,6 +50,31 @@ const adminTemporarySetProductStockPhysicalStockInput =
 const adminTemporarySetProductStockReservedStockInput =
   document.getElementById("adminTemporarySetProductStockReservedStockInput");
 const adminTemporarySetProductStockResultText = document.getElementById("adminTemporarySetProductStockResultText");
+const adminTemporaryCreateSampleOrderSetButton = document.getElementById("adminTemporaryCreateSampleOrderSetButton");
+const adminTemporaryCreateSampleOrderSetResultText =
+  document.getElementById("adminTemporaryCreateSampleOrderSetResultText");
+const adminTemporaryCreateShortageReportOrderStatusSelect =
+  document.getElementById("adminTemporaryCreateShortageReportOrderStatusSelect");
+const adminTemporaryCreateShortageReportMissingQuantityInput =
+  document.getElementById("adminTemporaryCreateShortageReportMissingQuantityInput");
+const adminTemporaryCreateShortageReportOrderReferenceInput =
+  document.getElementById("adminTemporaryCreateShortageReportOrderReferenceInput");
+const adminTemporaryCreateShortageReportButton =
+  document.getElementById("adminTemporaryCreateShortageReportButton");
+const adminTemporaryCreateShortageReportResultText =
+  document.getElementById("adminTemporaryCreateShortageReportResultText");
+const adminTemporaryResolveShortageCaseShortageCaseIDInput =
+  document.getElementById("adminTemporaryResolveShortageCaseShortageCaseIDInput");
+const adminTemporaryResolveShortageCaseButton =
+  document.getElementById("adminTemporaryResolveShortageCaseButton");
+const adminTemporaryResolveShortageCaseResultText =
+  document.getElementById("adminTemporaryResolveShortageCaseResultText");
+const adminTemporaryCreatePickingOrderWorkerUsernameInput =
+  document.getElementById("adminTemporaryCreatePickingOrderWorkerUsernameInput");
+const adminTemporaryCreatePickingOrderButton =
+  document.getElementById("adminTemporaryCreatePickingOrderButton");
+const adminTemporaryCreatePickingOrderResultText =
+  document.getElementById("adminTemporaryCreatePickingOrderResultText");
 
 // ===== SECTION 2: PAGE STATE =====
 // The frame checks the Admin's session. The tool page also checks the dedicated mode endpoint.
@@ -98,6 +123,10 @@ adminTemporaryCreateOldLogRowButton.addEventListener("click", adminTemporaryCrea
 adminTemporaryRunLogCleanupButton.addEventListener("click", adminTemporaryRunLogCleanup);
 adminTemporaryCreatePrivateValueLogRowButton.addEventListener("click", adminTemporaryCreatePrivateValueLogRow);
 adminTemporarySetProductStockButton.form.addEventListener("submit", adminTemporarySetProductStock);
+adminTemporaryCreateSampleOrderSetButton.addEventListener("click", adminTemporaryCreateSampleOrderSet);
+adminTemporaryCreateShortageReportButton.form.addEventListener("submit", adminTemporaryCreateShortageReport);
+adminTemporaryResolveShortageCaseButton.form.addEventListener("submit", adminTemporaryResolveShortageCase);
+adminTemporaryCreatePickingOrderButton.form.addEventListener("submit", adminTemporaryCreatePickingOrder);
 
 // ===== SECTION 4: adminTemporaryCreateTestUser =====
 
@@ -363,4 +392,96 @@ async function adminTemporarySetProductStock(adminTemporarySetProductStockEvent)
       + adminTemporarySetProductStockError.message;
   }
   adminTemporarySetProductStockResultText.hidden = false;
+}
+
+// ===== SECTION 15: adminTemporaryCreateSampleOrderSet =====
+
+// TEMPORARY TEST CODE - remove before integration
+// Stage 5 needs examples of all ten order statuses.
+// What it does: Create one sample order for each status and display its reference.
+// Input: None.
+// Output: The list of sample references and statuses, or the server's error.
+async function adminTemporaryCreateSampleOrderSet() {
+  // The shared helper disables the button until the body-free request finishes.
+  try {
+    const adminTemporaryCreateSampleOrderSetResponse = await sharedSendRequest(
+      "POST", "/api/admin/temporary-test/sample-order-set", undefined, adminTemporaryCreateSampleOrderSetButton
+    );
+    adminTemporaryCreateSampleOrderSetResultText.textContent = adminTemporaryCreateSampleOrderSetResponse.message;
+  } catch (adminTemporaryCreateSampleOrderSetError) {
+    adminTemporaryCreateSampleOrderSetResultText.textContent = adminTemporaryCreateSampleOrderSetError.code + ": "
+      + adminTemporaryCreateSampleOrderSetError.message;
+  }
+  adminTemporaryCreateSampleOrderSetResultText.hidden = false;
+}
+
+// ===== SECTION 16: adminTemporaryCreateShortageReport =====
+
+// TEMPORARY TEST CODE - remove before integration
+// What it does: Submit the shortage report fixture for Stage 6.
+// Input: The test card's submit event and its current fields.
+// Output: The fixture result or rule error in the same card.
+async function adminTemporaryCreateShortageReport(adminTemporaryCreateShortageReportEvent) {
+  adminTemporaryCreateShortageReportEvent.preventDefault();
+
+  // Send the fixture with the same names as the test tool request record.
+  try {
+    const adminTemporaryCreateShortageReportResponse = await sharedSendRequest(
+      "POST", "/api/admin/temporary-test/shortage-report", {
+        adminTemporaryCreateShortageReportOrderStatus: adminTemporaryCreateShortageReportOrderStatusSelect.value,
+        adminTemporaryCreateShortageReportMissingQuantity: adminTemporaryCreateShortageReportMissingQuantityInput.valueAsNumber,
+        adminTemporaryCreateShortageReportOrderReference: adminTemporaryCreateShortageReportOrderReferenceInput.value
+      }, adminTemporaryCreateShortageReportButton);
+    adminTemporaryCreateShortageReportResultText.textContent = adminTemporaryCreateShortageReportResponse.message;
+  } catch (adminTemporaryCreateShortageReportError) {
+    adminTemporaryCreateShortageReportResultText.textContent = adminTemporaryCreateShortageReportError.code + ": "
+      + adminTemporaryCreateShortageReportError.message;
+  }
+  adminTemporaryCreateShortageReportResultText.hidden = false;
+}
+
+// ===== SECTION 17: adminTemporaryResolveShortageCase =====
+
+// TEMPORARY TEST CODE - remove before integration
+// What it does: Submit the shortage resolved fixture for Stage 6.
+// Input: The test card's submit event and its current fields.
+// Output: The fixture result or rule error in the same card.
+async function adminTemporaryResolveShortageCase(adminTemporaryResolveShortageCaseEvent) {
+  adminTemporaryResolveShortageCaseEvent.preventDefault();
+
+  // Send the fixture with the same names as the test tool request record.
+  try {
+    const adminTemporaryResolveShortageCaseResponse = await sharedSendRequest(
+      "POST", "/api/admin/temporary-test/shortage-resolved", {
+        adminTemporaryResolveShortageCaseShortageCaseID: adminTemporaryResolveShortageCaseShortageCaseIDInput.valueAsNumber
+      }, adminTemporaryResolveShortageCaseButton);
+    adminTemporaryResolveShortageCaseResultText.textContent = adminTemporaryResolveShortageCaseResponse.message;
+  } catch (adminTemporaryResolveShortageCaseError) {
+    adminTemporaryResolveShortageCaseResultText.textContent = adminTemporaryResolveShortageCaseError.code + ": "
+      + adminTemporaryResolveShortageCaseError.message;
+  }
+  adminTemporaryResolveShortageCaseResultText.hidden = false;
+}
+
+// ===== SECTION 18: adminTemporaryCreatePickingOrder =====
+
+// TEMPORARY TEST CODE - remove before integration
+// What it does: Submit the picking order fixture for Stage 6.
+// Input: The test card's submit event and its current fields.
+// Output: The fixture result or rule error in the same card.
+async function adminTemporaryCreatePickingOrder(adminTemporaryCreatePickingOrderEvent) {
+  adminTemporaryCreatePickingOrderEvent.preventDefault();
+
+  // Send the fixture with the same names as the test tool request record.
+  try {
+    const adminTemporaryCreatePickingOrderResponse = await sharedSendRequest(
+      "POST", "/api/admin/temporary-test/picking-order", {
+        adminTemporaryCreatePickingOrderWorkerUsername: adminTemporaryCreatePickingOrderWorkerUsernameInput.value
+      }, adminTemporaryCreatePickingOrderButton);
+    adminTemporaryCreatePickingOrderResultText.textContent = adminTemporaryCreatePickingOrderResponse.message;
+  } catch (adminTemporaryCreatePickingOrderError) {
+    adminTemporaryCreatePickingOrderResultText.textContent = adminTemporaryCreatePickingOrderError.code + ": "
+      + adminTemporaryCreatePickingOrderError.message;
+  }
+  adminTemporaryCreatePickingOrderResultText.hidden = false;
 }

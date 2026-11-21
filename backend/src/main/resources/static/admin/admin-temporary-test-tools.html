@@ -217,6 +217,88 @@
         </form>
       </section>
     </div>
+    <!-- TEMPORARY TEST CODE - remove before integration
+         Stage 5 creates order examples in all ten statuses. -->
+    <h2 class="shared-section-title" hidden>Stage 5</h2>
+    <div class="shared-grid-two" hidden>
+      <section class="shared-card" id="adminTemporaryCreateSampleOrderSetPanel">
+        <div class="shared-card-body">
+          <h3 class="shared-card-title">Create sample order set</h3>
+          <p>Creates one sample order in each of the ten order statuses.</p>
+          <div class="shared-button-row">
+            <button class="shared-button" type="button" id="adminTemporaryCreateSampleOrderSetButton">
+              Create sample order set
+            </button>
+          </div>
+          <p class="shared-note" id="adminTemporaryCreateSampleOrderSetResultText" aria-live="polite" hidden></p>
+        </div>
+      </section>
+    </div>
+    <!-- TEMPORARY TEST CODE - remove before integration
+         Stage 6 supplies shortage and picking fixtures. -->
+    <h2 class="shared-section-title" hidden>Stage 6</h2>
+    <div class="shared-grid-two" hidden>
+      <section class="shared-card" id="adminTemporaryCreateShortageReportPanel">
+        <form class="shared-card-body">
+          <h3 class="shared-card-title">Create shortage report</h3>
+          <p>Reports a missing item of a sample order, as Warehouse would.</p>
+          <label class="shared-field">
+            <span class="shared-field-label">Order status</span>
+            <span class="shared-select"><select id="adminTemporaryCreateShortageReportOrderStatusSelect">
+              <option value="AWAITING_PAYMENT">Awaiting payment</option>
+              <option value="PICKING">Picking</option>
+              <option value="READY_FOR_PICKUP">Ready for pickup</option>
+            </select><svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg></span>
+          </label>
+          <label class="shared-field">
+            <span class="shared-field-label">Missing quantity</span>
+            <input class="shared-input" id="adminTemporaryCreateShortageReportMissingQuantityInput" type="number" min="1" step="1" value="1" required>
+          </label>
+          <label class="shared-field">
+            <span class="shared-field-label">Order reference<span class="shared-field-optional"> (optional)</span></span>
+            <input class="shared-input" id="adminTemporaryCreateShortageReportOrderReferenceInput" type="text">
+          </label>
+          <div class="shared-button-row">
+            <button class="shared-button" type="submit" id="adminTemporaryCreateShortageReportButton">
+              Create shortage report
+            </button>
+          </div>
+          <p class="shared-note" id="adminTemporaryCreateShortageReportResultText" aria-live="polite" hidden></p>
+        </form>
+      </section>
+      <section class="shared-card" id="adminTemporaryResolveShortageCasePanel">
+        <form class="shared-card-body">
+          <h3 class="shared-card-title">Mark shortage resolved</h3>
+          <p>Closes a waiting shortage case, as Warehouse would after restock.</p>
+          <label class="shared-field">
+            <span class="shared-field-label">Case number</span>
+            <input class="shared-input" id="adminTemporaryResolveShortageCaseShortageCaseIDInput" type="number" min="1" step="1" required>
+          </label>
+          <div class="shared-button-row">
+            <button class="shared-button" type="submit" id="adminTemporaryResolveShortageCaseButton">
+              Mark shortage resolved
+            </button>
+          </div>
+          <p class="shared-note" id="adminTemporaryResolveShortageCaseResultText" aria-live="polite" hidden></p>
+        </form>
+      </section>
+      <section class="shared-card" id="adminTemporaryCreatePickingOrderPanel">
+        <form class="shared-card-body">
+          <h3 class="shared-card-title">Create picking order</h3>
+          <p>Creates a sample order that a Warehouse Worker is picking.</p>
+          <label class="shared-field">
+            <span class="shared-field-label">Worker username<span class="shared-field-optional"> (optional)</span></span>
+            <input class="shared-input" id="adminTemporaryCreatePickingOrderWorkerUsernameInput" type="text">
+          </label>
+          <div class="shared-button-row">
+            <button class="shared-button" type="submit" id="adminTemporaryCreatePickingOrderButton">
+              Create picking order
+            </button>
+          </div>
+          <p class="shared-note" id="adminTemporaryCreatePickingOrderResultText" aria-live="polite" hidden></p>
+        </form>
+      </section>
+    </div>
   </main>
 </body>
 </html>

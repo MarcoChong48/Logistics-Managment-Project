@@ -267,6 +267,7 @@ public class AdminLogService {
                         adminDownloadPickingScanHistoryCSVRow.scanID(),
                         adminDownloadPickingScanHistoryCSVRow.scanTime(),
                         adminDownloadPickingScanHistoryCSVRow.pickingTaskID(),
+                        adminDownloadPickingScanHistoryCSVRow.orderID(),
                         adminDownloadPickingScanHistoryCSVRow.adminSearchPickingScanHistoryOrderReference(),
                         adminDownloadPickingScanHistoryCSVRow.workerUserID(),
                         adminDownloadPickingScanHistoryCSVRow.adminSearchPickingScanHistoryWorkerUsername(),
@@ -291,7 +292,7 @@ public class AdminLogService {
         adminWriteCSVDownloadLog("CSV_PICKING_SCAN_HISTORY", adminDownloadPickingScanHistoryCSVRowList.size(),
                 adminDownloadPickingScanHistoryCSVFilterMap);
         return sharedWriteCSVDownload(List.of(
-                "scanID", "scanTime", "pickingTaskID", "adminSearchPickingScanHistoryOrderReference",
+                "scanID", "scanTime", "pickingTaskID", "orderID", "adminSearchPickingScanHistoryOrderReference",
                 "workerUserID", "adminSearchPickingScanHistoryWorkerUsername", "scannedIdentifier", "result",
                 "reason", "originalScanID", "adminSearchPickingScanHistoryProductSKU"),
                 adminDownloadPickingScanHistoryCSVRowList, "admin-picking-scan-history", Instant.now(),
@@ -404,6 +405,7 @@ public class AdminLogService {
             Object[] adminReadPickingScanHistoryRowValues) {
         return new AdminSearchPickingScanHistoryRow((Long) adminReadPickingScanHistoryRowValues[0],
                 (Instant) adminReadPickingScanHistoryRowValues[1], (Long) adminReadPickingScanHistoryRowValues[2],
+                (Long) adminReadPickingScanHistoryRowValues[11],
                 (String) adminReadPickingScanHistoryRowValues[3], (Long) adminReadPickingScanHistoryRowValues[4],
                 (String) adminReadPickingScanHistoryRowValues[5], (String) adminReadPickingScanHistoryRowValues[6],
                 (SharedScanResult) adminReadPickingScanHistoryRowValues[7],
