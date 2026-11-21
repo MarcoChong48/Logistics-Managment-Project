@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Account Settings | LMS Client Portal</title>
+  <link rel="stylesheet" href="/shared/shared-common.css">
+  <link rel="stylesheet" href="/client/client.css">
+</head>
+<body class="client-body">
+  <section class="client-entry" id="clientEntry" aria-label="Portal access">
+    <p id="clientEntryStatus" role="status">Checking your session…</p>
+    <button class="client-button client-button--primary" id="clientRetrySession" type="button" hidden>Try again</button>
+    <p class="client-feedback client-feedback--error" role="alert" hidden><span id="clientLogoutError"></span></p>
+    <button class="client-button client-button--primary" id="clientRetryLogout" type="button" hidden>Retry logout</button>
+    <noscript><p>JavaScript is required to use the Client Portal.</p></noscript>
+  </section>
+
+  <main class="client-main" id="clientMain" tabindex="-1" hidden>
+    <header class="client-page-heading">
+      <h1>Account Settings</h1>
+      <p>Manage your account and saved delivery details.</p>
+    </header>
+
+    <section class="client-card client-load" id="accountLoad" aria-label="Account loading state">
+      <p id="accountLoadStatus" role="status">Loading your account…</p>
+      <button type="button" class="client-button" id="accountRetry" hidden>Reload account</button>
+    </section>
+
+    <div class="client-account-layout" id="accountContent" hidden>
+      <section class="client-card client-account-info" aria-labelledby="accountInfoTitle">
+        <h2 id="accountInfoTitle">Account information</h2>
+        <dl class="client-account-facts">
+          <div><dt>Username</dt><dd id="accountUsername"></dd></div>
+          <div><dt>Account role</dt><dd id="accountRole"></dd></div>
+          <div><dt>Member since</dt><dd><time id="accountCreatedAt"></time></dd></div>
+        </dl>
+      </section>
+
+      <section class="client-card client-defaults" aria-labelledby="deliveryDefaultsTitle">
+        <h2 id="deliveryDefaultsTitle">Default delivery information</h2>
+        <p class="client-card-intro">Saved details prefill new orders. Existing orders keep their delivery details.</p>
+        <p class="client-empty" id="deliveryEmpty" hidden>No delivery defaults saved.</p>
+        <form id="deliveryForm" autocomplete="off" novalidate>
+          <fieldset id="deliveryFields">
+            <legend class="client-visually-hidden">Saved delivery details</legend>
+            <div class="client-fields-row">
+              <div class="client-field">
+                <label for="recipientName">Default recipient name</label>
+                <input type="text" id="recipientName" name="recipientName"
+                  aria-describedby="recipientNameError">
+                <p class="client-field-error" id="recipientNameError" hidden></p>
+              </div>
+              <div class="client-field">
+                <label for="contactPhone">Contact phone</label>
+                <input type="tel" id="contactPhone" name="contactPhone"
+                  aria-describedby="contactPhoneError">
+                <p class="client-field-error" id="contactPhoneError" hidden></p>
+              </div>
+            </div>
+            <div class="client-field">
+              <label for="deliveryAddress">Full Hong Kong address</label>
+              <textarea id="deliveryAddress" name="deliveryAddress" rows="4"
+                aria-describedby="deliveryAddressError"></textarea>
+              <p class="client-field-error" id="deliveryAddressError" hidden></p>
+            </div>
+            <p class="client-form-hint">Leave a field blank and save to clear it.</p>
+            <div class="client-form-actions">
+              <button class="client-button client-button--primary" type="submit">Save delivery details</button>
+              <button class="client-button" id="reloadDefaults" type="button">Reload saved details</button>
+            </div>
+          </fieldset>
+          <p class="client-feedback" id="deliveryFeedback" role="status" aria-atomic="true" hidden></p>
+        </form>
+      </section>
+
+      <section class="client-card client-password" aria-labelledby="passwordTitle">
+        <span class="client-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 4v2"/></svg></span>
+        <h2 id="passwordTitle">Change password</h2>
+        <p class="client-card-intro">You’ll need to sign in again after changing your password.</p>
+        <a class="client-button" href="/shared/shared-change-password.html">Change password</a>
+      </section>
+    </div>
+  </main>
+  <script src="/shared/shared-common.js"></script>
+  <script type="module" src="/client/account-settings.js"></script>
+</body>
+</html>
