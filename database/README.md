@@ -6,8 +6,8 @@
 
 - `01_create_tables.sql`: 25 related PostgreSQL tables, PKs, FKs, constraints, indexes. All 25 tables are in the `public` schema. Meant for a **new/empty** PostgreSQL database.
 - `02_sample_data.sql`: optional fictional product/stock data for local testing; **never auto-applied**.
-- `03_admin_changes.sql` and `04_client_order_idempotency.sql` extend the baseline.
-- `../compose.yaml` mounts scripts `01`, `03`, and `04` for automatic initialization of a **new Docker PostgreSQL volume**.
+- `03_admin_changes.sql`, `04_client_order_idempotency.sql`, and `06_client_notification_event_key.sql` extend the baseline. `05_client_stripe_sandbox.sql` is optional for the isolated Stripe sandbox.
+- `../compose.yaml` mounts scripts `01`, `03`, `04`, and `06` for automatic initialization of a **new Docker PostgreSQL volume**.
 
 ## Table mapping from the original ERD
 
@@ -117,7 +117,7 @@ The initialization scripts run only when PostgreSQL creates a fresh volume. On a
 
 ## Client Order Idempotency
 
-`04_client_order_idempotency.sql` adds one table for persistent Create Order responses. Fresh Compose volumes run scripts `01`, `03`, and `04` in that order and have **28 tables**. For a fresh integration test database, apply the same scripts in order with `psql -v ON_ERROR_STOP=1`.
+`04_client_order_idempotency.sql` adds one table for persistent Create Order responses. Fresh Compose volumes run scripts `01`, `03`, `04`, and `06` in order and have **28 tables**. For a fresh integration test database with Stripe disabled, apply the same scripts in order with `psql -v ON_ERROR_STOP=1`.
 
 On an existing database with `01` and `03` already applied, verify the intended database and check whether `04` is present. For an existing local Compose volume, run from the repository root.
 
@@ -137,8 +137,14 @@ Record the migration in the team’s operations log. The script creates the new 
 
 ## Stripe Sandbox foundation
 
-`05_client_stripe_sandbox.sql` adds a checkout-to-Session mapping and a durable webhook inbox keyed by event ID. It preserves existing order, payment, reservation and refund rows. The foundation requires `05` only when Stripe is enabled. For an isolated test database, apply `01`, `03`, `04`, then `05` with `psql -v ON_ERROR_STOP=1`. The resulting schema contains 30 tables. The normal Compose initialization still stops at `04`. Existing databases and volumes need no changes for Stripe-disabled operation.
+`05_client_stripe_sandbox.sql` adds a checkout-to-Session mapping and a durable webhook inbox keyed by event ID. It preserves existing order, payment, reservation and refund rows. The foundation requires `05` only when Stripe is enabled. For an isolated Stripe test database, apply `01`, `03`, `04`, `05`, then `06` with `psql -v ON_ERROR_STOP=1`. The resulting schema contains 30 tables. Normal Compose initialization skips `05`.
 
-For a new isolated Stripe database, apply all four scripts in order. For an already-initialized isolated database, verify the server, confirm `04` is present, and check both `public.client_stripe_checkout` and `public.client_stripe_event` before applying `05`. If both are present, skip `05`. If only one is present, inspect the schema before proceeding. The migration adds no backfill and runs in one transaction. If any statement fails, PostgreSQL rolls back the entire migration when the `psql` session exits.
+For an already-initialized isolated Stripe database, verify the server, confirm `04` is present, and check both `public.client_stripe_checkout` and `public.client_stripe_event` before applying `05`. If both are present, skip `05`. If only one is present, inspect the schema before proceeding. The migration adds no backfill and runs in one transaction. If any statement fails, PostgreSQL rolls back the entire migration when the `psql` session exits.
 
 For application rollback, disable Stripe and retain both tables. If any sessions have already been issued, stop new checkout issuance and arrange closure and reconciliation of those sessions and any refund obligations before retiring the adapter. If an urgent rollback takes the webhook offline, retain the stored identifiers and reconcile against the Sandbox before restoring checkout. Dropping the tables would erase the evidence needed to avoid duplicate Session creation and process missed events. This milestone includes no down migration.
+
+## Client notification event identity
+
+`06_client_notification_event_key.sql` adds nullable `notification.source_event_id` and enforces uniqueness on `(order_id, type, source_event_id)` for keyed events. Legacy rows keep their existing data and read flags, including rows without an order or durable event identity. The migration adds no table or backfill. With Stripe disabled, startup and the list, count and mark-read APIs can operate on the original columns. Apply `06` before enabling any notification writer, including future Delivery writers with Stripe disabled. Event writes require the unique index to handle repeated and concurrent events.
+
+Fresh local Compose volumes run `01`, `03`, `04` and `06` during initialization. For an existing database, verify the target and obtain approval before applying `06` once with `psql -v ON_ERROR_STOP=1`. Confirm that `notification` exists. If both `source_event_id` and `uq_notification_order_event` already exist, verify their definitions and skip the migration. If only one exists, inspect the schema before proceeding. If neither exists, apply the script. Migration `05` is optional and independent. A repeat application fails without changing the existing data or index. For application rollback, retain the additive column and index so future retries can still deduplicate. No existing database or volume needs to be recreated.

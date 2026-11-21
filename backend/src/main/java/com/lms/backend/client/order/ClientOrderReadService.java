@@ -29,6 +29,7 @@ import com.lms.backend.client.order.ClientOrderTrackingResponse.DeliveryAttempt;
 import com.lms.backend.client.order.ClientOrderTrackingResponse.TrackingEvent;
 import com.lms.backend.shared.error.SharedRuleException;
 import com.lms.backend.shared.login.SharedCurrentUserReader;
+import com.lms.backend.shared.value.SharedDeliveryFailureReason;
 import com.lms.backend.shared.value.SharedOrderStatus;
 
 @Service
@@ -107,7 +108,7 @@ class ClientOrderReadService {
             int number = attempts.size() + 1;
             Integer cycle = cycleByPickup.get(row.pickupEventId());
             String outcome = deliveryOutcome(row.outcome());
-            String reason = "FAILED".equals(outcome) ? failureReason(row.failureReason()) : null;
+            String reason = "FAILED".equals(outcome) ? SharedDeliveryFailureReason.messageForCode(row.failureReason()) : null;
             attempts.add(new DeliveryAttempt(number, cycle, row.deliveryAddressVersion(), row.startedAt(), row.endedAt(),
                     outcome, reason));
             addEvent(history, "DELIVERY_ATTEMPT_STARTED", row.startedAt(), number, cycle);
@@ -175,16 +176,6 @@ class ClientOrderReadService {
         return switch (outcome) {
             case "IN_PROGRESS", "DELIVERED", "FAILED" -> outcome;
             default -> "UNKNOWN";
-        };
-    }
-
-    private static String failureReason(String reason) {
-        return switch (reason) {
-            case "RECIPIENT_UNAVAILABLE" -> "The recipient was unavailable.";
-            case "ADDRESS_NOT_FOUND" -> "The address could not be located.";
-            case "ACCESS_RESTRICTED" -> "The delivery location could not be accessed.";
-            case "DELIVERY_REFUSED" -> "The delivery was declined at the address.";
-            case null, default -> "The delivery could not be completed.";
         };
     }
 

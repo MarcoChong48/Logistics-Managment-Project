@@ -97,6 +97,7 @@ class StripeSandboxCheckoutTest {
 
     @AfterEach
     void cleanFixtures() {
+        db.sql("DELETE FROM notification WHERE order_id=:id").param("id", order).update();
         db.sql("DELETE FROM client_stripe_event WHERE payment_id IN (SELECT payment_id FROM payment WHERE order_id=:id)")
                 .param("id", order).update();
         db.sql("DELETE FROM client_stripe_checkout WHERE payment_id IN (SELECT payment_id FROM payment WHERE order_id=:id)")

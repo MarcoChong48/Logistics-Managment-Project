@@ -25,6 +25,7 @@ import com.lms.backend.shared.database.CustomerOrderReleaseRepository;
 import com.lms.backend.shared.database.CustomerOrderRepository;
 import com.lms.backend.shared.error.SharedRuleException;
 import com.lms.backend.shared.login.SharedCurrentUserReader;
+import com.lms.backend.shared.notification.ClientNotificationWriter;
 import com.lms.backend.shared.value.SharedOrderStatus;
 
 @Service
@@ -37,16 +38,19 @@ public class ClientCheckoutService {
     private final CustomerOrderReleaseRepository orderRows;
     private final CheckoutPaymentRepository payments;
     private final ClientOrderReservations reservations;
+    private final ClientNotificationWriter notifications;
     private final TransactionTemplate settlementTransaction;
 
     public ClientCheckoutService(SharedCurrentUserReader currentUser, CustomerOrderRepository orders,
             CustomerOrderReleaseRepository orderRows, CheckoutPaymentRepository payments,
-            ClientOrderReservations reservations, PlatformTransactionManager transactions) {
+            ClientOrderReservations reservations, ClientNotificationWriter notifications,
+            PlatformTransactionManager transactions) {
         this.currentUser = currentUser;
         this.orders = orders;
         this.orderRows = orderRows;
         this.payments = payments;
         this.reservations = reservations;
+        this.notifications = notifications;
         this.settlementTransaction = new TransactionTemplate(transactions);
         this.settlementTransaction.setIsolationLevel(TransactionDefinition.ISOLATION_READ_COMMITTED);
     }
@@ -145,6 +149,11 @@ public class ClientCheckoutService {
         if (validAttempt && order.canAcceptPaymentAt(acceptedAt)) {
             payments.markAccepted(attempt.paymentId(), reference, acceptedAt);
             order.orderStatus = SharedOrderStatus.READY_FOR_PICKING.name();
+            orders.flush();
+            if (notifications.paymentConfirmed(order.orderID, attempt.paymentId())
+                    == ClientNotificationWriter.Result.EVIDENCE_MISSING) {
+                throw new IllegalStateException("Accepted payment notification evidence is missing.");
+            }
         } else {
             payments.markRefundRequired(attempt.paymentId(), reference);
             payments.requestFullRefund(attempt.paymentId(), captured);

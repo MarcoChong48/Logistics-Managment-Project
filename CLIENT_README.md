@@ -140,6 +140,54 @@ The current APIs require no schema migration or writer changes. For a later team
 
 Warehouse must persist picking start, packing confirmation and custody events. Delivery must persist each attempt with the address version actually used and link it to the same parcel's pickup event. For address approval, agree how writers distinguish a proposed version from the effective version before storing drafts as newer delivery details. The current schema has no effective-version flag. Client instructions record requests and approvals, which alone do not establish delivery events. Agree public reason codes before adding new mappings. The current read model recognizes delivery outcomes `IN_PROGRESS`, `FAILED` and `DELIVERED` and custody types `PICKED_UP` and `RETURNED_TO_WAREHOUSE`. Unknown outcomes display `UNKNOWN`, and unknown failed-delivery reasons use generic wording. Admin inspection found no shared status history or item name snapshots. Recheck the shared Product/OrderItem and security changes when the branches are integrated. [Admin Stage 4](https://github.com/MarcoChong48/Logistics-Managment-Project/commit/d3759e685496969f0c53b7237ee1e3169c178438)
 
+## In-app notifications
+
+All four endpoints require a signed-in Client. List and count are read-only. Responses use `Cache-Control: no-store`, and both POSTs use the shared CSRF header.
+
+| Request | Response |
+|---|---|
+| `GET /api/client/notifications?limit=20` | `200` with `notifications` and `nextCursor`. Each item has `notificationId`, `type`, `message`, `orderReference`, `createdAt`, and `isRead`. |
+| `GET /api/client/notifications/unread-count` | `200` with `{ "unreadCount": 2 }`. |
+| `POST /api/client/notifications/{notificationId}/read` | `200` with `{ "notificationId": "42", "isRead": true }`, including when it was already read. Unknown and unowned IDs return the same `404`. |
+| `POST /api/client/notifications/read-all` | `200` with `{ "markedRead": 2 }`, the number of the Client's notifications changed by the request. Repeating it returns zero if no new unread notifications arrived. |
+
+The list is newest first by `(createdAt, notificationId)`. `notificationId` and `nextCursor` use decimal strings so JavaScript can preserve the full identifier. Use a page size from 1 to 50 and pass `nextCursor` as `cursor` on the next request. Invalid limits return `400`. A numeric cursor must identify an owned notification or the API returns the same `404` as mark-one. An empty inbox returns `{"notifications":[],"nextCursor":null}`. `orderReference` is null for a notification without a link to an owned order. Unrecognized legacy types and invalid cross-owner links display as `GENERAL` with a generic message. Text is limited to approved public templates, including when a legacy row contains free text.
+
+```javascript
+const inbox = await sharedSendRequest("GET", "/api/client/notifications?limit=20")
+const count = await sharedSendRequest("GET", "/api/client/notifications/unread-count")
+if (inbox.nextCursor !== null) {
+  await sharedSendRequest("GET", "/api/client/notifications?cursor=" + encodeURIComponent(inbox.nextCursor))
+}
+if (inbox.notifications.length) {
+  const id = inbox.notifications[0].notificationId
+  await sharedSendRequest("POST", "/api/client/notifications/" + encodeURIComponent(id) + "/read")
+}
+await sharedSendRequest("POST", "/api/client/notifications/read-all")
+```
+
+### Business event writer
+
+Inject `ClientNotificationWriter` in the service responsible for the business change. Hold the existing order-row lock, persist the new order status and its event evidence, flush any JPA entities, then call the writer before committing. It joins the existing transaction, derives the recipient from the order, and verifies that the evidence belongs to that order. It returns `INSERTED` for a new notification, `ALREADY_RECORDED` for a previously committed or inserted event, and `EVIDENCE_MISSING` if no matching notification exists and the supplied evidence or status does not qualify. A direct publisher must roll back its transition if the expected evidence is missing. Keep the same persisted source IDs on retry. [Migration 06 and rollback notes](database/README.md#client-notification-event-identity)
+
+| Event | When the responsible service calls the writer | Durable source ID |
+|---|---|---|
+| `PAYMENT_CONFIRMED` | Already wired to `paymentConfirmed(orderId, paymentId)` after trusted capture verification sets the payment to `ACCEPTED` with `accepted_at` and moves the order to `READY_FOR_PICKING`. Browser returns, pending, declined, or refund-required payments do not qualify. Stripe remains disabled by default. | Order ID. One payment confirmation per order. |
+| `SHIPPED` | Delivery calls `shipped(orderId, pickupListId)` when physical pickup moves the order to `SHIPPED`. The same transaction must set the parcel's pickup-list item to `COLLECTED` with `collected_at` and record `PICKED_UP` custody for that parcel and list. Claiming a list or scanning an internal QR code does not qualify. | Pickup list ID. A genuine redelivery pickup uses a new list. |
+| `DELIVERY_FAILED` | Delivery finalizes the existing attempt as `FAILED` with `end_time` and a recognized reason code, sets `DELIVERY_FAILED`, and calls `deliveryFailed(orderId, attemptId)`. The attempt's parcel and address version must belong to the same order. | Delivery attempt ID. Separate failed visits may each notify. |
+| `DELIVERED` | Delivery finalizes the attempt as `DELIVERED` with `end_time`, persists any required delivery proof under its own workflow contract, sets `DELIVERED`, and calls `delivered(orderId, attemptId)`. The writer does not expose proof or contact fields. | Order ID. One final delivery notice per order. |
+
+`SHIPPED`, `DELIVERY_FAILED`, and `DELIVERED` have writer support and isolated tests. They await integration with Delivery's transition handlers. In addition to the existing shared codes, Tracking and Notifications map Delivery's `CLIENT_NOT_HOME` and `UNABLE_TO_CONTACT` to recipient unavailability, `WRONG_ADDRESS` to address not found, `CLIENT_REFUSED` to delivery refused, and `OTHER` to a generic failure. Unknown codes also use the generic message. Keep worker notes, audit data, and provider references out of the notification payload. This milestone adds no historical backfill, external messaging, or frontend. [Delivery v3.1 API contract](https://github.com/MarcoChong48/Logistics-Managment-Project/blob/e1e36a9810bf127af6fc5c4806ae676465ec39ec/features/delivery/API_CONTRACT.md)
+
+Delivery v3.1 writes a placeholder row to `notification_outbox` in its own database. It records local IDs, a display message and transport status. Delivery and LMS need to agree how local records map to authoritative LMS order, parcel, pickup-list and attempt IDs. Map Delivery's `PICKUP` custody event and `ended_at` to shared `PICKED_UP` and `end_time`. [Published outbox schema](https://github.com/MarcoChong48/Logistics-Managment-Project/blob/e1e36a9810bf127af6fc5c4806ae676465ec39ec/features/delivery/backend/src/main/resources/schema.sql) [Delivery integration handoffs](https://github.com/MarcoChong48/Logistics-Managment-Project/blob/e1e36a9810bf127af6fc5c4806ae676465ec39ec/features/delivery/docs/INTEGRATION.md)
+
+1. Choose one publication path for each transition. Use the direct writer when Delivery can persist the transition and notification in the same shared database transaction. With separate databases, use the Delivery outbox as transport and display only shared LMS `notification` rows in the Client inbox.
+2. For the outbox path, Delivery must persist a typed event with the business transition. Include a stable transport event ID, type, mapped LMS order ID, mapped pickup-list or attempt ID, and the published reason code for a failed attempt. Reuse the same IDs after command retries. The transport ID tracks delivery of the message. The business identity in the table above deduplicates the notification. Omit recipient overrides and display text.
+3. The consumer must authenticate the Delivery source, verify event ownership and mappings, and process transitions in order for each order. In one shared LMS transaction, acquire the order-row lock, check whether the canonical event is already recorded, and return the existing acknowledgement for an already-applied event. For a new event, persist the valid transition and its matching evidence, then invoke the writer. Conflicting or stale transitions need reconciliation before any new write.
+4. Acknowledge `INSERTED` or `ALREADY_RECORDED` after the LMS transaction commits. Keep `EVIDENCE_MISSING` pending for investigation or retry after reconciliation. A crash after commit and before acknowledgement replays the same key. During cutover, both paths must preserve that key and shared LMS must remain the only Client-facing publisher. Retain keyed rows, or their identities if notification retention is introduced.
+
+The typed payload, consumer, ID mappings and cross-module integration tests are pending. This milestone has no Delivery outbox consumer.
+
 ## Verification and deployment limits
 
 - Automated verification uses PostgreSQL 18.1. PostgreSQL 17 and manual browser testing are pending.

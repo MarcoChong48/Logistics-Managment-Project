@@ -24,4 +24,4 @@ docker build --no-cache --target rule-check --progress plain ./backend
 docker compose exec db psql -U lms -d lms -c "\dt"
 ```
 
-On a fresh volume, Compose runs `01_create_tables.sql`, `03_admin_changes.sql`, and `04_client_order_idempotency.sql` in order, creating 28 tables. For migration details on existing volumes, see the [database README](database/README.md). Run `docker compose down` from this checkout to stop the stack and keep its data.
+On a fresh volume, Compose runs `01_create_tables.sql`, `03_admin_changes.sql`, `04_client_order_idempotency.sql`, and `06_client_notification_event_key.sql` in order, creating 28 tables. For migration details on existing volumes, see the [database README](database/README.md). Run `docker compose down` from this checkout to stop the stack and keep its data.

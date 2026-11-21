@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -53,6 +54,7 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.AopTestUtils;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.transaction.TestTransaction;
@@ -77,6 +79,7 @@ import com.lms.backend.shared.database.Product;
 import com.lms.backend.shared.database.ProductRepository;
 import com.lms.backend.shared.log.SharedSecurityLogWriter;
 import com.lms.backend.shared.login.SharedCurrentUser;
+import com.lms.backend.shared.notification.ClientNotificationWriter;
 import com.lms.backend.shared.value.SharedAccountStatus;
 import com.lms.backend.shared.value.SharedUserRole;
 
@@ -121,6 +124,9 @@ class ClientOrderApiTest {
 
     @Autowired
     private ClientCheckoutService checkouts;
+
+    @MockitoSpyBean
+    private ClientNotificationWriter notificationWriter;
 
     // Keep fixtures in the test transaction instead of committing separate audit rows.
     @MockitoBean
@@ -936,9 +942,11 @@ class ClientOrderApiTest {
         String reference = createOrder(owner, item(product, 3));
         long first = checkoutId(owner, reference);
 
+        assertEquals(0L, notificationCount(reference));
         reconcile(first, Outcome.CARD_DECLINED);
         assertEquals(first, checkoutId(owner, reference));
         assertEquals(3, reservedStock(product));
+        assertEquals(0L, notificationCount(reference));
 
         makeCheckoutWindowElapsed(first);
         releases.expireIfDue(orderId(reference));
@@ -957,6 +965,7 @@ class ClientOrderApiTest {
         assertEquals(2L, countCheckouts(reference));
         assertEquals(1L, countReservations(reference, "HELD"));
         assertEquals(1L, countReservations(reference, "RELEASED"));
+        assertEquals(0L, notificationCount(reference));
     }
 
     @Test
@@ -1029,6 +1038,7 @@ class ClientOrderApiTest {
         assertEquals(0, reservedStock(product));
         assertEquals(1L, countReservations(reference, "RELEASED"));
         assertRequestedRefund(checkoutId);
+        assertEquals(0L, notificationCount(reference));
         assertTrue(database.sql("""
                 SELECT payment_status = 'REFUND_REQUIRED' AND accepted_at IS NULL
                 FROM payment WHERE payment_id = :id
@@ -1064,6 +1074,7 @@ class ClientOrderApiTest {
         makeCheckoutWindowElapsed(checkoutId);
         capture(checkoutId, "sandbox-paid-" + checkoutId, "12.00");
         assertEquals("READY_FOR_PICKING", orderStatus(reference));
+        assertEquals(1L, notificationCount(reference));
         assertEquals(3, reservedStock(product));
         assertEquals(0L, database.sql("SELECT count(*) FROM picking_task WHERE order_id = :id")
                 .param("id", orderId(reference)).query(Long.class).single());
@@ -1073,6 +1084,7 @@ class ClientOrderApiTest {
         cancel(owner, reference).andExpect(status().isOk());
         capture(checkoutId, "sandbox-paid-" + checkoutId, "12.00");
         assertEquals("CANCELLED", orderStatus(reference));
+        assertEquals(1L, notificationCount(reference));
         assertEquals(0, reservedStock(product));
         assertEquals(1L, countReservations(reference, "RELEASED"));
         assertRequestedRefund(checkoutId);
@@ -1080,6 +1092,67 @@ class ClientOrderApiTest {
                 SELECT payment_status = 'ACCEPTED' AND accepted_at IS NOT NULL
                 FROM payment WHERE payment_id = :id
                 """).param("id", checkoutId).query(Boolean.class).single());
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void concurrentVerifiedCapturesCreateOnePrivatePaymentNotification() throws Exception {
+        Product product = createProduct("4.00", "ACTIVE", 8, 0);
+        AppUser client = createUser(SharedUserRole.CLIENT);
+        var owner = signIn(client);
+        String reference = createOrder(owner, item(product, 3));
+        long checkoutId = checkoutId(owner, reference);
+        assertEquals(0L, notificationCount(reference));
+
+        CountDownLatch start = new CountDownLatch(1);
+        try (var workers = Executors.newFixedThreadPool(2)) {
+            var first = workers.submit(() -> {
+                assertTrue(start.await(5, TimeUnit.SECONDS));
+                capture(checkoutId, "sandbox-private-reference-" + checkoutId, "12.00");
+                return null;
+            });
+            var duplicate = workers.submit(() -> {
+                assertTrue(start.await(5, TimeUnit.SECONDS));
+                capture(checkoutId, "sandbox-private-reference-" + checkoutId, "12.00");
+                return null;
+            });
+            start.countDown();
+            first.get(15, TimeUnit.SECONDS);
+            duplicate.get(15, TimeUnit.SECONDS);
+        }
+
+        assertEquals("READY_FOR_PICKING", orderStatus(reference));
+        assertEquals(1L, notificationCount(reference));
+        assertEquals("Payment was confirmed for your order.", database.sql("""
+                SELECT message FROM notification WHERE order_id = :orderId AND recipient_user_id = :clientId AND NOT is_read
+                """).param("orderId", orderId(reference)).param("clientId", client.userID).query(String.class).single());
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void failedNotificationDuringAcceptanceRollsBackAndVerifiedRetryCanSucceed() throws Exception {
+        Product product = createProduct("4.00", "ACTIVE", 8, 0);
+        var owner = signIn(createUser(SharedUserRole.CLIENT));
+        String reference = createOrder(owner, item(product, 3));
+        long checkoutId = checkoutId(owner, reference);
+        String providerReference = "sandbox-notification-rollback-" + checkoutId;
+        ClientNotificationWriter writerTarget = AopTestUtils.getUltimateTargetObject(notificationWriter);
+        doAnswer(call -> {
+            assertEquals(ClientNotificationWriter.Result.INSERTED, call.callRealMethod());
+            return ClientNotificationWriter.Result.EVIDENCE_MISSING;
+        }).doCallRealMethod().when(writerTarget).paymentConfirmed(orderId(reference), checkoutId);
+
+        assertThrows(IllegalStateException.class, () -> capture(checkoutId, providerReference, "12.00"));
+        assertEquals("AWAITING_PAYMENT", orderStatus(reference));
+        assertEquals(0L, notificationCount(reference));
+        assertTrue(database.sql("""
+                SELECT payment_status = 'PENDING' AND accepted_at IS NULL
+                FROM payment WHERE payment_id = :id
+                """).param("id", checkoutId).query(Boolean.class).single());
+
+        capture(checkoutId, providerReference, "12.00");
+        assertEquals("READY_FOR_PICKING", orderStatus(reference));
+        assertEquals(1L, notificationCount(reference));
     }
 
     @Test
@@ -1215,6 +1288,7 @@ class ClientOrderApiTest {
                     .param("ids", fixtureProducts).update();
         }
         if (!fixtureUsers.isEmpty()) {
+            database.sql("DELETE FROM notification WHERE recipient_user_id IN (:ids)").param("ids", fixtureUsers).update();
             database.sql("DELETE FROM client_order_idempotency WHERE client_user_id IN (:ids)")
                     .param("ids", fixtureUsers).update();
             database.sql("""
@@ -1284,6 +1358,11 @@ class ClientOrderApiTest {
     private long countOrders(AppUser owner) {
         return database.sql("SELECT count(*) FROM customer_order WHERE client_user_id = :id")
                 .param("id", owner.userID).query(Long.class).single();
+    }
+
+    private long notificationCount(String reference) {
+        return database.sql("SELECT COUNT(*) FROM notification WHERE order_id = :id AND type = 'PAYMENT_CONFIRMED'")
+                .param("id", orderId(reference)).query(Long.class).single();
     }
 
     private long countForProducts(String sql) {
