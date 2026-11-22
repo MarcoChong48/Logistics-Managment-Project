@@ -256,7 +256,7 @@ Use the shared change-password page for temporary-password sessions. Those sessi
 
 ## Client Portal verification
 
-An authenticated Client can open `/client/account-settings.html` directly. Shared Login currently takes Clients to `/shared/shared-welcome.html`, which has no portal link. The proposed Shared Authentication handoff is an **Open Client Portal** link on Shared Welcome, pointing to `/client/account-settings.html` and shown only after Shared Session confirms `CLIENT` with `mustChangePassword: false`. This requires the Shared Authentication team's approval. The Client Shell continues to verify the session on entry.
+An authenticated Client can open `/client/account-settings.html` directly. After Shared Login, Clients arrive at `/shared/shared-welcome.html`, which now includes an **Open Client Portal** link to `/client/account-settings.html`. The link starts hidden and becomes visible only after `/api/shared/session` confirms a logged-in `CLIENT` with `mustChangePassword: false`. The Client Shell independently rechecks the session and role when entering the portal. The Shared Authentication owner should review the shared-page change before merge.
 
 Run the Chromium fixture suite from `backend` with Node.js 22 or later and Chrome or Edge installed.
 
