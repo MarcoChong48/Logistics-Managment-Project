@@ -1,0 +1,31 @@
+/* Live Delivery controls share the prototype layout and theme. */
+.delivery-signature {
+  display: block;
+  width: 100%;
+  height: 128px;
+  touch-action: none;
+  background: var(--colour-surface);
+  border: 1px solid var(--colour-control-line);
+  border-radius: var(--radius-control);
+}
+
+.delivery-camera, .delivery-proof-image {
+  display: block;
+  max-width: 100%;
+  max-height: 45vh;
+  margin: 8px auto 0;
+}
+
+.delivery-stack > * + * { margin-top: 16px; }
+.delivery-stack .shared-grid-two {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+}
+
+@media (max-width: 899px) {
+  .delivery-menu-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 39;
+    background: rgba(0, 0, 0, .28);
+  }
+}

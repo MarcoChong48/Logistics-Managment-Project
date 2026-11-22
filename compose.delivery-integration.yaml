@@ -1,0 +1,35 @@
+# Local v4 team integration. Keep the shared application and database.
+services:
+  db:
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U lms -d lms"]
+
+  delivery-migrate:
+    image: postgres:17
+    environment:
+      PGHOST: db
+      PGDATABASE: lms
+      PGUSER: lms
+      PGPASSWORD: lms_local_dev_only
+    command: ["psql", "-X", "--set=ON_ERROR_STOP=1", "--file=/migrations/07_delivery_changes.sql"]
+    volumes:
+      - ./database/07_delivery_changes.sql:/migrations/07_delivery_changes.sql:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
+  backend:
+    environment:
+      SPRING_PROFILES_ACTIVE: delivery-full
+      LMS_DELIVERY_DEMO_ENABLED: "false"
+      LMS_DELIVERY_PROOF_DIRECTORY: /app/delivery-proofs
+      SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE: 5MB
+      SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE: 6MB
+    depends_on:
+      delivery-migrate:
+        condition: service_completed_successfully
+    volumes:
+      - delivery_proofs:/app/delivery-proofs
+
+volumes:
+  delivery_proofs:

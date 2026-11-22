@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#262624">
+  <title>Overview - LMS Delivery</title>
+  <link rel="stylesheet" href="/shared/shared-common.css">
+  <link rel="stylesheet" href="/delivery/assets/styles.css">
+  <link rel="icon" href="/delivery/assets/favicon.svg" type="image/svg+xml">
+  <script defer src="/shared/shared-common.js"></script>
+</head>
+<body>
+<svg class="shared-icon-sprite" aria-hidden="true">
+  <symbol id="icon-dashboard" viewBox="0 0 20 20"><rect x="3" y="3" width="6" height="6" rx="1.5"/><rect x="11" y="3" width="6" height="6" rx="1.5"/><rect x="3" y="11" width="6" height="6" rx="1.5"/><rect x="11" y="11" width="6" height="6" rx="1.5"/></symbol>
+  <symbol id="icon-users" viewBox="0 0 20 20"><circle cx="10" cy="7" r="3.2"/><path d="M3.5 17c.6-3.2 3.3-5 6.5-5s5.9 1.8 6.5 5"/></symbol>
+  <symbol id="icon-products" viewBox="0 0 20 20"><path d="M3 6.5 10 3l7 3.5v7L10 17l-7-3.5z"/><path d="M3 6.5 10 10l7-3.5M10 10v7"/></symbol>
+  <symbol id="icon-orders" viewBox="0 0 20 20"><rect x="4" y="3" width="12" height="14" rx="2"/><path d="M7 7.5h6M7 10.5h6M7 13.5h3.5"/></symbol>
+  <symbol id="icon-warehouse" viewBox="0 0 20 20"><path d="M3 8.5 10 4l7 4.5V16H3z"/><path d="M7 16v-4.5h6V16"/></symbol>
+  <symbol id="icon-delivery" viewBox="0 0 20 20"><path d="M2.5 5.5h9v7.5h-9z"/><path d="M11.5 8.5h3.2l2.8 3V13h-6z"/><circle cx="6" cy="14.6" r="1.5"/><circle cx="14.2" cy="14.6" r="1.5"/></symbol>
+  <symbol id="icon-refunds" viewBox="0 0 20 20"><path d="M4 8h9a3.5 3.5 0 0 1 0 7H8"/><path d="M7 5 4 8l3 3"/></symbol>
+  <symbol id="icon-logs" viewBox="0 0 20 20"><path d="M5 3.5h7l3 3v10H5z"/><path d="M12 3.5v3h3M7.5 10h5M7.5 13h5"/></symbol>
+  <symbol id="icon-test-tools" viewBox="0 0 20 20"><path d="M8 3.5h4"/><path d="M8.5 3.5v4.3L4.7 14.5A1.7 1.7 0 0 0 6.2 17h7.6a1.7 1.7 0 0 0 1.5-2.5L11.5 7.8V3.5"/><path d="M6.6 11.5h6.8"/></symbol>
+  <symbol id="icon-search" viewBox="0 0 20 20"><circle cx="9" cy="9" r="5"/><path d="m13 13 3.5 3.5"/></symbol>
+  <symbol id="icon-plus" viewBox="0 0 20 20"><path d="M10 4.5v11M4.5 10h11"/></symbol>
+  <symbol id="icon-chevron" viewBox="0 0 20 20"><path d="m5.5 8 4.5 4.5L14.5 8"/></symbol>
+  <symbol id="icon-clock" viewBox="0 0 20 20"><circle cx="10" cy="10" r="6.5"/><path d="M10 6.5V10l2.5 1.5"/></symbol>
+  <symbol id="icon-download" viewBox="0 0 20 20"><path d="M10 3.5v9M6.5 9.5 10 13l3.5-3.5M4 16h12"/></symbol>
+  <symbol id="icon-check" viewBox="0 0 20 20"><circle cx="10" cy="10" r="6.5"/><path d="m7 10.2 2.1 2.1L13.2 8"/></symbol>
+  <symbol id="icon-alert" viewBox="0 0 20 20"><path d="M10 3.6 17 16H3z"/><path d="M10 8.5v3.5"/><path d="M10 14.1v.1"/></symbol>
+  <symbol id="icon-information" viewBox="0 0 20 20"><circle cx="10" cy="10" r="6.5"/><path d="M10 9.3v4"/><path d="M10 6.7v.1"/></symbol>
+  <symbol id="icon-tick" viewBox="0 0 20 20"><path d="m5.5 10.5 3 3 6-6.5"/></symbol>
+  <symbol id="icon-label-sample" viewBox="0 0 21 21"><path fill-rule="evenodd" d="M0 0h7v7h-7zM1 1v5h5v-5zM2 2h3v3h-3zM14 0h7v7h-7zM15 1v5h5v-5zM16 2h3v3h-3zM0 14h7v7h-7zM1 15v5h5v-5zM2 16h3v3h-3zM8 0h1v1h-1zM9 0h1v1h-1zM11 0h1v1h-1zM8 1h1v1h-1zM9 1h1v1h-1zM11 1h1v1h-1zM12 1h1v1h-1zM8 2h1v1h-1zM9 2h1v1h-1zM10 2h1v1h-1zM12 2h1v1h-1zM8 3h1v1h-1zM12 3h1v1h-1zM9 4h1v1h-1zM11 4h1v1h-1zM12 4h1v1h-1zM8 5h1v1h-1zM9 5h1v1h-1zM11 5h1v1h-1zM9 6h1v1h-1zM11 6h1v1h-1zM12 6h1v1h-1zM8 7h1v1h-1zM10 7h1v1h-1zM11 7h1v1h-1zM0 8h1v1h-1zM1 8h1v1h-1zM4 8h1v1h-1zM9 8h1v1h-1zM11 8h1v1h-1zM12 8h1v1h-1zM14 8h1v1h-1zM16 8h1v1h-1zM0 9h1v1h-1zM4 9h1v1h-1zM9 9h1v1h-1zM14 9h1v1h-1zM15 9h1v1h-1zM17 9h1v1h-1zM19 9h1v1h-1zM20 9h1v1h-1zM0 10h1v1h-1zM2 10h1v1h-1zM3 10h1v1h-1zM4 10h1v1h-1zM6 10h1v1h-1zM7 10h1v1h-1zM12 10h1v1h-1zM13 10h1v1h-1zM14 10h1v1h-1zM17 10h1v1h-1zM18 10h1v1h-1zM19 10h1v1h-1zM20 10h1v1h-1zM2 11h1v1h-1zM3 11h1v1h-1zM4 11h1v1h-1zM5 11h1v1h-1zM12 11h1v1h-1zM17 11h1v1h-1zM18 11h1v1h-1zM19 11h1v1h-1zM0 12h1v1h-1zM1 12h1v1h-1zM2 12h1v1h-1zM3 12h1v1h-1zM4 12h1v1h-1zM5 12h1v1h-1zM6 12h1v1h-1zM7 12h1v1h-1zM8 12h1v1h-1zM9 12h1v1h-1zM10 12h1v1h-1zM13 12h1v1h-1zM14 12h1v1h-1zM15 12h1v1h-1zM16 12h1v1h-1zM17 12h1v1h-1zM9 13h1v1h-1zM10 13h1v1h-1zM11 13h1v1h-1zM12 13h1v1h-1zM14 13h1v1h-1zM15 13h1v1h-1zM18 13h1v1h-1zM20 13h1v1h-1zM12 14h1v1h-1zM13 14h1v1h-1zM14 14h1v1h-1zM18 14h1v1h-1zM19 14h1v1h-1zM13 15h1v1h-1zM15 15h1v1h-1zM16 15h1v1h-1zM17 15h1v1h-1zM18 15h1v1h-1zM19 15h1v1h-1zM9 16h1v1h-1zM13 16h1v1h-1zM14 16h1v1h-1zM15 16h1v1h-1zM16 16h1v1h-1zM17 16h1v1h-1zM11 17h1v1h-1zM17 17h1v1h-1zM19 17h1v1h-1zM9 18h1v1h-1zM10 18h1v1h-1zM13 18h1v1h-1zM14 18h1v1h-1zM15 18h1v1h-1zM18 18h1v1h-1zM9 19h1v1h-1zM11 19h1v1h-1zM12 19h1v1h-1zM17 19h1v1h-1zM20 19h1v1h-1zM8 20h1v1h-1zM9 20h1v1h-1zM10 20h1v1h-1zM12 20h1v1h-1zM13 20h1v1h-1zM14 20h1v1h-1zM16 20h1v1h-1zM17 20h1v1h-1zM20 20h1v1h-1z"/></symbol>
+</svg>
+  <div id="root">
+    <main class="shared-centre-page">
+      <h1 class="shared-centre-title">LMS Delivery</h1>
+      <p role="status">Connecting…</p>
+    </main>
+  </div>
+  <dialog class="shared-dialog" id="sharedStartSessionCountdownDialog" aria-labelledby="delivery-session-title">
+    <h2 class="shared-dialog-title" id="delivery-session-title">Session ending soon</h2>
+    <div class="shared-dialog-body">
+      <p>Your session will end soon.</p>
+      <div class="shared-inline-message shared-inline-message-error" aria-live="polite" hidden>
+        <svg class="shared-icon" aria-hidden="true"><use href="#icon-alert"></use></svg><p></p>
+      </div>
+    </div>
+    <div class="shared-dialog-footer">
+      <button class="shared-button" type="button" id="delivery-session-logout">Log out</button>
+      <button class="shared-button shared-button-primary" type="button" id="delivery-session-extend">Stay logged in</button>
+    </div>
+  </dialog>
+  <script type="module" src="/delivery/assets/main.js"></script>
+</body>
+</html>

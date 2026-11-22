@@ -48,6 +48,6 @@ class SharedStartPageRuleCheckTest {
      */
     @Test
     void sharedFindStartPageForDeliveryWorker() {
-        assertEquals("/shared/shared-welcome.html", sharedFindStartPage(SharedUserRole.DELIVERY_WORKER));
+        assertEquals("/delivery/index.html", sharedFindStartPage(SharedUserRole.DELIVERY_WORKER));
     }
 }

@@ -26,6 +26,7 @@ class SharedRoleProtectionFlowCheckTest extends SharedFlowCheck {
     private static final String CLIENT_PATH = "/client/anything.html";
     private static final String WAREHOUSE_PATH = "/warehouse/anything.html";
     private static final String DELIVERY_PATH = "/delivery/anything.html";
+    private static final String DELIVERY_HOME = "/delivery/index.html";
     private static final String CLIENT_API = "/api/client/anything";
     private static final String WAREHOUSE_API = "/api/warehouse/anything";
     private static final String DELIVERY_API = "/api/delivery/anything";
@@ -106,7 +107,8 @@ class SharedRoleProtectionFlowCheckTest extends SharedFlowCheck {
         reportPartial("Rendered welcome notice and visibility of its Back link.");
         sharedCheckRoleBrowser.post("/api/shared/logout", null).expect(200);
         finishFirstLogin(sharedCheckRoleDeliveryWorker, "DELIVERY_WORKER");
-        checkWelcomeRedirect(sharedCheckRoleBrowser, CLIENT_PATH, WELCOME_PAGE);
+        sharedCheckRoleBrowser.get(DELIVERY_HOME).expect(200);
+        checkWelcomeRedirect(sharedCheckRoleBrowser, CLIENT_PATH, DELIVERY_HOME);
         sharedCheckRoleBrowser.get(WAREHOUSE_API).expect(403).code("SHARED_ACCESS_DENIED");
         sharedCheckRoleBrowser.get(DELIVERY_API).expect(404).code("SHARED_NOT_FOUND");
     }
@@ -147,7 +149,8 @@ class SharedRoleProtectionFlowCheckTest extends SharedFlowCheck {
                 .expect(200).json();
         assertEquals(role, sharedLoginUserPermanent.path("role").asText());
         assertFalse(sharedLoginUserPermanent.path("mustChangePassword").asBoolean());
-        assertEquals(WELCOME_PAGE, sharedLoginUserPermanent.path("sharedLoginUserNextPageWebAddress").asText());
+        String expectedHome = "DELIVERY_WORKER".equals(role) ? DELIVERY_HOME : WELCOME_PAGE;
+        assertEquals(expectedHome, sharedLoginUserPermanent.path("sharedLoginUserNextPageWebAddress").asText());
     }
 
     // What it does: Checks the denied-page destination and the signed-in person's home destination.
