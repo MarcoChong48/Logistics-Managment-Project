@@ -101,6 +101,83 @@ export async function createClientOrder(payload, key) {
   return order;
 }
 
+const ordersUrl = "/api/client/orders";
+const isText = (value) => typeof value === "string";
+const isCount = (value) => Number.isSafeInteger(value) && value >= 0;
+const nullable = (value, check) => value === null || check(value);
+const arrayOf = (value, check) => Array.isArray(value) && value.every(check);
+const instantFormat = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?Z$/;
+
+function isTime(value) {
+  if (!isText(value) || !instantFormat.test(value)) return false;
+  const time = Date.parse(value);
+  // Reject dates silently normalized by the browser, such as 30 February.
+  return Number.isFinite(time) && new Date(time).toISOString().slice(0, 19) === value.slice(0, 19);
+}
+
+export function isOrderReference(value) {
+  return isText(value) && value.trim().length > 0 && value.length <= 60
+    && value !== "." && value !== ".." && !/[/\\%\u0000-\u001f\u007f\p{Cs}]/u.test(value);
+}
+
+function orderUrl(reference) {
+  if (!isOrderReference(reference)) throw { status: 404 };
+  return ordersUrl + "/" + encodeURIComponent(reference);
+}
+
+function isOrderSummary(order) {
+  return order && isOrderReference(order.orderReference) && isText(order.orderStatus)
+    && isTime(order.createdAt) && nullable(order.paymentDeadline, isTime) && isHkdAmount(order.totalAmountHkd);
+}
+
+function isPaymentAttempt(attempt) {
+  return attempt && isText(attempt.status) && isTime(attempt.createdAt) && nullable(attempt.acceptedAt, isTime)
+    && arrayOf(attempt.refunds, (refund) => refund && isText(refund.status) && isHkdAmount(refund.amountHkd)
+      && isTime(refund.requestedAt) && nullable(refund.completedAt, isTime));
+}
+
+export async function readClientOrders(cursor = null) {
+  const query = new URLSearchParams({ limit: "20" });
+  if (cursor !== null) query.set("cursor", cursor);
+  const page = await window.sharedSendRequest("GET", ordersUrl + "?" + query);
+  if (!page || !nullable(page.nextCursor, (cursor) => isText(cursor) && cursor.length > 0)
+      || !arrayOf(page.orders, (row) => isOrderSummary(row) && row.itemSummary
+        && isCount(row.itemSummary.productCount) && isCount(row.itemSummary.totalQuantity))) {
+    throw invalidResponse();
+  }
+  return page;
+}
+
+export async function readClientOrder(reference) {
+  const order = await window.sharedSendRequest("GET", orderUrl(reference));
+  if (!isOrderSummary(order) || order.orderReference !== reference || typeof order.canCancel !== "boolean"
+      || !arrayOf(order.items, (item) => item && isText(item.labelSource) && isCount(item.quantity)
+        && nullable(item.sku, isText) && nullable(item.name, isText) && isHkdAmount(item.unitPriceHkd))
+      || !nullable(order.deliveryDetails, (detail) => detail && isCount(detail.version)
+        && isText(detail.recipientName) && isText(detail.phone) && isText(detail.address))
+      || !arrayOf(order.paymentAttempts, isPaymentAttempt)) throw invalidResponse();
+  return order;
+}
+
+export async function readClientOrderTracking(reference) {
+  const tracking = await window.sharedSendRequest("GET", orderUrl(reference) + "/tracking");
+  if (!tracking || tracking.orderReference !== reference || !isText(tracking.orderStatus) || !isText(tracking.statusLabel)
+      || !nullable(tracking.currentStatusSince, isTime) || typeof tracking.historyComplete !== "boolean"
+      || !arrayOf(tracking.progression, (event) => event && isText(event.type) && isTime(event.occurredAt)
+        && nullable(event.attemptNumber, isCount) && nullable(event.cycleNumber, isCount))
+      || !arrayOf(tracking.deliveryAttempts, (attempt) => attempt && isCount(attempt.attemptNumber)
+        && nullable(attempt.cycleNumber, isCount) && isCount(attempt.deliveryAddressVersion)
+        && isTime(attempt.startedAt) && nullable(attempt.endedAt, isTime)
+        && isText(attempt.outcome) && nullable(attempt.failureReason, isText))
+      || !arrayOf(tracking.paymentAttempts, isPaymentAttempt)) throw invalidResponse();
+  return tracking;
+}
+
+export async function cancelClientOrder(reference) {
+  const result = await window.sharedSendRequest("POST", orderUrl(reference) + "/cancel");
+  if (result?.orderReference !== reference || result.orderStatus !== "CANCELLED") throw invalidResponse();
+}
+
 export function clientErrorMessage(error) {
   switch (error?.status) {
     case 400:

@@ -99,6 +99,7 @@
         <div><dt>Payment deadline (Hong Kong time)</dt><dd><time id="createdOrderDeadline"></time></dd></div>
       </dl>
       <p class="client-order-payment">Online payment is currently unavailable.</p>
+      <a class="client-button client-button--primary" id="viewCreatedOrder" hidden>View order details</a>
       <button class="client-button" id="startAnotherOrder" type="button">Create another order</button>
     </section>
 
@@ -108,6 +109,14 @@
       <div class="shared-dialog-footer">
         <button class="client-button" id="keepOrderRetry" type="button">Keep original submission</button>
         <button class="client-button client-button--primary" id="confirmNewOrder" type="button">Start a different order</button>
+      </div>
+    </dialog>
+    <dialog class="shared-dialog client-order-confirmation" id="leaveOrderDialog" aria-labelledby="leaveOrderTitle" aria-describedby="leaveOrderExplanation">
+      <h2 class="shared-dialog-title" id="leaveOrderTitle">Leave this order?</h2>
+      <div class="shared-dialog-body"><p id="leaveOrderExplanation">The order may already be saved. Leaving this page will discard the ability to retry the original submission.</p></div>
+      <div class="shared-dialog-footer">
+        <button class="client-button client-button--primary" id="stayOnOrder" type="button" autofocus>Stay on this page</button>
+        <button class="client-button" id="confirmLeaveOrder" type="button">Leave this page</button>
       </div>
     </dialog>
   </main>

@@ -1,4 +1,5 @@
 import { clientErrorMessage, createClientOrder, readClientAccount, readClientProducts } from "./client-api.js";
+import { clientOrderDetailsUrl } from "./client-order-view.js";
 import { startClientShell } from "./client-shell.js";
 
 const element = (id) => document.getElementById(id);
@@ -17,6 +18,7 @@ const discard = element("discardOrderRetry");
 const feedback = element("orderFeedback");
 const result = element("createdOrder");
 const dialog = element("discardOrderDialog");
+const leaveDialog = element("leaveOrderDialog");
 const delivery = [
   { key: "recipientName", input: element("orderRecipient"), label: "Recipient name", limit: 120 },
   { key: "contactPhone", input: element("orderPhone"), label: "Contact phone", limit: 40 },
@@ -51,6 +53,7 @@ let accountReady = false;
 let loadingAccount = false;
 let pending = null;
 let submitting = false;
+let leaveDestination = null;
 
 function showStatus(node, message) {
   node.textContent = message;
@@ -69,8 +72,19 @@ function fieldError(input, message = "") {
   else input.removeAttribute("aria-invalid");
 }
 
+function confirmLeavingPendingOrder(event) {
+  event.preventDefault();
+  event.returnValue = "";
+}
+
 function updateControls() {
   const locked = pending !== null;
+  if (locked) window.addEventListener("beforeunload", confirmLeavingPendingOrder);
+  else {
+    window.removeEventListener("beforeunload", confirmLeavingPendingOrder);
+    leaveDestination = null;
+    if (leaveDialog.open) window.sharedCloseDialog(leaveDialog);
+  }
   productFields.disabled = locked;
   deliveryFields.disabled = locked || !accountReady;
   addButton.disabled = locked || loadingCatalogue || !matches.some(selectable);
@@ -265,6 +279,8 @@ function clear() {
     element(id).textContent = "";
   }
   element("createdOrderDeadline").removeAttribute("datetime");
+  element("viewCreatedOrder").removeAttribute("href");
+  element("viewCreatedOrder").hidden = true;
   result.hidden = true;
   form.hidden = false;
   if (dialog.open) window.sharedCloseDialog(dialog);
@@ -331,6 +347,12 @@ function displayOrder(order) {
   const deadline = element("createdOrderDeadline");
   deadline.dateTime = order.paymentDeadline;
   deadline.textContent = date.format(new Date(order.paymentDeadline));
+  const details = element("viewCreatedOrder");
+  const detailsUrl = clientOrderDetailsUrl(order.orderReference);
+  if (detailsUrl) {
+    details.href = detailsUrl;
+    details.hidden = false;
+  }
   form.hidden = true;
   result.hidden = false;
   if (!document.hidden) result.focus();
@@ -340,7 +362,7 @@ async function sendOrder(identity) {
   const { key, payload } = pending;
   submitting = true;
   updateControls();
-  showFeedback("pending", "Creating your order. Keep this page open to receive the result.");
+  showFeedback("pending", "Creating your order. Leaving this page will discard the ability to retry this submission.");
   let timer;
   let returnedOrder = false;
   try {
@@ -356,6 +378,7 @@ async function sendOrder(identity) {
     const order = await Promise.race([verifiedOrder, timeout]);
     if (!shell.isCurrent(identity)) return;
     pending = null;
+    if (leaveDialog.open) window.sharedCloseDialog(leaveDialog);
     displayOrder(order);
   } catch (error) {
     if (!shell.isCurrent(identity) || shell.handleAccessError(error)) return;
@@ -400,6 +423,20 @@ const shell = startClientShell({ activePage: "create-order", onClear: clear, pre
   if (!catalogueReady && !loadingCatalogue) loadCatalogue(identity, "");
   loadAccount(identity);
 } });
+
+element("clientNavigation").addEventListener("click", (event) => {
+  const link = event.target.closest("a[data-client-page]");
+  if (!pending || !link || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+  event.preventDefault();
+  leaveDestination = link.href;
+  window.sharedOpenDialog(leaveDialog);
+});
+element("stayOnOrder").addEventListener("click", () => window.sharedCloseDialog(leaveDialog));
+element("confirmLeaveOrder").addEventListener("click", () => {
+  if (!leaveDialog.open || !leaveDestination) return;
+  window.removeEventListener("beforeunload", confirmLeavingPendingOrder);
+  window.location.assign(leaveDestination);
+});
 
 addButton.addEventListener("click", () => addLine().focus());
 searchButton.addEventListener("click", () => {

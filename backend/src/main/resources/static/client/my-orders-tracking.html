@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Orders &amp; Tracking | LMS Client Portal</title>
+  <link rel="stylesheet" href="/shared/shared-common.css">
+  <link rel="stylesheet" href="/client/client.css">
+</head>
+<body class="client-body">
+  <section class="client-entry" id="clientEntry" aria-label="Portal access">
+    <p id="clientEntryStatus" role="status">Checking your session…</p>
+    <button class="client-button client-button--primary" id="clientRetrySession" type="button" hidden>Try again</button>
+    <p class="client-feedback client-feedback--error" role="alert" hidden><span id="clientLogoutError"></span></p>
+    <button class="client-button client-button--primary" id="clientRetryLogout" type="button" hidden>Retry logout</button>
+    <noscript><p>JavaScript is required to use the Client Portal.</p></noscript>
+  </section>
+  <main class="client-main" id="clientMain" tabindex="-1" hidden>
+    <header class="client-page-heading">
+      <h1>My Orders &amp; Tracking</h1>
+      <p>View your order history and open an order to track it.</p>
+    </header>
+    <section class="client-card" aria-labelledby="orderHistoryTitle">
+      <div class="client-order-heading">
+        <h2 id="orderHistoryTitle">Order history</h2>
+        <button class="client-button" id="refreshOrders" type="button">Refresh</button>
+      </div>
+      <p class="client-feedback" id="ordersNotice" role="status" aria-atomic="true">Loading orders…</p>
+      <ul class="client-order-history" id="orderHistory" role="list"></ul>
+      <div class="client-form-actions" id="ordersMoreAction" hidden>
+        <button class="client-button" id="loadMoreOrders" type="button">Load more orders</button>
+      </div>
+    </section>
+  </main>
+  <script src="/shared/shared-common.js"></script>
+  <script type="module" src="/client/my-orders-tracking.js"></script>
+</body>
+</html>

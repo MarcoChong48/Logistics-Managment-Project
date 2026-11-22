@@ -245,6 +245,11 @@ test("response-loss retry keeps the exact payload and key, blocks duplicate clic
   assert.equal(await evaluate("submitOrder.disabled && productFields.disabled && orderDeliveryFields.disabled && createdOrder.hidden"), true);
   release();
   await retryVisible();
+  assert.equal(await evaluate('window.dispatchEvent(new Event("beforeunload", { cancelable: true }))'), false);
+  await evaluate('document.querySelector("[data-client-page=my-orders]").click()');
+  assert.equal(await evaluate("leaveOrderDialog.open && document.activeElement === stayOnOrder"), true);
+  await evaluate("stayOnOrder.click()");
+  assert.equal(await evaluate('location.pathname === "/client/create-order.html" && !orderRetry.hidden'), true);
   const [original] = calls(orderPath, "POST");
   assert.match(original.key, keyPattern);
   assert.equal(original.token, state.token);
@@ -255,6 +260,8 @@ test("response-loss retry keeps the exact payload and key, blocks duplicate clic
   assert.equal(original.body.items[0].quantity, 2);
   await evaluate('orderAddress.value = "Changed after response loss"; retryOrder.click(); retryOrder.click()');
   assert.equal(await created(), savedOrder.orderReference);
+  assert.equal(await evaluate('viewCreatedOrder.getAttribute("href")'), "/client/order-details.html?reference=" + savedOrder.orderReference);
+  assert.equal(await evaluate('window.dispatchEvent(new Event("beforeunload", { cancelable: true }))'), true);
   const replay = calls(orderPath, "POST")[1];
   assert.equal(calls(orderPath, "POST").length, 2);
   assert.equal(replay.key, original.key);
@@ -296,6 +303,20 @@ test("a malformed success can be retried, or explicitly discarded through an acc
   await evaluate("orderForm.requestSubmit()");
   assert.equal(await created(), "ORDER-REAL-002");
   assert.notEqual(calls(orderPath, "POST")[1].key, key);
+});
+
+test("navigation to order history requires explicit confirmation while the submission result is unknown", { skip: !browser }, async () => {
+  prepare({ loseFirst: true });
+  await openOrder();
+  await ready();
+  await select("123", "1");
+  await evaluate("orderForm.requestSubmit()");
+  await retryVisible();
+  await evaluate('document.querySelector("[data-client-page=my-orders]").click()');
+  assert.equal(await evaluate("leaveOrderDialog.open && orderDeliveryFields.disabled"), true);
+  await evaluate("confirmLeaveOrder.click()");
+  await until(() => evaluate('location.pathname === "/client/my-orders-tracking.html"'), "the confirmed navigation");
+  assert.equal(calls(orderPath, "POST").length, 1);
 });
 
 test("an unanswered order can be retried after the UI times out and the session check temporarily fails", { skip: !browser }, async () => {

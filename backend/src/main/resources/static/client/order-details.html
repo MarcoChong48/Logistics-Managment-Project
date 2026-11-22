@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Order Details | LMS Client Portal</title>
+  <link rel="stylesheet" href="/shared/shared-common.css">
+  <link rel="stylesheet" href="/client/client.css">
+</head>
+<body class="client-body">
+  <section class="client-entry" id="clientEntry" aria-label="Portal access">
+    <p id="clientEntryStatus" role="status">Checking your session…</p>
+    <button class="client-button client-button--primary" id="clientRetrySession" type="button" hidden>Try again</button>
+    <p class="client-feedback client-feedback--error" role="alert" hidden><span id="clientLogoutError"></span></p>
+    <button class="client-button client-button--primary" id="clientRetryLogout" type="button" hidden>Retry logout</button>
+    <noscript><p>JavaScript is required to use the Client Portal.</p></noscript>
+  </section>
+  <main class="client-main" id="clientMain" tabindex="-1" hidden>
+    <a class="client-order-back" href="/client/my-orders-tracking.html">Back to My Orders</a>
+    <header class="client-page-heading client-order-detail-heading">
+      <div>
+        <h1>Order details</h1>
+        <p class="client-order-reference" id="detailReference" hidden></p>
+      </div>
+      <div class="client-order-detail-actions">
+        <button class="client-button" id="refreshOrderDetails" type="button">Refresh</button>
+        <button class="client-button client-button--danger" id="openCancelOrder" type="button" hidden>Cancel order</button>
+      </div>
+    </header>
+    <p class="client-feedback" id="cancellationNotice" role="status" aria-atomic="true" tabindex="-1" hidden></p>
+    <p class="client-feedback" id="orderDetailsNotice" role="status" aria-atomic="true">Loading order…</p>
+    <div id="orderDetailsContent" hidden>
+      <section class="client-card client-order-detail-summary" aria-labelledby="orderSummaryTitle">
+        <h2 id="orderSummaryTitle">Order summary</h2>
+        <dl class="client-order-facts" id="orderDetailFacts"></dl>
+      </section>
+      <div class="client-order-detail-grid">
+        <div class="client-order-detail-column">
+          <section class="client-card" aria-labelledby="trackingTitle">
+            <h2 id="trackingTitle">Tracking timeline</h2>
+            <p class="client-feedback" id="trackingNotice" role="status" hidden></p>
+            <div id="trackingContent"></div>
+          </section>
+          <section class="client-card" aria-labelledby="purchasedItemsTitle">
+            <h2 id="purchasedItemsTitle">Purchased items</h2>
+            <ul class="client-order-records" id="orderDetailItems" role="list"></ul>
+            <p class="client-empty" id="orderItemsEmpty" hidden>No items are available for this order.</p>
+          </section>
+        </div>
+        <div class="client-order-detail-column">
+          <section class="client-card" aria-labelledby="deliveryDetailsTitle">
+            <h2 id="deliveryDetailsTitle">Delivery details</h2>
+            <div id="orderDetailDelivery"></div>
+          </section>
+          <section class="client-card" aria-labelledby="paymentAttemptsTitle">
+            <h2 id="paymentAttemptsTitle">Payment and refunds</h2>
+            <div id="orderDetailPayments"></div>
+          </section>
+          <section class="client-card" id="postDeliveryActions" aria-labelledby="postDeliveryTitle" hidden>
+            <h2 id="postDeliveryTitle">Failed delivery requests</h2>
+            <p class="client-card-intro" id="postDeliveryExplanation">Requests are currently unavailable. They require confirmed Warehouse receipt and Admin approval.</p>
+            <div class="client-form-actions" aria-describedby="postDeliveryExplanation">
+              <button class="client-button" type="button" disabled>Request redelivery</button>
+              <button class="client-button" type="button" disabled>Request cancellation</button>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+    <dialog class="shared-dialog client-order-confirmation" id="cancelOrderDialog" aria-labelledby="cancelOrderTitle" aria-describedby="cancelOrderExplanation">
+      <h2 class="shared-dialog-title" id="cancelOrderTitle">Cancel this order?</h2>
+      <div class="shared-dialog-body">
+        <p id="cancelOrderExplanation">Cancellation is final. If payment was accepted, the server may request a refund.</p>
+      </div>
+      <div class="shared-dialog-footer">
+        <button class="client-button" id="keepOrder" type="button" autofocus>Keep order</button>
+        <button class="client-button client-button--danger" id="confirmCancelOrder" type="button">Cancel order</button>
+      </div>
+    </dialog>
+  </main>
+  <script src="/shared/shared-common.js"></script>
+  <script type="module" src="/client/order-details.js"></script>
+</body>
+</html>
