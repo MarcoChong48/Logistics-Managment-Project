@@ -62,6 +62,7 @@ async function fixture(request, response) {
   }
   if (entry.path === "/api/client/account") return json(200, state.account);
   if (entry.path === countApi && entry.method === "GET") {
+    if (state.holdCount) await state.holdCount;
     if (state.countError) return json(503, { code: "COUNT_ERROR" });
     return json(200, { unreadCount: state.items.filter((notification) => !notification.isRead).length });
   }
@@ -283,6 +284,36 @@ test("mark all is explicit and repeated requests are safe", { skip: !browser }, 
   assert.equal(calls(allApi, "POST")[0].token, state.token);
   assert.equal(await evaluate("markAllNotificationsRead.disabled"), true);
   assert.deepEqual(await evaluate('sharedSendRequest("POST", ' + JSON.stringify(allApi) + ')'), { markedRead: 0 });
+});
+
+test("a notification arriving between list and count reads is reconciled on the next refresh", { skip: !browser }, async () => {
+  prepare();
+  await open();
+  await waitForInbox();
+  const before = await listedIds();
+  assert.equal(await countText(), "3 unread");
+  let release;
+  const pending = new Promise((resolve) => { release = resolve; });
+  Object.assign(state, { holdList: pending, holdCount: pending });
+  try {
+    await evaluate("refreshNotifications.click()");
+    await until(() => calls(api).length === 2 && calls(countApi).length === 2, "both reads for refresh");
+    const newId = "9007199254740994";
+    state.items.unshift(item(newId, { message: "Arrived during refresh" }));
+    Object.assign(state, { holdList: null, holdCount: null });
+    release();
+    await waitForInbox();
+    assert.deepEqual(await listedIds(), before);
+    assert.equal(await countText(), "4 unread");
+    await evaluate("refreshNotifications.click()");
+    await waitForInbox();
+    assert.deepEqual(await listedIds(), [newId, ...before]);
+    assert.equal(await countText(), "4 unread");
+    assert.equal(await evaluate('notificationList.firstElementChild.dataset.read'), "false");
+    assert.equal(requests.some(({ method }) => method === "POST"), false);
+  } finally {
+    release();
+  }
 });
 
 test("a notification arriving after Mark All stays unread and refresh cannot race the mutation", { skip: !browser }, async () => {

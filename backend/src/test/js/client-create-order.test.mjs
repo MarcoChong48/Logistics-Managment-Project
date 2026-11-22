@@ -45,7 +45,12 @@ async function fixture(request, response) {
     "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store"
   }).end(JSON.stringify(body));
   if (entry.path === "/api/shared/session") {
-    if (state.revoked) return json(401, { code: "SHARED_SESSION_ENDED" });
+    if (state.revoked) {
+      // Shared Security invalidates the old session on the first rejected request.
+      state.revoked = false;
+      state.signedIn = false;
+      return json(401, { code: "SHARED_SESSION_ENDED" });
+    }
     if (state.sessionUnavailable) return json(503, { code: "SESSION_CHECK_UNAVAILABLE" });
     return json(200, {
       sharedViewSessionIsLoggedIn: state.signedIn, username: state.username, role: state.role,
@@ -448,7 +453,7 @@ test("asynchronous order results are discarded when the session switches clients
   assert.equal(await evaluate("createdOrder.hidden && !createdOrderReference.textContent && orderRetry.hidden"), true);
   state.revoked = true;
   await evaluate('document.dispatchEvent(new Event("visibilitychange"))');
-  await until(() => evaluate('location.pathname === "/shared/shared-login.html"'), "the sign-in page after revocation");
+  await until(() => evaluate('location.pathname === "/shared/shared-login.html" && document.readyState === "complete" && document.getElementById("sharedLoginUserSubmitButton")?.disabled === false'), "the initialized sign-in page after revocation");
 });
 
 test("cross-tab logout drops the pending submission and history navigation cannot restore it", { skip: !browser }, async () => {

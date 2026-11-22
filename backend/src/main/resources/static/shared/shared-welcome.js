@@ -4,6 +4,7 @@
 const sharedShowWelcomeUsernameText = document.getElementById("sharedShowWelcomeUsernameText");
 const sharedShowWelcomeRoleText = document.getElementById("sharedShowWelcomeRoleText");
 const sharedShowWelcomeNoticeMessage = document.getElementById("sharedShowWelcomeNoticeMessage");
+const sharedShowWelcomeClientPortalLink = document.getElementById("sharedShowWelcomeClientPortalLink");
 const sharedShowWelcomeLogoutButton = document.getElementById("sharedShowWelcomeLogoutButton");
 
 // ===== SECTION 2: PAGE STATE =====
@@ -49,6 +50,8 @@ async function sharedShowWelcome() {
       sharedShowWelcomeNoticeMessage.textContent = "You are not allowed to open that page.";
       sharedShowWelcomeNoticeMessage.parentElement.hidden = false;
     }
+    sharedShowWelcomeClientPortalLink.hidden = !(sharedViewSessionResponse.sharedViewSessionIsLoggedIn === true
+      && sharedViewSessionResponse.role === "CLIENT" && sharedViewSessionResponse.mustChangePassword === false);
     sharedShowWelcomeUsernameText.closest("main").hidden = false;
   } catch (sharedViewSessionError) {
     // The request helper already directs an expired or revoked session to login.

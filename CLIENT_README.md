@@ -235,7 +235,7 @@ Use the defaults GET to prefill the Client order form. Let the Client edit the v
 
 ### Shared sign-in and password change
 
-The future Client Account Settings UI uses the same shared authentication endpoints as Admin. The shared request helper attaches the CSRF header on POST and PUT. If making requests directly, read it from the session response and obtain a fresh token after login or logout.
+The Client Account Settings UI uses the same shared authentication endpoints as Admin. The shared request helper attaches the CSRF header on POST and PUT. If making requests directly, read it from the session response and obtain a fresh token after login or logout.
 
 | Existing endpoint | Contract |
 |---|---|
@@ -254,9 +254,28 @@ await sharedSendRequest("POST", "/api/shared/change-password", {
 
 Use the shared change-password page for temporary-password sessions. Those sessions require a password change before accessing account settings. Public Client registration remains a gap to coordinate with Andrew in Shared Authentication. For local testing, an authorized Admin can provision a Client through the existing user management flow. [Admin account provisioning](https://github.com/MarcoChong48/Logistics-Managment-Project/blob/01fba08cac729d0ff3e136b5df0dc7d327cfeb1b/backend/src/main/java/com/lms/backend/admin/user/AdminUserController.java) · [Shared sign-in routes](https://github.com/MarcoChong48/Logistics-Managment-Project/blob/01fba08cac729d0ff3e136b5df0dc7d327cfeb1b/backend/src/main/java/com/lms/backend/shared/login/SharedLoginController.java)
 
+## Client Portal verification
+
+An authenticated Client can open `/client/account-settings.html` directly. Shared Login currently takes Clients to `/shared/shared-welcome.html`, which has no portal link. The proposed Shared Authentication handoff is an **Open Client Portal** link on Shared Welcome, pointing to `/client/account-settings.html` and shown only after Shared Session confirms `CLIENT` with `mustChangePassword: false`. This requires the Shared Authentication team's approval. The Client Shell continues to verify the session on entry.
+
+Run the Chromium fixture suite from `backend` with Node.js 22 or later and Chrome or Edge installed.
+
+~~~powershell
+node --test --test-concurrency=1 src/test/js/*.test.mjs
+~~~
+
+To run the cross-page acceptance tests, initialize a fresh disposable PostgreSQL database named `lms_m10e_acceptance` using `01_create_tables.sql` and migrations `03` through `06`. Point Spring Boot only at that database, bind the server to loopback, and leave Stripe and the Admin test tools disabled. Run `src/test/js/client-portal-fixtures.sql` with `psql`, passing `fixture_a`, `fixture_b`, `fixture_role`, `fixture_forced`, `pass_a`, `pass_b`, `pass_role`, and `pass_forced` as psql variables. Use distinct usernames beginning with `m10e-fixture-` and temporary passwords. Supply the loopback Spring Boot address in `LMS_M10E_TEST_URL`, and the credentials in `LMS_M10E_TEST_<A|B|ROLE|FORCED>_USERNAME` and `LMS_M10E_TEST_<A|B|ROLE|FORCED>_PASSWORD`.
+
+~~~powershell
+node --test --test-timeout=60000 src/test/js/client-portal-e2e.test.mjs
+~~~
+
+After the browser run, rerun the fixture SQL with `verify=1` and the two Client usernames. It checks the persisted order and replay row, stock, cancellation and refund records, and the separate notification read flags. The seeded accepted payment, failed delivery attempts, and notifications represent existing records in the isolated database. The browser does not invoke checkout, a payment provider, Warehouse, or Delivery transitions.
+
 ## Verification and deployment limits
 
-- Automated verification uses PostgreSQL 18.1. PostgreSQL 17 and manual browser testing are pending.
+- The Maven package and regression build passed on isolated PostgreSQL 17.12. Physical-device and deployed-environment testing remain pending.
 - Existing databases need migration `04` before using the updated Create Order API. Earlier orders have no replay records.
 - Stripe's hosted cutoff, terminal expiry evidence after a decline, and live webhook forwarding with Sandbox credentials remain unverified. Refund submission and verification of provider refund outcomes are pending. The adapter records `REQUESTED` obligations only.
 - The local Compose stack activates the existing `admintest` profile, which includes an Admin-only fixture generator that creates already-paid sample orders. Keep that profile out of normal deployments.
+- Delivery notification production and the Warehouse Start Picking race still need cross-team integration. Post-delivery redelivery and cancellation requests remain disabled pending Warehouse receipt and Admin approval. Pre-picking cancellation uses the existing Client API.

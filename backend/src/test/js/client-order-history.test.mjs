@@ -74,7 +74,11 @@ async function fixture(request, response) {
     "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store"
   }).end(JSON.stringify(body));
   if (entry.path === "/api/shared/session") {
-    if (state.revoked) return json(401, { code: "SHARED_SESSION_ENDED" });
+    if (state.revoked) {
+      state.revoked = false;
+      state.signedIn = false;
+      return json(401, { code: "SHARED_SESSION_ENDED" });
+    }
     return json(200, {
       sharedViewSessionIsLoggedIn: state.signedIn, role: state.role, username: state.account.username,
       userID: Number(state.account.userId), mustChangePassword: state.forced,
@@ -484,13 +488,18 @@ test("switching accounts during a read clears the old order, and logout and revo
     await open(listPage);
     await listReady();
     const navigation = await command("Page.getNavigationHistory");
+    // Preserve the earlier list visit when logout replaces the current entry.
+    await evaluate('history.pushState(null, "", location.href)');
     await evaluate("clientLogout.click()");
-    await waitFor('location.pathname === "/shared/shared-login.html"', "shared logout");
+    await waitFor('location.pathname === "/shared/shared-login.html" && document.readyState === "complete" && document.getElementById("sharedLoginUserSubmitButton")?.disabled === false', "initialized Shared Login after logout");
+    const afterLogout = await command("Page.getNavigationHistory");
+    const listEntry = navigation.entries[navigation.currentIndex];
+    assert(afterLogout.entries.some(({ id }) => id === listEntry.id));
     state.signedIn = true;
     state.revoked = true;
     const reads = calls(ordersApi).length;
     const checks = calls("/api/shared/session").length;
-    await command("Page.navigateToHistoryEntry", { entryId: navigation.entries[navigation.currentIndex].id });
+    await command("Page.navigateToHistoryEntry", { entryId: listEntry.id });
     await until(() => calls("/api/shared/session").length > checks, "ownership recheck on browser history navigation");
     await waitFor('location.pathname === "/shared/shared-login.html"', "revoked session redirect");
     assert.equal(calls(ordersApi).length, reads);
