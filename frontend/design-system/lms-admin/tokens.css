@@ -1,0 +1,103 @@
+/*
+  LMS Admin design tokens ("Evergreen and apricot on a linen desk").
+  Source of truth: design-system/lms-admin/MASTER.md. Every colour pair here was measured for contrast
+  (see MASTER.md Section 3). This file is imported by src/index.css, so Tailwind turns each token into
+  utilities, for example --color-teal gives bg-teal, text-teal and border-teal.
+*/
+@theme {
+  /* Fonts (bundled from npm, nothing loads from an outside address) */
+  --font-sans: "Atkinson Hyperlegible Next Variable", "Atkinson Hyperlegible Next", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Atkinson Hyperlegible Mono Variable", "Atkinson Hyperlegible Mono", ui-monospace, "Cascadia Mono", monospace;
+
+  /* Neutrals: the linen desk */
+  --color-paper: #f3f2ed;
+  --color-surface: #ffffff;
+  --color-sunken: #f1efe9;
+  --color-sand: #e8e5db;
+  --color-track: #ece8df;
+  --color-hover: #f7f6f1;
+  --color-line: #e2ded3;
+  --color-line-strong: #cdc7b8;
+  --color-field-line: #8c8278;
+  --color-ink: #24201c;
+  --color-ink-muted: #5f574f;
+  --color-ink-subtle: #6e655c;
+
+  /* Brand and action */
+  --color-teal: #0f6e66;
+  --color-teal-hover: #0b5b54;
+  --color-teal-press: #094a45;
+  --color-teal-tint: #e2f0ec;
+  --color-evergreen: #173a36;
+  --color-evergreen-hover: #21504a;
+  --color-evergreen-active: #2a5e57;
+  --color-cream: #f3ece0;
+  --color-menu-label: #a9c2bb;
+  --color-apricot: #f0b47a;
+  --color-apricot-fill: #b5651d;
+  --color-apricot-tint: #fcebd8;
+  --color-terracotta: #8a4310;
+  --color-danger: #b42318;
+  --color-danger-hover: #931b12;
+  --color-danger-tint: #fce9e6;
+
+  /* "Your turn": waits for a decision of the reader (apricot tint, terracotta words: 6.23 to 1) */
+  --color-turn-bg: #fcebd8;
+  --color-turn-fg: #8a4310;
+  --color-turn-dot: #b5651d;
+
+  /* The six status families: background, text, dot */
+  --color-waiting-bg: #fbefd7;
+  --color-waiting-fg: #774700;
+  --color-waiting-dot: #c98516;
+  --color-warehouse-bg: #e3edfa;
+  --color-warehouse-fg: #1c4c8a;
+  --color-warehouse-dot: #3a78d0;
+  --color-road-bg: #ede7fa;
+  --color-road-fg: #4c3394;
+  --color-road-dot: #7656d2;
+  --color-done-bg: #e0f1e5;
+  --color-done-fg: #1c5f35;
+  --color-done-dot: #3a9659;
+  --color-problem-bg: #fbe4df;
+  --color-problem-fg: #972a1d;
+  --color-problem-dot: #d2493b;
+  --color-closed-bg: #eeeae4;
+  --color-closed-fg: #544d46;
+  --color-closed-dot: #968c82;
+
+  /* Type scale (font size and line height) */
+  --text-flag: 12.5px;
+  --text-flag--line-height: 16px;
+  --text-small: 13px;
+  --text-small--line-height: 18px;
+  --text-label: 14px;
+  --text-label--line-height: 20px;
+  --text-body: 15px;
+  --text-body--line-height: 22px;
+  --text-part-title: 15px;
+  --text-part-title--line-height: 22px;
+  --text-card-title: 17px;
+  --text-card-title--line-height: 24px;
+  --text-section-title: 20px;
+  --text-section-title--line-height: 28px;
+  --text-page-title: 28px;
+  --text-page-title--line-height: 36px;
+  --text-greeting: 32px;
+  --text-greeting--line-height: 40px;
+  --text-big-number: 34px;
+  --text-big-number--line-height: 40px;
+
+  /* Radius */
+  --radius-chip: 8px;
+  --radius-control: 10px;
+  --radius-card: 14px;
+  --radius-window: 18px;
+
+  /* Elevation */
+  --shadow-raised: 0 10px 28px -8px rgb(36 32 28 / 0.2), 0 2px 6px rgb(36 32 28 / 0.06);
+  --shadow-window: 0 28px 56px -16px rgb(36 32 28 / 0.32), 0 4px 12px rgb(36 32 28 / 0.08);
+
+  /* Motion */
+  --ease-calm: cubic-bezier(0.2, 0.7, 0.2, 1);
+}

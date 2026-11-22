@@ -1,0 +1,12 @@
+name: lms-admin-redesign-preview
+
+services:
+  backend:
+    ports: !override
+      - "127.0.0.1:${LMS_PREVIEW_PORT:-18092}:8081"
+    environment:
+      SERVER_SERVLET_SESSION_COOKIE_NAME: LMS_ADMIN_PREVIEW_SESSION
+      SPRING_WEB_RESOURCES_STATIC_LOCATIONS: file:/lms-admin-preview/,classpath:/static/
+      LMS_BOOTSTRAP_ADMIN_RESET_ON_START: "false"
+    volumes:
+      - ./frontend/.spring-preview:/lms-admin-preview:ro

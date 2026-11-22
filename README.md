@@ -1,5 +1,7 @@
 # Logistics Management System · Admin
 
+> This branch, `admin-react-preview`, adds the React redesign on top of the accepted Stage 9 backend. [Run the React preview](ADMIN_UI_PREVIEW.md) · [Manual test cases](testcase.md)
+
 `feature/admin-system` contains the Admin module and shared sign-in for the team's Logistics Management System. It builds on `feature/database-setup` using Java 21, Spring Boot 4.1.2, PostgreSQL 17, and Docker Compose.
 
 **Stage 9 passed on 22 November 2026.** All ten Admin implementation stages are complete. The final stage passed all 13 hand tests. The combined suite passed 175 rule checks and 199 flow checks with zero failures and six documented skips.
@@ -35,7 +37,7 @@ Use these references to build another role in the shared application. [Team inte
 | 8 | Refund problems | Passed |
 | 9 | Dashboard and final checks | Passed |
 
-## Set up and test locally
+## Set up and test the Stage 9 baseline
 
 1. Download the [Admin branch ZIP](https://github.com/MarcoChong48/Logistics-Managment-Project/archive/refs/heads/feature/admin-system.zip) and extract it.
 2. Give your AI coding assistant the **entire unzipped project folder** by opening it as the assistant's workspace. Select the folder containing `compose.yaml`, `backend/`, and `database/`. Do this before creating `.env`. Ask the assistant to read `ADMIN_README.md` and help you start and test the Admin system.
