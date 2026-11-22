@@ -5,6 +5,7 @@
 
 // ===== SECTION 2: PAGE STATE =====
 // The frame uses the current session for the top bar and test-mode menu.
+let adminViewMenuCounterRequestCount = 0;
 
 // ===== SECTION 3: START OF PAGE =====
 // Each page calls adminBuildPageFrame with its active menu entry.
@@ -78,15 +79,13 @@ async function adminBuildPageFrame(adminBuildPageFrameActivePageName) {
       <svg class="shared-icon" aria-hidden="true"><use href="#icon-warehouse"/></svg>
       <span class="shared-page-frame-menu-text">Warehouse cases</span>
     </a>
-    <a class="shared-page-frame-menu-item shared-page-frame-menu-item-disabled" aria-disabled="true">
+    <a class="shared-page-frame-menu-item" href="/admin/admin-delivery-cases.html">
       <svg class="shared-icon" aria-hidden="true"><use href="#icon-delivery"/></svg>
       <span class="shared-page-frame-menu-text">Delivery cases</span>
-      <span class="shared-page-frame-menu-stage">Stage 7</span>
     </a>
-    <a class="shared-page-frame-menu-item shared-page-frame-menu-item-disabled" aria-disabled="true">
+    <a class="shared-page-frame-menu-item" href="/admin/admin-refunds.html">
       <svg class="shared-icon" aria-hidden="true"><use href="#icon-refunds"/></svg>
       <span class="shared-page-frame-menu-text">Refunds</span>
-      <span class="shared-page-frame-menu-stage">Stage 8</span>
     </a>
     <div class="shared-page-frame-menu-label">Manage</div>
     <a class="shared-page-frame-menu-item" href="/admin/admin-users.html">
@@ -189,22 +188,30 @@ async function adminBuildPageFrame(adminBuildPageFrameActivePageName) {
   document.getElementById("sharedExtendSessionButton").addEventListener("click", sharedExtendSession);
   adminPageFrameMain.hidden = false;
   sharedStartSessionCountdown(sharedViewSessionResponse.sharedViewSessionIdleTimeoutSeconds);
+  adminViewMenuCounter();
 
+  return sharedCheckSystemHealth();
+}
+
+// What it does: Read the health facts for the Admin frame and dashboard.
+// Input: None.
+// Output: The latest health facts, including a disconnected database, or null if unavailable.
+async function sharedCheckSystemHealth() {
   // A healthy and a disconnected database both return health facts for the dashboard.
-  let adminBuildPageFrameHealthResponse = null;
+  let sharedCheckSystemHealthResponse = null;
   try {
-    adminBuildPageFrameHealthResponse = await sharedSendRequest("GET", "/api/shared/health");
-  } catch (adminBuildPageFrameHealthError) {
-    if (adminBuildPageFrameHealthError.status === 503
-        && adminBuildPageFrameHealthError.sharedCheckSystemHealthDatabaseIsConnected === false) {
-      adminBuildPageFrameHealthResponse = adminBuildPageFrameHealthError;
+    sharedCheckSystemHealthResponse = await sharedSendRequest("GET", "/api/shared/health");
+  } catch (sharedCheckSystemHealthError) {
+    if (sharedCheckSystemHealthError.status === 503
+        && sharedCheckSystemHealthError.sharedCheckSystemHealthDatabaseIsConnected === false) {
+      sharedCheckSystemHealthResponse = sharedCheckSystemHealthError;
     }
   }
-  if (typeof adminBuildPageFrameHealthResponse?.sharedCheckSystemHealthTestModeIsEnabled !== "boolean") {
-    adminBuildPageFrameHealthResponse = null;
+  if (typeof sharedCheckSystemHealthResponse?.sharedCheckSystemHealthTestModeIsEnabled !== "boolean") {
     sharedShowMessage("ERROR", "Could not read the system health.");
+    return null;
   }
-  return adminBuildPageFrameHealthResponse;
+  return sharedCheckSystemHealthResponse;
 }
 
 // ===== SECTION 5: adminBuildStatusBadge =====
@@ -216,7 +223,7 @@ function adminBuildStatusBadge(adminBuildStatusBadgeStatusWord) {
   // Use the dictionary of approved status families and default to Closed.
   const adminBuildStatusBadgeFamilyMap = {
     waiting: ["AWAITING_PAYMENT", "LOCKED", "PENDING", "REQUESTED", "WAITING_RESTOCK", "WAITING_FOR_RETURN",
-      "WAITING_FOR_CLIENT"],
+      "WAITING_FOR_CLIENT", "NO_CLIENT_REQUEST"],
     warehouse: ["READY_FOR_PICKING", "PICKING", "READY_FOR_PICKUP", "READY_FOR_REDELIVERY", "IN_PROGRESS",
       "WAREHOUSE"],
     road: ["SHIPPED", "OUT_FOR_DELIVERY", "DELIVERY"],
@@ -236,7 +243,8 @@ function adminBuildStatusBadge(adminBuildStatusBadgeStatusWord) {
   // The label is always inserted as text, including for words outside the dictionary.
   const adminBuildStatusBadgeElement = document.createElement("span");
   adminBuildStatusBadgeElement.classList.add("shared-status-badge", "shared-status-badge-" + adminBuildStatusBadgeFamily);
-  adminBuildStatusBadgeElement.textContent = sharedFormatStatusWord(adminBuildStatusBadgeStatusWord);
+  adminBuildStatusBadgeElement.textContent = adminBuildStatusBadgeLookupWord === "NO_CLIENT_REQUEST"
+    ? "Waiting for client" : sharedFormatStatusWord(adminBuildStatusBadgeStatusWord);
   return adminBuildStatusBadgeElement;
 }
 
@@ -315,9 +323,10 @@ function adminBuildActionMenu(adminBuildActionMenuRowID, adminBuildActionMenuRow
 // Output: A promise for the field text, an empty string on a fieldless confirmation or null when dismissed.
 function adminOpenReasonDialog(adminOpenReasonDialogTitle, adminOpenReasonDialogText, adminOpenReasonDialogFieldMode,
   adminOpenReasonDialogConfirmButtonText, adminOpenReasonDialogCloseButtonText, adminOpenReasonDialogIsDangerous,
-  adminOpenReasonDialogFactList = []) {
+  adminOpenReasonDialogFactList = [], adminOpenReasonDialogID = "adminOpenReasonDialog") {
   // Reuse the same window for all confirmation actions.
   const adminOpenReasonDialogElement = adminOpenReasonDialogFindElement();
+  adminOpenReasonDialogElement.id = adminOpenReasonDialogID;
   const adminOpenReasonDialogTitleText = document.getElementById("adminOpenReasonDialogTitleText");
   const adminOpenReasonDialogBodyText = document.getElementById("adminOpenReasonDialogBodyText");
   const adminOpenReasonDialogFacts = document.getElementById("adminOpenReasonDialogFactList");
@@ -330,10 +339,18 @@ function adminOpenReasonDialog(adminOpenReasonDialogTitle, adminOpenReasonDialog
   adminOpenReasonDialogTitleText.textContent = adminOpenReasonDialogTitle;
   const [adminOpenReasonDialogFirstLine, ...adminOpenReasonDialogNoteList] = adminOpenReasonDialogText.split("\n");
   adminOpenReasonDialogBodyText.textContent = adminOpenReasonDialogFirstLine;
-  const adminOpenReasonDialogBodyNote = adminOpenReasonDialogBodyText.nextElementSibling;
+  adminOpenReasonDialogBodyText.hidden = !adminOpenReasonDialogFirstLine;
+  const adminOpenReasonDialogBodyNote = adminOpenReasonDialogBodyText.parentElement.querySelector(".shared-note");
   adminOpenReasonDialogBodyNote.textContent = adminOpenReasonDialogNoteList.join(" ");
   adminOpenReasonDialogBodyNote.hidden = adminOpenReasonDialogNoteList.length === 0;
   adminOpenReasonDialogFillFacts(adminOpenReasonDialogFacts, adminOpenReasonDialogFactList);
+  if (adminOpenReasonDialogID !== "adminOpenReasonDialog") {
+    adminOpenReasonDialogFacts.className = adminOpenReasonDialogIsDangerous ? "shared-decision-facts" : "shared-fact-list";
+    adminOpenReasonDialogBodyText.before(adminOpenReasonDialogFacts);
+  } else {
+    adminOpenReasonDialogFacts.className = "shared-decision-facts";
+    adminOpenReasonDialogBodyNote.after(adminOpenReasonDialogFacts);
+  }
 
   // Reset both fields and select the one that belongs to this action.
   adminOpenReasonDialogReasonInput.value = "";
@@ -431,7 +448,68 @@ function adminShowDecidedRow(adminShowDecidedRowElement, adminShowDecidedRowCell
   adminShowDecidedRowElement.querySelector("th a").focus();
 }
 
-// ===== SECTION 11: HELPER FUNCTIONS =====
+// What it does: Describe the refund outcome saved with a cancellation.
+// Input: The committed decision response.
+// Output: The last sentence of the decided line, with a refund ID placeholder when needed.
+function adminFormatDecidedRefund(adminFormatDecidedRefundResponse) {
+  if (adminFormatDecidedRefundResponse.refundID == null) {
+    return "No refund needed.";
+  }
+  return adminFormatDecidedRefundResponse.adminDecidedRowRefundIsNew
+    ? "Full refund requested." : "Refund {refundID} already existed.";
+}
+
+// ===== SECTION 11: adminViewMenuCounter =====
+
+// What it does: Load the three side-menu counts on entry or after a successful work action.
+// Input: None.
+// Output: The current positive count pills, or the previous menu if the request fails.
+async function adminViewMenuCounter() {
+  // An older request can finish after a newer action. Use only the newest request.
+  const adminViewMenuCounterRequestNumber = ++adminViewMenuCounterRequestCount;
+  let adminViewMenuCounterResponse;
+  try {
+    adminViewMenuCounterResponse = await sharedSendRequest("GET", "/api/admin/menu-counters");
+  } catch {
+    return;
+  }
+  if (adminViewMenuCounterRequestNumber !== adminViewMenuCounterRequestCount) {
+    return;
+  }
+
+  // The visible pill caps at 99+. Keep the full count in the link's accessible name.
+  const adminViewMenuCounterEntryList = [
+    ["/admin/admin-warehouse-cases.html", "adminViewMenuCounterWarehouseCaseText",
+      adminViewMenuCounterResponse.adminViewMenuCounterOpenShortageCaseCount],
+    ["/admin/admin-delivery-cases.html", "adminViewMenuCounterDeliveryCaseText",
+      adminViewMenuCounterResponse.adminViewMenuCounterPendingClientInstructionCount],
+    ["/admin/admin-refunds.html", "adminViewMenuCounterRefundText",
+      adminViewMenuCounterResponse.adminViewMenuCounterUnresolvedRefundCount]
+  ];
+  for (const [adminViewMenuCounterWebAddress, adminViewMenuCounterID, adminViewMenuCounterCount]
+    of adminViewMenuCounterEntryList) {
+    const adminViewMenuCounterLink = document.querySelector(
+      `#adminPageFrameSideMenu a[href="${adminViewMenuCounterWebAddress}"]`);
+    let adminViewMenuCounterText = document.getElementById(adminViewMenuCounterID);
+    if (adminViewMenuCounterCount === 0) {
+      adminViewMenuCounterText?.remove();
+      adminViewMenuCounterLink.removeAttribute("aria-label");
+      continue;
+    }
+    if (!adminViewMenuCounterText) {
+      adminViewMenuCounterText = document.createElement("span");
+      adminViewMenuCounterText.id = adminViewMenuCounterID;
+      adminViewMenuCounterText.className = "shared-page-frame-menu-count";
+      adminViewMenuCounterLink.append(adminViewMenuCounterText);
+    }
+    adminViewMenuCounterText.textContent = adminViewMenuCounterCount > 99 ? "99+" : adminViewMenuCounterCount;
+    const adminViewMenuCounterName = adminViewMenuCounterLink.querySelector(".shared-page-frame-menu-text").textContent;
+    adminViewMenuCounterLink.setAttribute("aria-label",
+      `${adminViewMenuCounterName}, ${adminViewMenuCounterCount} waiting`);
+  }
+}
+
+// ===== SECTION 12: HELPER FUNCTIONS =====
 
 // What it does: Close row menus on a page scroll or resize.
 // Input: The scroll or resize event.
@@ -475,7 +553,7 @@ function adminBuildActionMenuAddEntry(adminBuildActionMenuList, adminBuildAction
 // Output: One dialog with the approved fields, facts and buttons.
 function adminOpenReasonDialogFindElement() {
   // Static markup supplies the structure. User data is filled as text when it opens.
-  let adminOpenReasonDialogElement = document.getElementById("adminOpenReasonDialog");
+  let adminOpenReasonDialogElement = document.getElementById("adminOpenReasonDialogTitleText")?.closest("dialog");
   if (!adminOpenReasonDialogElement) {
     document.body.insertAdjacentHTML("beforeend", `
 <dialog class="shared-dialog" id="adminOpenReasonDialog" aria-labelledby="adminOpenReasonDialogTitleText">
@@ -491,7 +569,7 @@ function adminOpenReasonDialogFindElement() {
     </label>
     <label class="shared-field" hidden>
       <span class="shared-field-label">Note<span class="shared-field-optional"> (optional)</span></span>
-      <textarea class="shared-textarea" id="adminOpenReasonDialogNoteInput"></textarea>
+      <textarea class="shared-textarea" id="adminOpenReasonDialogNoteInput" maxlength="300"></textarea>
     </label>
   </div>
   <div class="shared-dialog-footer">

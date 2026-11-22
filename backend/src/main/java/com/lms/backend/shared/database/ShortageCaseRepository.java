@@ -68,6 +68,13 @@ public interface ShortageCaseRepository extends JpaRepository<ShortageCase, Long
     List<ShortageCase> findAllByOrderIDForUpdate(Long orderID);
 
     /**
+     * What it does: Checks for a shortage case that still blocks the order.
+     * Input: The order ID and the open and waiting shortage statuses.
+     * Output: True if at least one blocking case exists.
+     */
+    boolean existsByOrderIDAndCaseStatusIn(Long orderID, Collection<String> caseStatusList);
+
+    /**
      * What it does: Reads shortage cases with the facts needed by their work table and export.
      * Input: An optional status filter encoded by the all-status flag, statuses and requested page.
      * Output: The case fields and safe related facts for the requested page.

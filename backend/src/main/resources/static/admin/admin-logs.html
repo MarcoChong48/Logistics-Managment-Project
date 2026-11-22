@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Logs - LMS Admin</title>
   <link rel="stylesheet" href="/shared/shared-common.css">
-  <script src="/shared/shared-common.js?v=3" defer></script>
+  <link rel="stylesheet" href="/shared/shared-table-scrollbar.css">
+  <script src="/shared/shared-common.js?v=5" defer></script>
   <script src="/admin/admin-common.js?v=3" defer></script>
   <script src="/admin/admin-logs.js?v=3" defer></script>
 </head>
@@ -75,6 +76,14 @@
               <option value="ORDER_CANCELLED_BY_ADMIN">Order cancelled by admin</option>
               <option value="PICKING_TASK_REASSIGNED">Picking task reassigned</option>
               <option value="REFUND_REQUESTED">Refund requested</option>
+              <option value="REFUND_STATUS_CHECKED">Refund status checked</option>
+              <option value="REFUND_RETRIED">Refund retried</option>
+              <option value="DELIVERY_REMINDER_SENT">Delivery reminder sent</option>
+              <option value="CLIENT_INSTRUCTION_RECORDED_BY_ADMIN">Client instruction recorded by admin</option>
+              <option value="REDELIVERY_APPROVED">Redelivery approved</option>
+              <option value="CANCELLATION_APPROVED">Cancellation approved</option>
+              <option value="CLIENT_INSTRUCTION_REJECTED">Client instruction rejected</option>
+              <option value="DELIVERY_REASSIGNED">Delivery reassigned</option>
               <option value="CLIENT_INSTRUCTION_RECORDED_BY_ADMIN">Client instruction recorded by admin</option>
               <option value="LOG_CLEANUP_RUN">Log cleanup run</option>
               <option value="CSV_DOWNLOADED">CSV downloaded</option>
@@ -117,11 +126,11 @@
           <table class="shared-table">
             <thead>
               <tr>
-                <th scope="col" class="shared-table-time">Time</th>
-                <th scope="col">Actor</th>
-                <th scope="col" class="shared-table-wrap">Action</th>
-                <th scope="col">Target</th>
-                <th scope="col" class="shared-table-wrap">Old and new value</th>
+                <th scope="col" class="shared-table-time shared-column-time">Time</th>
+                <th class="shared-column-username" scope="col">Actor</th>
+                <th scope="col" class="shared-table-wrap shared-column-fill">Action</th>
+                <th class="shared-column-phrase-long" scope="col">Target</th>
+                <th scope="col" class="shared-table-wrap shared-column-fill">Old and new value</th>
               </tr>
             </thead>
             <tbody id="adminSearchAuditLogResultTableBody"></tbody>
@@ -204,12 +213,12 @@
           <table class="shared-table">
             <thead>
               <tr>
-                <th scope="col" class="shared-table-time">Time</th>
-                <th scope="col">User</th>
-                <th scope="col">Event</th>
-                <th scope="col">Result</th>
-                <th scope="col" class="shared-table-time">IP address</th>
-                <th scope="col" class="shared-table-wrap">Details and device</th>
+                <th scope="col" class="shared-table-time shared-column-time">Time</th>
+                <th class="shared-column-username" scope="col">User</th>
+                <th class="shared-column-phrase-long" scope="col">Event</th>
+                <th class="shared-column-status-short" scope="col">Result</th>
+                <th scope="col" class="shared-table-time shared-column-code">IP address</th>
+                <th scope="col" class="shared-table-wrap shared-column-fill">Details and device</th>
               </tr>
             </thead>
             <tbody id="adminSearchSecurityLogResultTableBody"></tbody>
@@ -274,13 +283,13 @@
           <table class="shared-table">
             <thead>
               <tr>
-                <th scope="col" class="shared-table-time">Time</th>
-                <th scope="col">Order</th>
-                <th scope="col">Worker</th>
-                <th scope="col">Scanned code</th>
-                <th scope="col">Product</th>
-                <th scope="col">Result</th>
-                <th scope="col" class="shared-table-wrap">Reason</th>
+                <th scope="col" class="shared-table-time shared-column-time">Time</th>
+                <th class="shared-column-order" scope="col">Order</th>
+                <th class="shared-column-username" scope="col">Worker</th>
+                <th class="shared-column-code" scope="col">Scanned code</th>
+                <th class="shared-column-code" scope="col">Product</th>
+                <th class="shared-column-status-short" scope="col">Result</th>
+                <th scope="col" class="shared-table-wrap shared-column-fill">Reason</th>
               </tr>
             </thead>
             <tbody id="adminSearchPickingScanHistoryResultTableBody"></tbody>

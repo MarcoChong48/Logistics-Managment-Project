@@ -1,0 +1,96 @@
+/* Keep the horizontal table control visible even on systems with fading scrollbars. */
+.shared-table-scroll:has(> .shared-table-scrollbar:not([hidden])) {
+  scrollbar-width: none;
+}
+
+.shared-table-scroll:has(> .shared-table-scrollbar:not([hidden]))::-webkit-scrollbar {
+  display: none;
+}
+
+.shared-table-scrollbar {
+  --shared-table-scrollbar-grip: clamp(24px, var(--shared-table-scrollbar-thumb-width, 24px), calc(100% - 16px));
+  --shared-table-scrollbar-track: var(--colour-hover);
+  --shared-table-scrollbar-thumb: var(--colour-control-line);
+  appearance: none;
+  position: sticky;
+  left: 0;
+  display: block;
+  width: 100%;
+  height: 24px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: var(--colour-surface);
+  cursor: grab;
+  touch-action: none;
+}
+
+.shared-table-scrollbar[hidden] {
+  display: none;
+}
+
+.shared-table-scrollbar:active {
+  cursor: grabbing;
+}
+
+.shared-table-scrollbar:focus-visible {
+  outline: 2px solid var(--colour-focus);
+  outline-offset: -2px;
+}
+
+.shared-table-scrollbar::-webkit-slider-runnable-track {
+  height: 10px;
+  border-radius: var(--radius-pill);
+  background: var(--shared-table-scrollbar-track);
+}
+
+.shared-table-scrollbar::-moz-range-track {
+  height: 10px;
+  border-radius: var(--radius-pill);
+  background: var(--shared-table-scrollbar-track);
+}
+
+.shared-table-scrollbar::-webkit-slider-thumb {
+  appearance: none;
+  width: var(--shared-table-scrollbar-grip);
+  height: 10px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--shared-table-scrollbar-thumb);
+}
+
+.shared-table-scrollbar::-moz-range-thumb {
+  width: var(--shared-table-scrollbar-grip);
+  height: 10px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--shared-table-scrollbar-thumb);
+}
+
+/* Keep the clearance below a total row ahead of the bar, at the bottom of the table. */
+.shared-table-scroll:has(> .shared-table > tfoot):has(> .shared-table-scrollbar:not([hidden])) {
+  padding-bottom: 0;
+}
+
+.shared-table-scroll:has(> .shared-table > tfoot) > .shared-table-scrollbar {
+  margin-top: 12px;
+}
+
+@media (forced-colors: active) {
+  .shared-table-scrollbar {
+    --shared-table-scrollbar-track: Canvas;
+    --shared-table-scrollbar-thumb: ButtonText;
+    background: Canvas;
+    forced-color-adjust: none;
+  }
+
+  .shared-table-scrollbar:focus-visible {
+    outline-color: Highlight;
+  }
+}
+
+@media print {
+  .shared-table-scrollbar {
+    display: none;
+  }
+}

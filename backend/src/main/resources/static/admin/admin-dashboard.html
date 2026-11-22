@@ -16,8 +16,81 @@
       <div class="shared-page-header-text">
         <h1 class="shared-page-title">Dashboard</h1>
       </div>
+      <div class="shared-page-header-actions">
+        <span class="shared-muted" aria-live="polite">Last loaded
+          <time class="shared-nowrap" id="adminViewDashboardLastLoadedTimeText">-</time>
+        </span>
+        <button class="shared-button" id="adminViewDashboardRefreshButton" type="button" disabled>Refresh</button>
+      </div>
     </div>
 
+    <!-- Dashboard totals and their filtered lists. -->
+    <div class="shared-grid-three">
+      <section class="shared-card shared-number-box shared-number-box-work" id="adminViewDashboardOpenCasePanel">
+        <h2 class="shared-number-box-title">Open cases</h2>
+        <p class="shared-number-box-value" id="adminViewDashboardOpenCaseTotalCountText">-</p>
+        <p class="shared-number-box-hint">The total counts the first group.</p>
+        <p class="shared-number-box-group">Work to do</p>
+        <a class="shared-number-line" id="adminViewDashboardOpenShortageCaseLink"
+          href="admin-warehouse-cases.html?adminSearchShortageCaseCaseStatus=OPEN">
+          <span class="shared-number-line-name">Shortage cases</span>
+          <span class="shared-number-line-count">-</span>
+        </a>
+        <a class="shared-number-line" id="adminViewDashboardPendingClientInstructionLink"
+          href="admin-delivery-cases.html?adminSearchFailedDeliveryCaseFilter=NEEDS_DECISION">
+          <span class="shared-number-line-name">Client requests</span>
+          <span class="shared-number-line-count">-</span>
+        </a>
+        <a class="shared-number-line" id="adminViewDashboardUnresolvedRefundLink"
+          href="admin-refunds.html?adminSearchRefundIsUnresolvedOnly=true">
+          <span class="shared-number-line-name">Refund problems</span>
+          <span class="shared-number-line-count">-</span>
+        </a>
+        <p class="shared-number-box-group">Also check</p>
+        <a class="shared-number-line" id="adminViewDashboardWaitingShortageCaseLink"
+          href="admin-warehouse-cases.html?adminSearchShortageCaseCaseStatus=WAITING_RESTOCK">
+          <span class="shared-number-line-name">Shortage cases waiting for restock</span>
+          <span class="shared-number-line-count">-</span>
+        </a>
+        <a class="shared-number-line" id="adminViewDashboardWaitingClientCaseLink"
+          href="admin-delivery-cases.html?adminSearchFailedDeliveryCaseFilter=NO_CLIENT_REQUEST">
+          <span class="shared-number-line-name">Failed deliveries waiting for the client</span>
+          <span class="shared-number-line-count">-</span>
+        </a>
+        <a class="shared-number-line" id="adminViewDashboardFlaggedDeliveryCaseLink"
+          href="admin-delivery-cases.html?adminSearchFailedDeliveryCaseFilter=FLAGGED">
+          <span class="shared-number-line-name">Flagged delivery cases</span>
+          <span class="shared-number-line-count">-</span>
+        </a>
+        <a class="shared-number-line" id="adminViewDashboardLockedUserLink"
+          href="admin-users.html?adminSearchUserAccountStatus=LOCKED_NOW">
+          <span class="shared-number-line-name">Locked users</span>
+          <span class="shared-number-line-count">-</span>
+        </a>
+      </section>
+
+      <section class="shared-card shared-number-box" id="adminViewDashboardActiveOrderPanel">
+        <h2 class="shared-number-box-title">Active orders</h2>
+        <p class="shared-number-box-value" id="adminViewDashboardActiveOrderCountText">-</p>
+        <p class="shared-number-box-group">By order status</p>
+        <div id="adminViewDashboardOrderStatusCountList"></div>
+      </section>
+
+      <section class="shared-card shared-number-box" id="adminViewDashboardLowStockPanel">
+        <h2 class="shared-number-box-title">Low stock</h2>
+        <p class="shared-number-box-value" id="adminViewDashboardLowStockProductCountText">-</p>
+        <p class="shared-number-box-hint">Products below their low-stock level.</p>
+        <p class="shared-number-box-group">Available stock, lowest first</p>
+        <div id="adminViewDashboardLowStockProductList"></div>
+        <p class="shared-number-box-hint">
+          <a id="adminViewDashboardLowStockLink" href="admin-products.html?adminSearchProductIsLowStockOnly=true">
+            Show all low-stock products
+          </a>
+        </p>
+      </section>
+    </div>
+
+    <!-- System health from Stage 0. -->
     <section class="shared-card" id="sharedCheckSystemHealthPanel" aria-live="polite">
       <div class="shared-card-header">
         <h2 class="shared-card-title">System health</h2>

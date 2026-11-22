@@ -1,6 +1,7 @@
 package com.lms.backend.shared.database;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -27,4 +28,12 @@ public interface DeliveryAttemptRepository extends JpaRepository<DeliveryAttempt
             ORDER BY attempt.startTime DESC, attempt.deliveryAttemptID DESC
             """)
     List<Object[]> adminViewOrderDeliveryAttempts(Long packageID, String photoType, String signatureType);
+
+    /**
+     * What it does: Reads the latest ended attempt with a given outcome.
+     * Input: The package ID and the stored failed outcome.
+     * Output: The attempt whose end time supplies the start of the return check.
+     */
+    Optional<DeliveryAttempt> findFirstByPackageIDAndOutcomeAndEndTimeIsNotNullOrderByEndTimeDescDeliveryAttemptIDDesc(
+            Long packageID, String outcome);
 }

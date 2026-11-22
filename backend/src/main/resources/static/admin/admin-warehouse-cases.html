@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Warehouse cases - LMS Admin</title>
   <link rel="stylesheet" href="/shared/shared-common.css">
-  <script src="/shared/shared-common.js?v=4" defer></script>
+  <link rel="stylesheet" href="/shared/shared-table-scrollbar.css">
+  <script src="/shared/shared-common.js?v=5" defer></script>
   <script src="/admin/admin-common.js?v=4" defer></script>
   <script src="/admin/admin-warehouse-cases.js" defer></script>
 </head>
@@ -45,8 +46,8 @@
       <div class="shared-table-scroll" role="region" aria-label="Shortage cases table" hidden>
         <table class="shared-table shared-table-work">
           <thead>
-            <tr><th scope="col">Order</th><th scope="col">Shortage</th><th scope="col">Reported</th>
-              <th scope="col">Status</th><th scope="col" class="shared-table-actions">Actions</th></tr>
+            <tr><th class="shared-column-order" scope="col">Order</th><th class="shared-column-fill" scope="col">Shortage</th><th class="shared-column-time" scope="col">Reported</th>
+              <th class="shared-column-status-long" scope="col">Status</th><th scope="col" class="shared-table-actions shared-column-actions">Actions</th></tr>
           </thead>
           <tbody id="adminSearchShortageCaseResultTableBody"></tbody>
         </table>
@@ -66,9 +67,9 @@
       <div class="shared-table-scroll" role="region" aria-label="Picking tasks table" hidden>
         <table class="shared-table shared-table-work">
           <thead>
-            <tr><th scope="col">Order</th><th scope="col">Worker</th><th scope="col">Assigned</th>
-              <th scope="col">Started</th><th scope="col">Progress</th>
-              <th scope="col" class="shared-table-actions">Actions</th></tr>
+            <tr><th class="shared-column-order-flag" scope="col">Order</th><th class="shared-column-username" scope="col">Worker</th><th class="shared-column-time" scope="col">Assigned</th>
+              <th class="shared-column-time" scope="col">Started</th><th class="shared-column-fill" scope="col">Progress</th>
+              <th scope="col" class="shared-table-actions shared-column-button">Actions</th></tr>
           </thead>
           <tbody id="adminSearchPickingTaskResultTableBody"></tbody>
         </table>

@@ -13,6 +13,7 @@ import static com.lms.backend.shared.log.SharedAuditAction.SHARED_AUDIT_ACTION_R
 import static com.lms.backend.shared.log.SharedAuditAction.SHARED_AUDIT_ACTION_SHORTAGE_CANCEL_DECIDED;
 import static com.lms.backend.shared.log.SharedAuditAction.SHARED_AUDIT_ACTION_SHORTAGE_WAIT_DECIDED;
 import static com.lms.backend.shared.notification.SharedNotificationType.CLIENT_SHORTAGE_CANCELLED;
+import static com.lms.backend.shared.notification.SharedNotificationType.CLIENT_SHORTAGE_CANCELLED_REFUND_EXISTS;
 import static com.lms.backend.shared.notification.SharedNotificationType.CLIENT_SHORTAGE_CANCELLED_UNPAID;
 import static com.lms.backend.shared.notification.SharedNotificationType.CLIENT_SHORTAGE_WAITING;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_INSTRUCTION_STATUS_PENDING;
@@ -21,10 +22,9 @@ import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_INSTRUCT
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -38,16 +38,15 @@ import org.springframework.transaction.annotation.Transactional;
 import com.lms.backend.admin.common.AdminDecidedRowResponse;
 import com.lms.backend.admin.placeholder.AdminOrderCancellationPlaceholder;
 import com.lms.backend.admin.placeholder.AdminRefundPlaceholder;
+import com.lms.backend.admin.placeholder.AdminRequestFullRefundAnswer;
 import com.lms.backend.shared.database.ClientInstruction;
 import com.lms.backend.shared.database.ClientInstructionRepository;
 import com.lms.backend.shared.database.CustomerOrder;
 import com.lms.backend.shared.database.CustomerOrderRepository;
 import com.lms.backend.shared.database.DeliveryPackage;
 import com.lms.backend.shared.database.DeliveryPackageRepository;
-import com.lms.backend.shared.database.PaymentRepository;
 import com.lms.backend.shared.database.PickingAssignmentHistoryRepository;
 import com.lms.backend.shared.database.PickingTaskRepository;
-import com.lms.backend.shared.database.RefundRepository;
 import com.lms.backend.shared.database.ShortageCase;
 import com.lms.backend.shared.database.ShortageCaseRepository;
 import com.lms.backend.shared.error.SharedRuleException;
@@ -72,8 +71,6 @@ public class AdminShortageService {
     private final PickingTaskRepository adminShortagePickingTaskRepository;
     private final PickingAssignmentHistoryRepository adminShortageAssignmentRepository;
     private final ClientInstructionRepository adminShortageInstructionRepository;
-    private final PaymentRepository adminShortagePaymentRepository;
-    private final RefundRepository adminShortageRefundRepository;
     private final AdminOrderCancellationPlaceholder adminShortageOrderCancellation;
     private final AdminRefundPlaceholder adminShortageRefund;
 
@@ -89,7 +86,6 @@ public class AdminShortageService {
             PickingTaskRepository adminShortagePickingTaskRepository,
             PickingAssignmentHistoryRepository adminShortageAssignmentRepository,
             ClientInstructionRepository adminShortageInstructionRepository,
-            PaymentRepository adminShortagePaymentRepository, RefundRepository adminShortageRefundRepository,
             AdminOrderCancellationPlaceholder adminShortageOrderCancellation, AdminRefundPlaceholder adminShortageRefund) {
         this.adminShortageCaseRepository = adminShortageCaseRepository;
         this.adminShortageOrderRepository = adminShortageOrderRepository;
@@ -100,8 +96,6 @@ public class AdminShortageService {
         this.adminShortagePickingTaskRepository = adminShortagePickingTaskRepository;
         this.adminShortageAssignmentRepository = adminShortageAssignmentRepository;
         this.adminShortageInstructionRepository = adminShortageInstructionRepository;
-        this.adminShortagePaymentRepository = adminShortagePaymentRepository;
-        this.adminShortageRefundRepository = adminShortageRefundRepository;
         this.adminShortageOrderCancellation = adminShortageOrderCancellation;
         this.adminShortageRefund = adminShortageRefund;
     }
@@ -248,7 +242,7 @@ public class AdminShortageService {
                 CLIENT_SHORTAGE_WAITING, CLIENT_SHORTAGE_WAITING.sharedFormatNotificationMessage(orderReference));
         return new AdminDecidedRowResponse("The shortage case of order " + orderReference + " now waits for restock.",
                 adminDecideShortageWaitCase.caseStatus, null, adminDecideShortageWaitAdmin.username(),
-                adminDecideShortageWaitCase.decidedTime, null);
+                adminDecideShortageWaitCase.decidedTime, null, false);
     }
 
     // ===== SECTION 4: adminDecideShortageCancel =====
@@ -303,12 +297,12 @@ public class AdminShortageService {
         // PLACEHOLDER OUTPUT PO-01. Client and Warehouse will replace this stand-in with shared cancellation.
         adminShortageOrderCancellation.adminCancelOrderPlaceholder(
                 orderID, adminDecideShortageCancelAdmin.userID(), adminDecideShortageCancelReason);
-        Set<Long> adminDecideShortageCancelEarlierRefundIDs = adminReadShortageRefundIDs(orderID);
         // PLACEHOLDER OUTPUT PO-02. Payment will send the refund and record its actual outcome.
-        Long refundID = adminShortageRefund.adminRequestFullRefundPlaceholder(
-                orderID, adminDecideShortageCancelAdmin.userID(), adminDecideShortageCancelReason).orElse(null);
+        AdminRequestFullRefundAnswer adminDecideShortageCancelRefund = adminShortageRefund
+                .adminRequestFullRefundPlaceholder(orderID, adminDecideShortageCancelAdmin.userID(),
+                        adminDecideShortageCancelReason);
         return adminRecordShortageCancellation(adminDecideShortageCancelCase, adminDecideShortageCancelOrder,
-                orderStatus, adminDecideShortageCancelAdmin, refundID, adminDecideShortageCancelEarlierRefundIDs);
+                orderStatus, adminDecideShortageCancelAdmin, adminDecideShortageCancelRefund);
     }
 
     // ===== SECTION 5: HELPER FUNCTIONS =====
@@ -357,56 +351,63 @@ public class AdminShortageService {
     }
 
     /**
-     * What it does: Observes existing refund IDs under the same payment lock used by the refund stand-in.
-     * Input: The locked order's ID.
-     * Output: The previously saved refund IDs so only a new request receives a new audit entry.
-     */
-    private Set<Long> adminReadShortageRefundIDs(long orderID) {
-        return adminShortagePaymentRepository.findFirstByOrderIDAndAcceptedTimeIsNotNullOrderByCreatedTimeDescPaymentIDDesc(orderID)
-                .map(adminReadShortageRefundIDsPayment -> adminShortageRefundRepository
-                        .findByPaymentIDOrderByCreatedTimeDescRefundIDDesc(adminReadShortageRefundIDsPayment.paymentID)
-                        .stream().map(adminReadShortageRefundIDsRefund -> adminReadShortageRefundIDsRefund.refundID)
-                        .collect(Collectors.toUnmodifiableSet()))
-                .orElseGet(Set::of);
-    }
-
-    /**
-     * What it does: Records cancellation audit entries and sends the client's paid or unpaid notification.
+     * What it does: Records cancellation audit entries and tells the client what happened to the payment.
      * Input: The saved case and order, the prior order status, the deciding Admin, and the refund result.
      * Output: The message and saved outcome for the Warehouse row.
      */
     private AdminDecidedRowResponse adminRecordShortageCancellation(ShortageCase adminRecordShortageCancellationCase,
             CustomerOrder adminRecordShortageCancellationOrder, String adminRecordShortageCancellationPriorOrderStatus,
-            SharedCurrentUser adminRecordShortageCancellationAdmin, Long refundID,
-            Set<Long> adminRecordShortageCancellationEarlierRefundIDs) {
+            SharedCurrentUser adminRecordShortageCancellationAdmin,
+            AdminRequestFullRefundAnswer adminRecordShortageCancellationRefund) {
         Long userID = adminRecordShortageCancellationAdmin.userID();
         String orderReference = adminRecordShortageCancellationOrder.orderReference;
-        String adminRecordShortageCancellationReason = adminHidePrivateValue(adminRecordShortageCancellationCase.decisionNote);
+        Long refundID = adminRecordShortageCancellationRefund.refundID();
+        boolean adminRequestFullRefundIsNew = adminRecordShortageCancellationRefund.adminRequestFullRefundIsNew();
+        String adminRecordShortageCancellationReason =
+                adminHidePrivateValue(adminRecordShortageCancellationCase.decisionNote);
+        Map<String, Object> adminRecordShortageCancellationAuditValues = new HashMap<>(Map.of(
+                "caseStatus", adminRecordShortageCancellationCase.caseStatus,
+                "decision", adminRecordShortageCancellationCase.decision,
+                "reason", adminRecordShortageCancellationReason,
+                "stockCorrectionIsConfirmed", true, "orderReference", orderReference));
+        if (refundID != null && !adminRequestFullRefundIsNew) {
+            adminRecordShortageCancellationAuditValues.put("existingRefundID", refundID);
+        }
         adminShortageAuditLogWriter.sharedWriteAuditLog(userID, SHARED_AUDIT_ACTION_SHORTAGE_CANCEL_DECIDED,
                 "SHORTAGE_CASE", adminRecordShortageCancellationCase.shortageCaseID.toString(), null,
-                Map.of("caseStatus", adminRecordShortageCancellationCase.caseStatus,
-                        "decision", adminRecordShortageCancellationCase.decision, "reason", adminRecordShortageCancellationReason,
-                        "stockCorrectionIsConfirmed", true, "orderReference", orderReference));
+                adminRecordShortageCancellationAuditValues);
         adminShortageAuditLogWriter.sharedWriteAuditLog(userID, SHARED_AUDIT_ACTION_ORDER_CANCELLED_BY_ADMIN,
                 "ORDER", adminRecordShortageCancellationOrder.orderID.toString(),
                 Map.of("orderStatus", adminRecordShortageCancellationPriorOrderStatus),
                 Map.of("orderStatus", adminRecordShortageCancellationOrder.orderStatus,
                         "reason", adminRecordShortageCancellationReason));
-        if (refundID != null && !adminRecordShortageCancellationEarlierRefundIDs.contains(refundID)) {
+        if (adminRequestFullRefundIsNew) {
             adminShortageAuditLogWriter.sharedWriteAuditLog(userID, SHARED_AUDIT_ACTION_REFUND_REQUESTED,
                     "ORDER", adminRecordShortageCancellationOrder.orderID.toString(), null, Map.of("refundID", refundID));
         }
 
         // PLACEHOLDER OUTPUT PO-08. Client pages will read the new order notification.
-        SharedNotificationType adminRecordShortageCancellationType = refundID == null
-                ? CLIENT_SHORTAGE_CANCELLED_UNPAID : CLIENT_SHORTAGE_CANCELLED;
+        SharedNotificationType adminRecordShortageCancellationType;
+        String adminRecordShortageCancellationOutcome;
+        if (refundID == null) {
+            adminRecordShortageCancellationType = CLIENT_SHORTAGE_CANCELLED_UNPAID;
+            adminRecordShortageCancellationOutcome = "Nothing had been paid, so no refund was needed.";
+        } else if (adminRequestFullRefundIsNew) {
+            adminRecordShortageCancellationType = CLIENT_SHORTAGE_CANCELLED;
+            adminRecordShortageCancellationOutcome = "A full refund was requested.";
+        } else {
+            adminRecordShortageCancellationType = CLIENT_SHORTAGE_CANCELLED_REFUND_EXISTS;
+            adminRecordShortageCancellationOutcome = "Refund " + refundID
+                    + " of this payment already existed, so no new refund was requested.";
+        }
         adminShortageNotificationSender.sharedSendNotification(adminRecordShortageCancellationOrder.clientUserID,
                 adminRecordShortageCancellationOrder.orderID, adminRecordShortageCancellationType,
                 adminRecordShortageCancellationType.sharedFormatNotificationMessage(orderReference));
         String adminRecordShortageCancellationMessage = "Order " + orderReference + " was cancelled. "
-                + (refundID == null ? "Nothing had been paid, so no refund was needed." : "A full refund was requested.");
-        return new AdminDecidedRowResponse(adminRecordShortageCancellationMessage, adminRecordShortageCancellationCase.caseStatus,
-                null, adminRecordShortageCancellationAdmin.username(), adminRecordShortageCancellationCase.decidedTime, refundID);
+                + adminRecordShortageCancellationOutcome;
+        return new AdminDecidedRowResponse(adminRecordShortageCancellationMessage,
+                adminRecordShortageCancellationCase.caseStatus, null, adminRecordShortageCancellationAdmin.username(),
+                adminRecordShortageCancellationCase.decidedTime, refundID, adminRequestFullRefundIsNew);
     }
 
     // ===== SECTION 6: CASE FILTER AND SAFE ROWS =====

@@ -1,6 +1,7 @@
 package com.lms.backend.shared.database;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -35,4 +36,44 @@ public interface ClientInstructionRepository extends JpaRepository<ClientInstruc
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     List<ClientInstruction> findByOrderIDAndStatusOrderByInstructionIDAsc(Long orderID, String status);
+
+    /**
+     * What it does: Finds a request's order before either row is locked.
+     * Input: The instruction ID.
+     * Output: The order ID, or empty when the request is missing.
+     */
+@Query("SELECT instruction.orderID FROM ClientInstruction instruction "
+            + "WHERE instruction.instructionID = :instructionID")
+    Optional<Long> findOrderIDByInstructionID(Long instructionID);
+
+    /**
+     * What it does: Reads the current request after its order is locked.
+     * Input: The instruction ID and its locked order ID.
+     * Output: The locked instruction, or empty when the relation no longer exists.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<ClientInstruction> findByInstructionIDAndOrderID(Long instructionID, Long orderID);
+
+    /**
+     * What it does: Reads the newest pending request first for the replacement window check.
+     * Input: The locked order ID and pending status word.
+     * Output: All pending requests, with locks kept until commit.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+List<ClientInstruction> findByOrderIDAndStatusOrderBySubmittedTimeDescInstructionIDDesc(
+            Long orderID, String status);
+
+    /**
+     * What it does: Finds the newest request, regardless of its status.
+     * Input: The order ID.
+     * Output: Its newest instruction or empty.
+     */
+    Optional<ClientInstruction> findFirstByOrderIDOrderBySubmittedTimeDescInstructionIDDesc(Long orderID);
+
+    /**
+     * What it does: Checks whether the client is already waiting for a decision.
+     * Input: The order ID and pending status word.
+     * Output: True when a request is pending.
+     */
+    boolean existsByOrderIDAndStatus(Long orderID, String status);
 }

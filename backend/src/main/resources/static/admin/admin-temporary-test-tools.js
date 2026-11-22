@@ -75,6 +75,41 @@ const adminTemporaryCreatePickingOrderButton =
   document.getElementById("adminTemporaryCreatePickingOrderButton");
 const adminTemporaryCreatePickingOrderResultText =
   document.getElementById("adminTemporaryCreatePickingOrderResultText");
+const adminTemporaryCreateFailedDeliveryCaseFailureCountInput =
+  document.getElementById("adminTemporaryCreateFailedDeliveryCaseFailureCountInput");
+const adminTemporaryCreateFailedDeliveryCaseIsReturnedCheckbox =
+  document.getElementById("adminTemporaryCreateFailedDeliveryCaseIsReturnedCheckbox");
+const adminTemporaryCreateFailedDeliveryCaseDaysSinceReturnInput =
+  document.getElementById("adminTemporaryCreateFailedDeliveryCaseDaysSinceReturnInput");
+const adminTemporaryCreateFailedDeliveryCaseClientRequestSelect =
+  document.getElementById("adminTemporaryCreateFailedDeliveryCaseClientRequestSelect");
+const adminTemporaryCreateFailedDeliveryCaseButton =
+  document.getElementById("adminTemporaryCreateFailedDeliveryCaseButton");
+const adminTemporaryCreateFailedDeliveryCaseResultText =
+  document.getElementById("adminTemporaryCreateFailedDeliveryCaseResultText");
+const adminTemporaryCreateHeldPackageWorkerUsernameInput =
+  document.getElementById("adminTemporaryCreateHeldPackageWorkerUsernameInput");
+const adminTemporaryCreateHeldPackageOrderStatusSelect =
+  document.getElementById("adminTemporaryCreateHeldPackageOrderStatusSelect");
+const adminTemporaryCreateHeldPackageButton = document.getElementById("adminTemporaryCreateHeldPackageButton");
+const adminTemporaryCreateHeldPackageResultText = document.getElementById("adminTemporaryCreateHeldPackageResultText");
+const adminTemporaryCreateRefundCaseRefundStatusSelect =
+  document.getElementById("adminTemporaryCreateRefundCaseRefundStatusSelect");
+const adminTemporaryCreateRefundCaseAgeHoursInput = document.getElementById("adminTemporaryCreateRefundCaseAgeHoursInput");
+const adminTemporaryCreateRefundCaseButton = document.getElementById("adminTemporaryCreateRefundCaseButton");
+const adminTemporaryCreateRefundCaseResultText = document.getElementById("adminTemporaryCreateRefundCaseResultText");
+const adminTemporarySetProviderAnswerRefundIDInput =
+  document.getElementById("adminTemporarySetProviderAnswerRefundIDInput");
+const adminTemporarySetProviderAnswerOutcomeSelect =
+  document.getElementById("adminTemporarySetProviderAnswerOutcomeSelect");
+const adminTemporarySetProviderAnswerButton = document.getElementById("adminTemporarySetProviderAnswerButton");
+const adminTemporarySetProviderAnswerResultText = document.getElementById("adminTemporarySetProviderAnswerResultText");
+const adminTemporaryRunPrivacyCheckButton = document.getElementById("adminTemporaryRunPrivacyCheckButton");
+const adminTemporaryRunPrivacyCheckResultText = document.getElementById("adminTemporaryRunPrivacyCheckResultText");
+const adminTemporaryRemoveAllTestDataConfirmTextInput =
+  document.getElementById("adminTemporaryRemoveAllTestDataConfirmTextInput");
+const adminTemporaryRemoveAllTestDataButton = document.getElementById("adminTemporaryRemoveAllTestDataButton");
+const adminTemporaryRemoveAllTestDataResultText = document.getElementById("adminTemporaryRemoveAllTestDataResultText");
 
 // ===== SECTION 2: PAGE STATE =====
 // The frame checks the Admin's session. The tool page also checks the dedicated mode endpoint.
@@ -127,6 +162,12 @@ adminTemporaryCreateSampleOrderSetButton.addEventListener("click", adminTemporar
 adminTemporaryCreateShortageReportButton.form.addEventListener("submit", adminTemporaryCreateShortageReport);
 adminTemporaryResolveShortageCaseButton.form.addEventListener("submit", adminTemporaryResolveShortageCase);
 adminTemporaryCreatePickingOrderButton.form.addEventListener("submit", adminTemporaryCreatePickingOrder);
+adminTemporaryCreateFailedDeliveryCaseButton.form.addEventListener("submit", adminTemporaryCreateFailedDeliveryCase);
+adminTemporaryCreateHeldPackageButton.form.addEventListener("submit", adminTemporaryCreateHeldPackage);
+adminTemporaryCreateRefundCaseButton.form.addEventListener("submit", adminTemporaryCreateRefundCase);
+adminTemporarySetProviderAnswerButton.form.addEventListener("submit", adminTemporarySetProviderAnswer);
+adminTemporaryRunPrivacyCheckButton.addEventListener("click", adminTemporaryRunPrivacyCheck);
+adminTemporaryRemoveAllTestDataButton.form.addEventListener("submit", adminTemporaryRemoveAllTestData);
 
 // ===== SECTION 4: adminTemporaryCreateTestUser =====
 
@@ -484,4 +525,149 @@ async function adminTemporaryCreatePickingOrder(adminTemporaryCreatePickingOrder
       + adminTemporaryCreatePickingOrderError.message;
   }
   adminTemporaryCreatePickingOrderResultText.hidden = false;
+}
+
+// ===== SECTION 19: adminTemporaryCreateFailedDeliveryCase =====
+
+// TEMPORARY TEST CODE - remove before integration
+// Stage 7 needs sample orders with configurable failed-delivery history.
+// What it does: Create the failed-delivery case described by the form.
+// Input: The submit event and the failure count, return state, return age and request.
+// Output: The tool's result message, or its error code and message.
+async function adminTemporaryCreateFailedDeliveryCase(adminTemporaryCreateFailedDeliveryCaseEvent) {
+  adminTemporaryCreateFailedDeliveryCaseEvent.preventDefault();
+  adminTemporaryCreateFailedDeliveryCaseResultText.hidden = true;
+  try {
+    const adminTemporaryCreateFailedDeliveryCaseResponse = await sharedSendRequest(
+      "POST", "/api/admin/temporary-test/failed-delivery-case", {
+        adminTemporaryCreateFailedDeliveryCaseFailureCount: adminTemporaryCreateFailedDeliveryCaseFailureCountInput.valueAsNumber,
+        adminTemporaryCreateFailedDeliveryCaseIsReturned: adminTemporaryCreateFailedDeliveryCaseIsReturnedCheckbox.checked,
+        adminTemporaryCreateFailedDeliveryCaseDaysSinceReturn: adminTemporaryCreateFailedDeliveryCaseDaysSinceReturnInput.valueAsNumber,
+        adminTemporaryCreateFailedDeliveryCaseClientRequest: adminTemporaryCreateFailedDeliveryCaseClientRequestSelect.value
+      }, adminTemporaryCreateFailedDeliveryCaseButton);
+    adminTemporaryCreateFailedDeliveryCaseResultText.textContent = adminTemporaryCreateFailedDeliveryCaseResponse.message;
+  } catch (adminTemporaryCreateFailedDeliveryCaseError) {
+    adminTemporaryCreateFailedDeliveryCaseResultText.textContent = adminTemporaryCreateFailedDeliveryCaseError.code
+      + ": " + adminTemporaryCreateFailedDeliveryCaseError.message;
+  }
+  adminTemporaryCreateFailedDeliveryCaseResultText.hidden = false;
+}
+
+// ===== SECTION 20: adminTemporaryCreateHeldPackage =====
+
+// TEMPORARY TEST CODE - remove before integration
+// Stage 7 needs held-package fixtures for reassignment tests.
+// What it does: Create a sample order with a worker holding its package.
+// Input: The submit event, optional worker username and order status.
+// Output: The tool's result message, or its error code and message.
+async function adminTemporaryCreateHeldPackage(adminTemporaryCreateHeldPackageEvent) {
+  adminTemporaryCreateHeldPackageEvent.preventDefault();
+  adminTemporaryCreateHeldPackageResultText.hidden = true;
+  try {
+    const adminTemporaryCreateHeldPackageResponse = await sharedSendRequest(
+      "POST", "/api/admin/temporary-test/held-package", {
+        adminTemporaryCreateHeldPackageWorkerUsername: adminTemporaryCreateHeldPackageWorkerUsernameInput.value,
+        adminTemporaryCreateHeldPackageOrderStatus: adminTemporaryCreateHeldPackageOrderStatusSelect.value
+      }, adminTemporaryCreateHeldPackageButton);
+    adminTemporaryCreateHeldPackageResultText.textContent = adminTemporaryCreateHeldPackageResponse.message;
+  } catch (adminTemporaryCreateHeldPackageError) {
+    adminTemporaryCreateHeldPackageResultText.textContent = adminTemporaryCreateHeldPackageError.code
+      + ": " + adminTemporaryCreateHeldPackageError.message;
+  }
+  adminTemporaryCreateHeldPackageResultText.hidden = false;
+}
+
+// ===== SECTION 21: adminTemporaryCreateRefundCase =====
+
+// TEMPORARY TEST CODE - remove before integration
+// Stage 8 needs refund attempts of different ages and statuses.
+// What it does: Create a cancelled sample order with one refund.
+// Input: The submit event, refund status and age in whole hours.
+// Output: The order reference, refund and payment numbers, or a rule error in the same card.
+async function adminTemporaryCreateRefundCase(adminTemporaryCreateRefundCaseEvent) {
+  adminTemporaryCreateRefundCaseEvent.preventDefault();
+  adminTemporaryCreateRefundCaseResultText.hidden = true;
+
+  // The request uses the fields of the Stage 8 fixture record.
+  try {
+    const adminTemporaryCreateRefundCaseResponse = await sharedSendRequest(
+      "POST", "/api/admin/temporary-test/refund-case", {
+        adminTemporaryCreateRefundCaseRefundStatus: adminTemporaryCreateRefundCaseRefundStatusSelect.value,
+        adminTemporaryCreateRefundCaseAgeHours: adminTemporaryCreateRefundCaseAgeHoursInput.valueAsNumber
+      }, adminTemporaryCreateRefundCaseButton);
+    adminTemporaryCreateRefundCaseResultText.textContent = adminTemporaryCreateRefundCaseResponse.message;
+  } catch (adminTemporaryCreateRefundCaseError) {
+    adminTemporaryCreateRefundCaseResultText.textContent = adminTemporaryCreateRefundCaseError.code
+      + ": " + adminTemporaryCreateRefundCaseError.message;
+  }
+  adminTemporaryCreateRefundCaseResultText.hidden = false;
+}
+
+// ===== SECTION 22: adminTemporarySetProviderAnswer =====
+
+// TEMPORARY TEST CODE - remove before integration
+// Stage 8 needs the stand-in provider to reproduce all supported outcomes.
+// What it does: Set the provider's answer for one refund number.
+// Input: The submit event, refund number and outcome.
+// Output: The saved answer message or a rule error in the same card.
+async function adminTemporarySetProviderAnswer(adminTemporarySetProviderAnswerEvent) {
+  adminTemporarySetProviderAnswerEvent.preventDefault();
+  adminTemporarySetProviderAnswerResultText.hidden = true;
+
+  // Setting the answer only changes what a later provider check receives.
+  try {
+    const adminTemporarySetProviderAnswerResponse = await sharedSendRequest(
+      "POST", "/api/admin/temporary-test/provider-answer", {
+        adminTemporarySetProviderAnswerRefundID: adminTemporarySetProviderAnswerRefundIDInput.valueAsNumber,
+        adminTemporarySetProviderAnswerOutcome: adminTemporarySetProviderAnswerOutcomeSelect.value
+      }, adminTemporarySetProviderAnswerButton);
+    adminTemporarySetProviderAnswerResultText.textContent = adminTemporarySetProviderAnswerResponse.message;
+  } catch (adminTemporarySetProviderAnswerError) {
+    adminTemporarySetProviderAnswerResultText.textContent = adminTemporarySetProviderAnswerError.code
+      + ": " + adminTemporarySetProviderAnswerError.message;
+  }
+  adminTemporarySetProviderAnswerResultText.hidden = false;
+}
+
+// ===== SECTION 23: adminTemporaryRunPrivacyCheck =====
+
+// TEMPORARY TEST CODE - remove before integration
+// What it does: Run the final Admin privacy check using the existing data.
+// Input: None.
+// Output: The number of answers and findings, or an error in the same card.
+async function adminTemporaryRunPrivacyCheck() {
+  adminTemporaryRunPrivacyCheckResultText.hidden = true;
+  try {
+    const adminTemporaryRunPrivacyCheckResponse = await sharedSendRequest(
+      "POST", "/api/admin/temporary-test/privacy-check", null, adminTemporaryRunPrivacyCheckButton);
+    adminTemporaryRunPrivacyCheckResultText.textContent = adminTemporaryRunPrivacyCheckResponse.message;
+  } catch (adminTemporaryRunPrivacyCheckError) {
+    adminTemporaryRunPrivacyCheckResultText.textContent = adminTemporaryRunPrivacyCheckError.code
+      + ": " + adminTemporaryRunPrivacyCheckError.message;
+  }
+  adminTemporaryRunPrivacyCheckResultText.hidden = false;
+}
+
+// ===== SECTION 24: adminTemporaryRemoveAllTestData =====
+
+// TEMPORARY TEST CODE - remove before integration
+// What it does: Ask the server to remove the local test data when the confirmation matches.
+// Input: The submit event and the exact text entered by the Admin.
+// Output: A success message or a refusal in the same card.
+async function adminTemporaryRemoveAllTestData(adminTemporaryRemoveAllTestDataEvent) {
+  adminTemporaryRemoveAllTestDataEvent.preventDefault();
+  adminTemporaryRemoveAllTestDataResultText.hidden = true;
+  try {
+    const adminTemporaryRemoveAllTestDataResponse = await sharedSendRequest(
+      "POST", "/api/admin/temporary-test/remove-all-test-data", {
+        adminTemporaryRemoveAllTestDataConfirmText: adminTemporaryRemoveAllTestDataConfirmTextInput.value
+      }, adminTemporaryRemoveAllTestDataButton);
+    adminTemporaryRemoveAllTestDataConfirmTextInput.value = "";
+    adminTemporaryRemoveAllTestDataResultText.textContent = adminTemporaryRemoveAllTestDataResponse.message;
+    void adminViewMenuCounter();
+  } catch (adminTemporaryRemoveAllTestDataError) {
+    adminTemporaryRemoveAllTestDataResultText.textContent = adminTemporaryRemoveAllTestDataError.code
+      + ": " + adminTemporaryRemoveAllTestDataError.message;
+  }
+  adminTemporaryRemoveAllTestDataResultText.hidden = false;
 }

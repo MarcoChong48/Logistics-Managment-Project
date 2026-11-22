@@ -178,6 +178,7 @@ async function adminDecideShortageWait(adminDecideShortageWaitCase, adminDecideS
     const adminDecideShortageWaitResponse = await sharedSendRequest("POST",
       "/api/admin/shortage-cases/" + adminDecideShortageWaitCase.shortageCaseID + "/wait",
       {adminDecideShortageWaitReason}, adminDecideShortageWaitButton);
+    adminViewMenuCounter();
     const adminDecideShortageWaitElement = adminDecideShortageWaitButton.closest("tr");
     adminShowDecidedRow(adminDecideShortageWaitElement,
       adminDecideShortageWaitElement.querySelector('[data-title="Status"]'),
@@ -244,7 +245,7 @@ async function adminDecideShortageCancel() {
     const adminDecideShortageCancelPaid = adminDecideShortageCancelResponse.refundID != null;
     adminShowDecidedRow(adminDecideShortageCancelElement,
       adminDecideShortageCancelElement.querySelector('[data-title="Status"]'), adminDecideShortageCancelResponse,
-      "Cancelled by {admin}, {time}. " + (adminDecideShortageCancelPaid ? "Full refund requested." : "No refund needed."));
+      "Cancelled by {admin}, {time}. " + adminFormatDecidedRefund(adminDecideShortageCancelResponse));
     adminDecideShortageCancelElement.querySelector('[data-title="Order"] .shared-cell-sub').textContent =
       "Order status: Cancelled, " + (adminDecideShortageCancelPaid ? "paid" : "not paid");
   }
@@ -627,6 +628,7 @@ async function adminSubmitWarehouseCaseDialog(adminSubmitWarehouseCaseDialogElem
   try {
     const adminSubmitWarehouseCaseDialogResponse = await sharedSendRequest("POST",
       adminSubmitWarehouseCaseDialogWebAddress, adminSubmitWarehouseCaseDialogBody, adminSubmitWarehouseCaseDialogButton);
+    adminViewMenuCounter();
     sharedCloseDialog(adminSubmitWarehouseCaseDialogElement);
     sharedShowMessage("SUCCESS", adminSubmitWarehouseCaseDialogResponse.message);
     return adminSubmitWarehouseCaseDialogResponse;

@@ -1,6 +1,6 @@
 # LMS design note: how to rebuild a draft page in the new design
 
-Version 2.6, 20 November 2026.
+Version 2.7, 22 November 2026.
 
 ---
 
@@ -29,6 +29,18 @@ The Logistics Management System (LMS) has an old website draft: six sample scree
 | 9 | The checks to do before you hand over |
 | Appendix A | The finished style sheet. You copy it unchanged. |
 | Appendix B | The icons. You copy them unchanged. |
+
+**What changed in version 2.7.** If you worked from version 2.6, these are all the differences:
+
+| Section | Change |
+|---|---|
+| 4.7, 4.8, Appendix A | Every table has fixed column widths. Each column title carries a width class (the table of classes is in Section 4.7) that holds the longest value the column can show, so a flag or a second line in one row never moves a column. Free text takes the rest and wraps. Copy the style sheet again. |
+| 4.5, 2.6, Appendix A | A further table in a card is a part of the card: a framed block set in from the card edges, with a grey head that holds its sub-heading (14 px) with its count, and then the column titles. Card titles and headings between groups of cards are 17 px, the page title 22 px. |
+| 4.4, 4.26, 4.28, Appendix A | In a form a placeholder shows only an example ("e.g. TEST-0055"); what a field does goes into its help line. New part "How to use": a worded line that opens a short block of help in a card. |
+| 4.4, Appendix A | A select inside a field fills the whole field, also without `shared-select-wide`. |
+| 4.17 | A decision fact says "Nothing paid" when nothing had been paid. |
+| 6.6 | A placeholder that names the field, and a question-mark icon or a tooltip with help, have a new part each. |
+| 9 | G-08 also holds when the page has a scroll bar; new checks G-25 and G-26. |
 
 **What changed in version 2.6.** If you worked from version 2.5, this is the only difference:
 
@@ -300,9 +312,10 @@ The same word always gets the same family on every page of every role.
 
 | Use | Size | Weight | Colour |
 |---|---|---|---|
-| Page title | 20 px, line height 28 px | 600 | text |
+| Page title | 22 px, line height 30 px | 600 | text |
 | Count line under the page title | 14 px | 400 | muted |
-| Card title | 15 px | 600 | text |
+| Card title, and a heading between groups of cards | 17 px, line height 24 px | 600 | text |
+| Sub-heading of a part of a card (Section 4.5) | 14 px, line height 20 px | 600 | text |
 | Window title | 16 px | 600 | text |
 | Normal text, table cells, inputs | 14 px, line height 20 px | 400 | text |
 | First cell of a table row (the name of the thing) | 14 px | 600 | text |
@@ -314,6 +327,8 @@ The same word always gets the same family on every page of every role.
 | Flag, group label of the side menu, counter | 12 px | 600 | family or menu colours |
 | Big number in a number box | 28 px, line height 34 px | 600 | text |
 | Raw values and the temporary password | fixed-width font, 13 px (password 18 px) | 400 (password 600) | text |
+
+Each level stands one clear step above the next: the page title (22 px) above a card title (17 px), and a card title above the sub-heading of a part of the card (14 px, in the grey head of its block).
 
 No text is smaller than 12 px. Nothing is written in capital letters except the short words and data of Section 2.5.
 
@@ -634,7 +649,7 @@ A link is an `a` with `href`. It is orange and always underlined, also inside a 
 label.shared-field
   span.shared-field-label                         "Username"
     span.shared-field-optional                    " (optional)"   (only for a field that may stay empty)
-  input.shared-input [type="text"]
+  input.shared-input [type="text"] [placeholder="e.g. wh_picker_04"]   (the placeholder only where an example helps)
   span.shared-field-help                          "4 to 30 characters."   (only if there is something to explain)
 ```
 
@@ -643,7 +658,7 @@ label.shared-field
 | One line of text | `input.shared-input [type="text"]`. Other types use the same class: `password`, `number`, `datetime-local`. |
 | A password that is set or changed | The password field (Section 4.27): the input with a "Show" button, and under a new password the strength scale and the rule list. |
 | Several lines of text | `textarea.shared-textarea` |
-| A choice from a list | `span.shared-select.shared-select-wide` holding `select [aria-label]` and after it `icon(chevron)`. Outside a form leave out `shared-select-wide`. |
+| A choice from a list | `span.shared-select.shared-select-wide` holding `select [aria-label]` and after it `icon(chevron)`. Outside a form leave out `shared-select-wide`. Inside a field the select always fills the whole field, so every point of the box opens the list; the style sheet does this also where `shared-select-wide` is missing. |
 | A tick box | `label.shared-checkbox` holding `input [type="checkbox"]` and `span` with the words. It is not wrapped in `label.shared-field`. |
 | A file | `input.shared-file-input [type="file"]` |
 | A search box | `label.shared-input-search` holding `icon(search)` and `input [type="search"] [placeholder] [aria-label]` |
@@ -651,6 +666,8 @@ label.shared-field
 Rules:
 
 - The label stands above the field. Fields of a form stand under each other and are as wide as the form.
+- **A placeholder is only an example.** In a form field the placeholder shows one typical value, written "e.g." and the value: "e.g. TEST-0055", "e.g. test_client_4". It never holds the name of the field, a rule or what the field does, because it disappears while the person types. A field for which no example helps has no placeholder. (In a filter bar the empty text names the control instead, Section 4.6.)
+- **What a field does goes into its help line** (`span.shared-field-help`) under the field: what happens when an optional field stays empty, the allowed range of a number, which value shows which flag. The help line stays visible while the person types. It has one or two short sentences.
 - A field with an error also has the class `shared-input-invalid` (a select: `shared-select-invalid` on the `span`), and under it stands `span.shared-field-error` with the reason instead of the help text. A password field keeps its help (Section 4.27).
 - A field that cannot be changed gets the attribute `disabled`.
 - Widths outside a form: `shared-input-short` (96 px) and `shared-input-medium` (200 px).
@@ -668,11 +685,17 @@ section.shared-card
     p.shared-note                                 "..."
   div.shared-card-body                            (text, fact lists, forms)
   (or, instead of the body: a filter bar, a table and a pager, which reach the edges of the card)
+  h3.shared-card-part-title                       (only for a part of the card, see below)
+    "Delivery attempts"
+    span.shared-card-count                        "1"   (its number of rows)
+  div.shared-table-scroll ...                     (its table; or p.shared-table-empty when it has no rows)
 ```
 
 - A card is a white leaf with a 1 px edge and no shadow. Cards never stand inside cards.
 - Inside `shared-card-body` blocks stand 12 px apart.
-- A second table in the same card starts with `h3.shared-card-part-title`.
+- The card title is 17 px (Section 2.6).
+
+**A part of a card.** A further table in the same card, for example the delivery attempts in the card "Delivery", is a part of the card. It starts with `h3.shared-card-part-title`, which holds its sub-heading and, in `span.shared-card-count`, its number of rows. The sub-heading and its table form one flat block, set 16 px in from the edges of the card: a 1 px edge with 6 px corners, a grey head that holds the sub-heading and then the column titles, and the rows in white. A part without rows shows `p.shared-table-empty` (for example "No rows found.") in the same frame instead of its table; a rule then closes the grey head, and the count is "0". The block is not a card in a card: it has no shadow, no header bar and no white ground of its own.
 
 ### 4.6 Filter bar
 
@@ -706,9 +729,9 @@ div.shared-table-scroll [role="region"] [aria-label="Users table"]   (a named re
   table.shared-table
     thead
       tr
-        th [scope="col"]                          "Username"
-        th.shared-table-number [scope="col"]      "Price"       (a number column)
-        th.shared-table-actions [scope="col"]     "Actions"     (the last column, if rows have actions)
+        th.shared-column-username [scope="col"]                       "Username"   (every column title has one width class)
+        th.shared-table-number.shared-column-money [scope="col"]      "Price"      (a number column)
+        th.shared-table-actions.shared-column-actions [scope="col"]   "Actions"    (the last column, if rows have actions)
     tbody
       tr
         th [scope="row"]                          "admin_second"   (the name of the thing; bold)
@@ -721,19 +744,41 @@ div.shared-table-scroll [role="region"] [aria-label="Users table"]   (a named re
         td.shared-table-number                    "HKD 45.00"
 ```
 
-- **One line per row.** A row is 46 px high and its cells do not wrap.
-- **A free-text column may wrap** (a product name, a note, a raw value). Its `th` and every `td` of it get the class `shared-table-wrap`.
+- **One line per row.** A row is 46 px high. Every column is as wide as the longest value it can hold, so its cells stay on one line. A value that is longer still (rare: a username of more than 20 characters) takes a second line; it is never cut off and never covers the next column.
+- **Free text takes the rest.** A column of free text (a product name, a note, a raw value) has the width class `shared-column-fill`: it takes the rest of the row and wraps. If its text often needs several lines, its `th` and every `td` of it also get the class `shared-table-wrap`, which adds 8 px above and below.
 - **Nothing is cut off.** If a table is wider than its card, it scrolls sideways inside `shared-table-scroll` and the scrollbar is visible.
 - **A named region that keeps its first column.** The scroll box of every list table has `role="region"` and an `aria-label` that names the table, for example "Orders table". While the table is wider than its card, the script (B11) adds the class `shared-table-scroll-overflow` and `tabindex="0"`: the first column stays at the left behind a margin rule, the keyboard can reach and scroll the list, and a focused cell never hides under the first column. When the table fits, the box is not a Tab stop.
 - **A sum closes with a total row.** A money table that states a sum ends with one `tfoot` row: `th [scope="row"]` "Total" across the other columns and the sum in `td.shared-table-number`. A rule stands above it and a double rule below it; 12 px of card ground under the double rule keep it apart from the edge of the card.
 - **The first cell** of a row is a `th` with `scope="row"`. It holds the name of the thing.
 - **Numbers and money** are right-aligned: class `shared-table-number` on the `th` and on every `td` of the column.
 - **Times** get the class `shared-table-time`, so the digits stand under each other.
-- **Several things in one cell** (a badge, a note and a flag) are wrapped in `span.shared-cell-line`. A small grey note next to a badge is `span.shared-cell-note`.
+- **Several things in one cell** (a badge, a note and a flag) are wrapped in `span.shared-cell-line`. A small grey note next to a badge is `span.shared-cell-note`. If they do not fit in one line, they go on to a second line.
 - **A table with no rows** shows, instead of the `div.shared-table-scroll`, one line: `p.shared-table-empty` with the words "No rows found." and, if filters are set, the text-link button "Clear filters".
 - A list table has no button in its rows except the Actions menu. Rows are not sorted by clicking a column title.
 
-In a window that is 1280 px wide the table has about 1000 px. Choose the columns so that they fit into that width.
+**Column widths.** The width of every column comes from its title in the head row and never from the rows (`table-layout: fixed`). So a longer value, a flag or a second line in one row never moves a column, and the columns stand where the design puts them, whatever the rows hold. Every `th` of the head row has exactly one width class. Choose the class that holds the longest value the column can ever show, with its badges, flags and notes, and the column title; do not choose by the sample rows. Where a value may be very long (a SKU may have 60 characters, a username 30), the class holds the length that real values have, and a longer value takes a second line. The classes of a whole column (`shared-table-number`, `shared-table-time`, `shared-table-actions`, `shared-table-wrap`) stay as they are; the width class goes on the `th` only.
+
+| Class | Width | Holds |
+|---|---|---|
+| `shared-column-count` | 88 px | A whole number up to 6 digits, or a short count such as "1 of 3". Column titles up to "Low below" fit. |
+| `shared-column-status-short` | 104 px | One status badge of a short word, up to "Accepted": Active, Inactive, Pending, Failed, Success, Failure, Rejected, Reversed. |
+| `shared-column-button` | 112 px | In a work table: one small button up to "Reassign". |
+| `shared-column-order` | 120 px | An order reference without a flag, with short lines under it (a refund number, a badge up to "Cancelled"). |
+| `shared-column-word` | 120 px | A word from a fixed list, up to "Tracking page"; a case number; an age such as "2 days 3 hours", which wraps. |
+| `shared-column-status` | 120 px | One status badge up to "In progress", "Requested" or "Withdrawn". |
+| `shared-column-code` | 128 px | A code that is read sign by sign, up to 13 signs: a SKU such as "TEST-MUG-1234", an IP address, "[unknown code]". |
+| `shared-column-time` | 136 px | A date and time, "2026-11-12 09:14". |
+| `shared-column-money` | 136 px | An amount up to "HKD 9,999,999.99". |
+| `shared-column-actions` | 136 px | In a list table: the Actions menu, or a short remark such as "Your own account". In a work table: 22 % of the row for the decision buttons, which wrap. |
+| `shared-column-order-flag` | 168 px | An order reference with one flag on its line, "TEST-0011 Open case". In a work table, where the flag stands under the reference: 144 px. |
+| `shared-column-username` | 168 px | A username up to 20 characters. In a work table, where a flag stands under it and a longer name wraps: 136 px. |
+| `shared-column-status-long` | 168 px | One status badge up to "Ready for redelivery": every order status, "Waiting restock", "Needs decision". |
+| `shared-column-phrase` | 176 px | A phrase from a fixed list, up to "Unable to contact client" or "Warehouse Worker". |
+| `shared-column-phrase-long` | 208 px | A phrase from a fixed list, up to "Temporary password issued" or "Client instruction 123456". |
+| `shared-column-account-status` | 368 px | The status of an account: its badge, the note of tries and one flag, for example "Locked, 12 min left", "5 of 5 tries", "Temporary password". |
+| `shared-column-fill` | the rest | Free text, and in a work table any column that shares the rest of the row. In a list table in a window narrower than 1280 px: 152 px. |
+
+In a window that is 1280 px wide a card of the full width leaves a table about 1000 px (1003 px when the page has a scroll bar). The widths of a list table add up to at most that, with about 120 px or more left for each `shared-column-fill`, so a list does not scroll sideways at 1280 px. In a narrower window a list may scroll sideways; its first column stays (B11), and each `shared-column-fill` then keeps 152 px. If no class holds the values of a new kind of column, ask.
 
 ### 4.8 Work table
 
@@ -756,7 +801,7 @@ div.shared-table-scroll
           span.shared-cell-sub                    "Decide the open shortage case first."   (only while a rule blocks a decision; its button then has [disabled])
 ```
 
-- **Cells may hold several lines** and wrap. So a work table never scrolls sideways.
+- **Cells may hold several lines** and wrap. So a work table never scrolls sideways. Its column widths (Section 4.7) are chosen so that it fits a window of 1024 px: the Order column has `shared-column-order-flag` when its rows can carry a flag and `shared-column-order` when they cannot; columns of times, money and badges have their classes; the decision buttons have `shared-column-actions` (22 % of the row) or, for one short button, `shared-column-button`; every other column has `shared-column-fill` and shares the rest.
 - **Every body cell carries `data-title`** with the title of its column. A small window uses it (Section 3.6).
 - **The decision buttons are visible** in the last column as small buttons with words, right-aligned. They are level "other"; a dangerous one is level "dangerous". They wrap inside the cell when they do not fit in one line.
 - **A decision that a rule blocks right now** keeps its button in the row, with the attribute `disabled`. Directly after `div.shared-cell-buttons` stands one `span.shared-cell-sub` that says why, for example "Decide the open shortage case first." Never hide a blocked decision without saying why.
@@ -936,7 +981,7 @@ The pairs stand next to each other, up to four in a row, and wrap.
 dl.shared-decision-facts
   div.shared-fact
     dt.shared-fact-label                          "Payment"
-    dd.shared-fact-value                          "Paid"   (or "No accepted payment")
+    dd.shared-fact-value                          "Paid"   (or "Nothing paid": no accepted payment, or one of HKD 0.00)
   div.shared-fact
     dt.shared-fact-label                          "Outcome"
     dd.shared-fact-value                          "The whole order is cancelled for good. A full refund is requested."
@@ -1093,7 +1138,7 @@ Icons are small line drawings. All of them are in Appendix B. An icon is allowed
 |---|---|
 | The entries of the side menu | One icon per entry |
 | A search box | search |
-| A select, and the "Actions" button | chevron |
+| A select, the "Actions" button and the line "How to use" (Section 4.28) | chevron |
 | The session time in the top bar | clock |
 | A main button that creates something ("Create user", "Add product") | plus |
 | A button that downloads a file ("Download CSV") | download |
@@ -1146,6 +1191,25 @@ Rules:
 - **Errors** stand under their own field in `span.shared-field-error`, which is in the page from the start with `hidden`. A field with an error gets `shared-input-invalid` and `aria-invalid="true"`; so does a field whose rule line or match line is red, also without words. Two errors of a new password show at once, because typing on cannot fix them: "Too long: some of these characters count as more than one. Use fewer characters." (more than 72 bytes in at most 72 characters) and "The new password must be different from the current one." After a press with a rule still not met, the line says "Meet every rule marked in red." After a press, the keyboard goes to the first marked field. A press first removes every earlier answer of the server, under the fields and in the message place. An answer of the server then stands under the field it belongs to, in place of the page's own line, until the next press or until the person types in that field again. An error that belongs to no field goes into the message place above the first field (Section 4.15).
 - **The account name.** A form with password fields also holds `input [type="text"] [autocomplete="username"] [hidden]` with the account name, so that a password manager saves the password for the right account.
 - **While the form is sent,** the main button is switched off and says what is happening ("Changing password").
+
+### 4.28 How to use
+
+A short block of help that a card opens on request, for a card whose sentence does not say everything a person needs: what it creates or changes, where the result can be seen, what must be done first, an example.
+
+```
+details.shared-disclosure
+  summary.shared-disclosure-summary               "How to use", then icon(chevron)
+  dl.shared-disclosure-body
+    div.shared-disclosure-line                    (one per line, at most four)
+      dt                                          "Creates"
+      dd                                          "An active account named after its role, for example test_warehouse_3, ..."
+```
+
+- "How to use" has words, in orange and underlined like a link; its chevron turns while the block is open. It is never a "?" icon or an icon alone.
+- It stands directly after the sentence of the card and starts closed. The browser opens and closes it with the mouse, Enter or Space; no script is needed.
+- Each line starts with one word from this list, in this order: "Creates", "Changes", "Removes", "Keeps", "Shows", "Before", "Next", "Not for", "See it on", "Example". The words after it are one short sentence.
+- A card whose sentence already says everything has no "How to use".
+- The block is a quiet grey ground without an edge, inside the card body. It is not a card.
 
 ---
 
@@ -1286,6 +1350,8 @@ You never write a colour yourself. You choose the part and, for a badge or a fla
 | A switch in a table row | A line in the Actions menu and a confirm window |
 | A number box or a "Save" button inside a table row | A form window, opened from the Actions menu or from a button |
 | A form inside the page | Fields (Section 4.4) in a card or in a form window |
+| A placeholder that names the field ("Enter username") | A label above the field; the placeholder shows only an example such as "e.g. wh_picker_04" (Section 4.4) |
+| A question-mark icon or a tooltip with help | How to use (Section 4.28) |
 | A password field with an eye icon, a strength bar or a list of password rules | Password field (Section 4.27): a "Show" button with words, and under a new password the strength scale and the rule list |
 | A pop-up (modal) | Window (Section 4.14) |
 | A small message that slides in (toast) | Message box (Section 4.15) |
@@ -1401,6 +1467,8 @@ tr
     span.shared-menu                              (the Actions menu of Section 4.12)
 ```
 
+Its column titles carry the width classes of Section 4.7: Username `shared-column-username`, Role `shared-column-phrase`, Status `shared-column-account-status`, Last login `shared-column-time`, Actions `shared-column-actions`.
+
 ### 8.2 Hints for the other draft screens
 
 These are hints, not decisions. The person responsible for a role decides its pages and what they show. The hints only say which part fits which thing in the draft.
@@ -1459,7 +1527,7 @@ These are hints, not decisions. The person responsible for a role decides its pa
 | G-05 | Switch the network off and open three pages. | They look the same as with the network. |
 | G-06 | Go through the list of Section 6.2 and search your pages for each thing. | None of them is left. |
 | G-07 | Read all sample data. | Invented and harmless. No real person, no persona name of the draft, no place name, no time zone label. |
-| G-08 | Make the browser window 1280 px wide and 720 px high. Open every page. | The page itself never scrolls sideways. No list table scrolls sideways. No text is cut off, overlaps another text or ends in three dots. |
+| G-08 | Make the browser window 1280 px wide and 720 px high. Open every page. | The page itself never scrolls sideways. No list table scrolls sideways, also when the page has a scroll bar. No text is cut off, overlaps another text or ends in three dots. |
 | G-09 | Only for an adaptive frame: make the window 390 px wide and open every page. Press "Menu" and "Close menu". If a page shows corner messages, show one. | The page does not scroll sideways. Work tables are shown as cards with a title above every value. The menu opens and closes. On an adaptive page the message area is 60 px from the top and 8 px from each side. |
 | G-10 | Look at every button, also in windows and menus. | Every button has words. No button shows only an icon. |
 | G-11 | Count the filled orange buttons on every page while no window is open, and in every window. | At most one per page and at most one per window. |
@@ -1476,16 +1544,18 @@ These are hints, not decisions. The person responsible for a role decides its pa
 | G-22 | At 1024 px and at 1280 px look at every date and time inside a line of text. | None is split over two lines; each stands in `time.shared-nowrap` with its `datetime`. |
 | G-23 | If a page has a field for a new password, type into it a short password, then one that meets every rule, then one of 16 characters or more. | The rule lines are ticked as each rule is met and turn red only after a press, or at once when the password is too long. The strength word changes with the level, and the scale is never red. |
 | G-24 | On a page with password fields press the main button with the fields empty, then press "Show" beside each field. Look at the message place of the page in its elements. | Each problem stands under its own field with a red edge and `aria-invalid="true"`, and the keyboard is on the first marked field. "Show" shows the characters and becomes "Hide". The message place is in the page before the first message and is never hidden. |
+| G-25 | Look at the column titles of every table in the elements of the developer tools. At 1280 px read the left edge of each column title, add a flag or a long note to one row in the elements, and read them again. At 1024 px look at every work table. | Every column title has one width class of Section 4.7, chosen for the longest value of the column. The edges do not move. No list table scrolls at 1280 px and no work table at 1024 px. Nothing sticks out of its cell. |
+| G-26 | Check every form field with a placeholder, every select inside a field, every part of a card and every "How to use". | A placeholder shows only an example ("e.g." and a value), and what the field does stands in its help line. A select opens from every point of its box. A part of a card is a framed block with a grey head that holds its sub-heading and count. "How to use" has words, opens and closes, and its chevron turns. |
 
 ---
 
 ## Appendix A. The style sheet
 
-Copy the text inside the block below unchanged into `shared/shared-common.css`. It has 2520 lines and 20 numbered sections. Do not add, remove, reorder or reformat anything. Every colour, size and movement of the design is in this file, so no page needs any style of its own.
+Copy the text inside the block below unchanged into `shared/shared-common.css`. It has 2697 lines and 20 numbered sections. Do not add, remove, reorder or reformat anything. Every colour, size and movement of the design is in this file, so no page needs any style of its own.
 
 ```css
 /* ==========================================================================
-   LMS shared style sheet: shared-common.css (version 2.4, the ledger look in charcoal and orange)
+   LMS shared style sheet: shared-common.css (version 2.7, the ledger look in charcoal and orange)
    One style sheet for every page of the Logistics Management System.
    Copy this text unchanged. Do not add, remove or change a rule.
 
@@ -1506,7 +1576,7 @@ Copy the text inside the block below unchanged into `shared/shared-common.css`. 
     14. Messages and notes
     15. Number box, fact list and timeline
     16. Pages without the frame (login and similar)
-    17. More parts (steps, summary, notices, scan box, capture box, progress)
+    17. More parts (steps, summary, notices, scan box, capture box, progress, how to use)
     18. Small windows (only for a frame marked as adaptive)
     19. Printing a label
     20. People who switched animations off
@@ -2004,8 +2074,8 @@ html {
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  font-size: 20px;
-  line-height: 28px;
+  font-size: 22px;
+  line-height: 30px;
   font-weight: 600;
   letter-spacing: -0.01em;
 }
@@ -2026,8 +2096,8 @@ html {
 
 .shared-section-title {
   margin-top: 8px;
-  font-size: 15px;
-  line-height: 22px;
+  font-size: 17px;
+  line-height: 24px;
   font-weight: 600;
 }
 
@@ -2243,12 +2313,16 @@ html {
   pointer-events: none;
 }
 
-.shared-select-wide {
+/* A select inside a field fills its field, also without shared-select-wide,
+   so the whole box opens the list. */
+.shared-select-wide,
+.shared-field > .shared-select {
   display: flex;
   width: 100%;
 }
 
-.shared-select-wide select {
+.shared-select-wide select,
+.shared-field > .shared-select select {
   width: 100%;
 }
 
@@ -2511,8 +2585,8 @@ html {
 }
 
 .shared-card-title {
-  font-size: 15px;
-  line-height: 22px;
+  font-size: 17px;
+  line-height: 24px;
   font-weight: 600;
 }
 
@@ -2543,13 +2617,40 @@ html {
   border-bottom: 1px solid var(--colour-line);
 }
 
+/* A sub-section of a card: one flat block, set in from the edges of the
+   card. Its grey head holds the sub-heading with its count and then the
+   column titles of its table; the rows follow in white inside a thin frame. */
 .shared-card-part-title {
-  padding: 12px 16px 8px;
-  border-top: 1px solid var(--colour-line);
-  font-size: 13px;
-  line-height: 18px;
+  margin: 0 16px;
+  padding: 12px 12px 2px;
+  border: 1px solid var(--colour-line);
+  border-bottom: 0;
+  border-radius: var(--radius-small) var(--radius-small) 0 0;
+  background: var(--colour-sunken);
+  font-size: 14px;
+  line-height: 20px;
   font-weight: 600;
-  color: var(--colour-text-muted);
+  color: var(--colour-text);
+}
+
+.shared-card-part-title + .shared-table-scroll,
+.shared-card-part-title + .shared-table-empty,
+.shared-card-part-title + .shared-table-scroll[hidden] + .shared-table-empty {
+  margin: 0 16px 16px;
+  border: 1px solid var(--colour-line);
+  border-top: 0;
+  border-radius: 0 0 var(--radius-small) var(--radius-small);
+}
+
+.shared-card-part-title + .shared-table-scroll thead th {
+  height: 30px;
+}
+
+/* A sub-section without rows: a rule closes its head above the empty line. */
+.shared-card-part-title:has(+ .shared-table-empty),
+.shared-card-part-title:has(+ .shared-table-scroll[hidden]) {
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--colour-rule-strong);
 }
 
 .shared-filter-bar {
@@ -2615,7 +2716,7 @@ html {
 }
 
 .admin-order-payment-refund-grid {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 600px), 1fr));
 }
 
 .shared-grid-three {
@@ -2662,16 +2763,21 @@ html {
   outline-offset: -2px;
 }
 
+/* The widths of the columns come from the classes of the head row, never
+   from the rows (Section 9, column widths below). */
 .shared-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
+/* A value that is longer than its column takes a second line. It is never
+   cut off and never covers the next column. */
 .shared-table th,
 .shared-table td {
   padding: 0 12px;
   text-align: left;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .shared-table thead th {
@@ -2682,6 +2788,7 @@ html {
   font-size: 12.5px;
   line-height: 18px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .shared-table tbody th,
@@ -2745,10 +2852,89 @@ html {
 }
 
 .shared-table .shared-table-wrap {
-  min-width: 160px;
   padding-top: 8px;
   padding-bottom: 8px;
-  white-space: normal;
+}
+
+/* Column widths. Each th of the head row has one of these classes. The
+   width holds the longest value that the column can show, and its title,
+   so a longer value, a flag or a second line in one row never moves a
+   column. */
+.shared-table th.shared-column-count {
+  width: 88px;
+}
+
+.shared-table th.shared-column-status-short {
+  width: 104px;
+}
+
+.shared-table th.shared-column-button {
+  width: 112px;
+}
+
+.shared-table th.shared-column-order,
+.shared-table th.shared-column-word,
+.shared-table th.shared-column-status {
+  width: 120px;
+}
+
+.shared-table th.shared-column-code {
+  width: 128px;
+}
+
+.shared-table th.shared-column-time,
+.shared-table th.shared-column-money,
+.shared-table th.shared-column-actions {
+  width: 136px;
+}
+
+.shared-table th.shared-column-order-flag,
+.shared-table th.shared-column-username,
+.shared-table th.shared-column-status-long {
+  width: 168px;
+}
+
+.shared-table th.shared-column-phrase {
+  width: 176px;
+}
+
+.shared-table th.shared-column-phrase-long {
+  width: 208px;
+}
+
+.shared-table th.shared-column-account-status {
+  width: 368px;
+}
+
+/* In a work table a flag stands under the order reference or the username,
+   and a long username takes a second line, so these columns are narrower.
+   The decision buttons get a share of the row and wrap. */
+.shared-table-work th.shared-column-order-flag {
+  width: 144px;
+}
+
+.shared-table-work th.shared-column-username {
+  width: 136px;
+}
+
+.shared-table-work th.shared-column-actions {
+  width: 22%;
+}
+
+/* A column with shared-column-fill has no width of its own: it takes the
+   rest of the row and wraps. A list in a window narrower than 1280 px may
+   scroll sideways; there such a column keeps 152 px, so it never shrinks
+   away. */
+@media (max-width: 1279px) {
+  .shared-table:not(.shared-table-work) th.shared-column-fill {
+    width: 152px;
+  }
+}
+
+/* Several things in one cell go on to a second line before they would
+   cover the next column. */
+.shared-table .shared-cell-line {
+  flex-wrap: wrap;
 }
 
 .shared-table-work tbody th,
@@ -3832,6 +4018,63 @@ html {
   font-variant-numeric: tabular-nums;
 }
 
+/* 17.6 How to use: a worded line that opens a short help block in a card */
+.shared-disclosure-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--radius-small);
+  color: var(--colour-link);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.shared-disclosure-summary::-webkit-details-marker {
+  display: none;
+}
+
+.shared-disclosure-summary:hover {
+  color: var(--colour-primary-hover);
+}
+
+.shared-disclosure-summary .shared-icon {
+  width: 16px;
+  height: 16px;
+  transition: transform var(--motion-menu);
+}
+
+.shared-disclosure[open] > .shared-disclosure-summary .shared-icon {
+  transform: rotate(180deg);
+}
+
+.shared-disclosure-body {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-small);
+  background: var(--colour-sunken);
+}
+
+.shared-disclosure-line {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 12px;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.shared-disclosure-line + .shared-disclosure-line {
+  margin-top: 6px;
+}
+
+.shared-disclosure-line dt {
+  font-weight: 600;
+  color: var(--colour-text-muted);
+}
+
 /* ===== SECTION 18: SMALL WINDOWS ===== */
 /* These rules work only when the frame also has the class
    shared-page-frame-adaptive. A frame without it stays 1000 px wide. */
@@ -3892,6 +4135,10 @@ html {
   }
 
   /* A work table becomes a list of cards: one row, one card. */
+  .shared-page-frame-adaptive .shared-table-work {
+    table-layout: auto;
+  }
+
   .shared-page-frame-adaptive .shared-table-work thead {
     position: absolute;
     width: 1px;

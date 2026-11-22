@@ -161,7 +161,7 @@ public class AdminPickingService {
         String adminReassignPickingTaskMessage = "The picking task of order " + adminReassignPickingTaskOrder.orderReference
                 + " was reassigned to " + adminReassignPickingTaskNewWorker.username + ".";
         return new AdminDecidedRowResponse(adminReassignPickingTaskMessage, null, adminReassignPickingTaskNewWorker.username,
-                adminReassignPickingTaskAdmin.username(), assignedTime, null);
+                adminReassignPickingTaskAdmin.username(), assignedTime, null, false);
     }
 
     // ===== SECTION 5: HELPER FUNCTIONS =====

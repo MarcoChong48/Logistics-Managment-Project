@@ -38,7 +38,8 @@ CMD ["flock", "/flow-lock/lms_flow_check.lock", "sh", "-c", "\
     for flow_class in AdminUserFlowCheckTest \
       AdminLogFlowCheckTest SharedChangePasswordFlowCheckTest SharedRoleProtectionFlowCheckTest \
       AdminProductFlowCheckTest AdminSuperAdminFlowCheckTest AdminOrderFlowCheckTest \
-      AdminWarehouseCaseFlowCheckTest; do \
+      AdminWarehouseCaseFlowCheckTest AdminDeliveryCaseFlowCheckTest AdminRefundFlowCheckTest \
+      AdminDashboardFlowCheckTest; do \
       run_flow \"$flow_class\"; \
     done; \
     awk 'BEGIN { rule=0; flow=0; } \

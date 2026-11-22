@@ -1,5 +1,5 @@
 /* ==========================================================================
-   LMS shared style sheet: shared-common.css (version 2.4, the ledger look in charcoal and orange)
+   LMS shared style sheet: shared-common.css (version 2.7, the ledger look in charcoal and orange)
    One style sheet for every page of the Logistics Management System.
    Copy this text unchanged. Do not add, remove or change a rule.
 
@@ -20,7 +20,7 @@
     14. Messages and notes
     15. Number box, fact list and timeline
     16. Pages without the frame (login and similar)
-    17. More parts (steps, summary, notices, scan box, capture box, progress)
+    17. More parts (steps, summary, notices, scan box, capture box, progress, how to use)
     18. Small windows (only for a frame marked as adaptive)
     19. Printing a label
     20. People who switched animations off
@@ -518,8 +518,8 @@ html {
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  font-size: 20px;
-  line-height: 28px;
+  font-size: 22px;
+  line-height: 30px;
   font-weight: 600;
   letter-spacing: -0.01em;
 }
@@ -540,8 +540,8 @@ html {
 
 .shared-section-title {
   margin-top: 8px;
-  font-size: 15px;
-  line-height: 22px;
+  font-size: 17px;
+  line-height: 24px;
   font-weight: 600;
 }
 
@@ -757,12 +757,16 @@ html {
   pointer-events: none;
 }
 
-.shared-select-wide {
+/* A select inside a field fills its field, also without shared-select-wide,
+   so the whole box opens the list. */
+.shared-select-wide,
+.shared-field > .shared-select {
   display: flex;
   width: 100%;
 }
 
-.shared-select-wide select {
+.shared-select-wide select,
+.shared-field > .shared-select select {
   width: 100%;
 }
 
@@ -1025,8 +1029,8 @@ html {
 }
 
 .shared-card-title {
-  font-size: 15px;
-  line-height: 22px;
+  font-size: 17px;
+  line-height: 24px;
   font-weight: 600;
 }
 
@@ -1057,13 +1061,40 @@ html {
   border-bottom: 1px solid var(--colour-line);
 }
 
+/* A sub-section of a card: one flat block, set in from the edges of the
+   card. Its grey head holds the sub-heading with its count and then the
+   column titles of its table; the rows follow in white inside a thin frame. */
 .shared-card-part-title {
-  padding: 12px 16px 8px;
-  border-top: 1px solid var(--colour-line);
-  font-size: 13px;
-  line-height: 18px;
+  margin: 0 16px;
+  padding: 12px 12px 2px;
+  border: 1px solid var(--colour-line);
+  border-bottom: 0;
+  border-radius: var(--radius-small) var(--radius-small) 0 0;
+  background: var(--colour-sunken);
+  font-size: 14px;
+  line-height: 20px;
   font-weight: 600;
-  color: var(--colour-text-muted);
+  color: var(--colour-text);
+}
+
+.shared-card-part-title + .shared-table-scroll,
+.shared-card-part-title + .shared-table-empty,
+.shared-card-part-title + .shared-table-scroll[hidden] + .shared-table-empty {
+  margin: 0 16px 16px;
+  border: 1px solid var(--colour-line);
+  border-top: 0;
+  border-radius: 0 0 var(--radius-small) var(--radius-small);
+}
+
+.shared-card-part-title + .shared-table-scroll thead th {
+  height: 30px;
+}
+
+/* A sub-section without rows: a rule closes its head above the empty line. */
+.shared-card-part-title:has(+ .shared-table-empty),
+.shared-card-part-title:has(+ .shared-table-scroll[hidden]) {
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--colour-rule-strong);
 }
 
 .shared-filter-bar {
@@ -1129,7 +1160,7 @@ html {
 }
 
 .admin-order-payment-refund-grid {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 600px), 1fr));
 }
 
 .shared-grid-three {
@@ -1176,16 +1207,21 @@ html {
   outline-offset: -2px;
 }
 
+/* The widths of the columns come from the classes of the head row, never
+   from the rows (Section 9, column widths below). */
 .shared-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
+/* A value that is longer than its column takes a second line. It is never
+   cut off and never covers the next column. */
 .shared-table th,
 .shared-table td {
   padding: 0 12px;
   text-align: left;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .shared-table thead th {
@@ -1196,6 +1232,7 @@ html {
   font-size: 12.5px;
   line-height: 18px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .shared-table tbody th,
@@ -1259,10 +1296,89 @@ html {
 }
 
 .shared-table .shared-table-wrap {
-  min-width: 160px;
   padding-top: 8px;
   padding-bottom: 8px;
-  white-space: normal;
+}
+
+/* Column widths. Each th of the head row has one of these classes. The
+   width holds the longest value that the column can show, and its title,
+   so a longer value, a flag or a second line in one row never moves a
+   column. */
+.shared-table th.shared-column-count {
+  width: 88px;
+}
+
+.shared-table th.shared-column-status-short {
+  width: 104px;
+}
+
+.shared-table th.shared-column-button {
+  width: 112px;
+}
+
+.shared-table th.shared-column-order,
+.shared-table th.shared-column-word,
+.shared-table th.shared-column-status {
+  width: 120px;
+}
+
+.shared-table th.shared-column-code {
+  width: 128px;
+}
+
+.shared-table th.shared-column-time,
+.shared-table th.shared-column-money,
+.shared-table th.shared-column-actions {
+  width: 136px;
+}
+
+.shared-table th.shared-column-order-flag,
+.shared-table th.shared-column-username,
+.shared-table th.shared-column-status-long {
+  width: 168px;
+}
+
+.shared-table th.shared-column-phrase {
+  width: 176px;
+}
+
+.shared-table th.shared-column-phrase-long {
+  width: 208px;
+}
+
+.shared-table th.shared-column-account-status {
+  width: 368px;
+}
+
+/* In a work table a flag stands under the order reference or the username,
+   and a long username takes a second line, so these columns are narrower.
+   The decision buttons get a share of the row and wrap. */
+.shared-table-work th.shared-column-order-flag {
+  width: 144px;
+}
+
+.shared-table-work th.shared-column-username {
+  width: 136px;
+}
+
+.shared-table-work th.shared-column-actions {
+  width: 22%;
+}
+
+/* A column with shared-column-fill has no width of its own: it takes the
+   rest of the row and wraps. A list in a window narrower than 1280 px may
+   scroll sideways; there such a column keeps 152 px, so it never shrinks
+   away. */
+@media (max-width: 1279px) {
+  .shared-table:not(.shared-table-work) th.shared-column-fill {
+    width: 152px;
+  }
+}
+
+/* Several things in one cell go on to a second line before they would
+   cover the next column. */
+.shared-table .shared-cell-line {
+  flex-wrap: wrap;
 }
 
 .shared-table-work tbody th,
@@ -2346,6 +2462,63 @@ html {
   font-variant-numeric: tabular-nums;
 }
 
+/* 17.6 How to use: a worded line that opens a short help block in a card */
+.shared-disclosure-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--radius-small);
+  color: var(--colour-link);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.shared-disclosure-summary::-webkit-details-marker {
+  display: none;
+}
+
+.shared-disclosure-summary:hover {
+  color: var(--colour-primary-hover);
+}
+
+.shared-disclosure-summary .shared-icon {
+  width: 16px;
+  height: 16px;
+  transition: transform var(--motion-menu);
+}
+
+.shared-disclosure[open] > .shared-disclosure-summary .shared-icon {
+  transform: rotate(180deg);
+}
+
+.shared-disclosure-body {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-small);
+  background: var(--colour-sunken);
+}
+
+.shared-disclosure-line {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 12px;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.shared-disclosure-line + .shared-disclosure-line {
+  margin-top: 6px;
+}
+
+.shared-disclosure-line dt {
+  font-weight: 600;
+  color: var(--colour-text-muted);
+}
+
 /* ===== SECTION 18: SMALL WINDOWS ===== */
 /* These rules work only when the frame also has the class
    shared-page-frame-adaptive. A frame without it stays 1000 px wide. */
@@ -2406,6 +2579,10 @@ html {
   }
 
   /* A work table becomes a list of cards: one row, one card. */
+  .shared-page-frame-adaptive .shared-table-work {
+    table-layout: auto;
+  }
+
   .shared-page-frame-adaptive .shared-table-work thead {
     position: absolute;
     width: 1px;

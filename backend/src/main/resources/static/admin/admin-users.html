@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Users - LMS Admin</title>
   <link rel="stylesheet" href="/shared/shared-common.css">
-  <script src="/shared/shared-common.js?v=3" defer></script>
+  <link rel="stylesheet" href="/shared/shared-table-scrollbar.css">
+  <script src="/shared/shared-common.js?v=5" defer></script>
   <script src="/admin/admin-common.js?v=3" defer></script>
   <script src="/admin/admin-users.js?v=3" defer></script>
 </head>
@@ -71,11 +72,11 @@
         <table class="shared-table" id="adminSearchUserResultTable">
           <thead>
             <tr>
-              <th scope="col">Username</th>
-              <th scope="col">Role</th>
-              <th scope="col">Status</th>
-              <th scope="col" class="shared-table-time">Last login</th>
-              <th scope="col" class="shared-table-actions">Actions</th>
+              <th class="shared-column-username" scope="col">Username</th>
+              <th class="shared-column-phrase" scope="col">Role</th>
+              <th class="shared-column-account-status" scope="col">Status</th>
+              <th scope="col" class="shared-table-time shared-column-time">Last login</th>
+              <th scope="col" class="shared-table-actions shared-column-actions">Actions</th>
             </tr>
           </thead>
           <tbody id="adminSearchUserResultTableBody"></tbody>

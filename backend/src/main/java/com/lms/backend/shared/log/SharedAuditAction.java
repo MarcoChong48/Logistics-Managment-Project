@@ -34,9 +34,20 @@ public final class SharedAuditAction {
     public static final String SHARED_AUDIT_ACTION_ORDER_CANCELLED_BY_ADMIN = "ORDER_CANCELLED_BY_ADMIN";
     public static final String SHARED_AUDIT_ACTION_REFUND_REQUESTED = "REFUND_REQUESTED";
     public static final String SHARED_AUDIT_ACTION_REFUND_STATUS_CHECKED = "REFUND_STATUS_CHECKED";
+    public static final String SHARED_AUDIT_ACTION_REFUND_RETRIED = "REFUND_RETRIED";
     public static final String SHARED_AUDIT_ACTION_PICKING_TASK_REASSIGNED = "PICKING_TASK_REASSIGNED";
 
-    // ===== SECTION 5: CONSTRUCTOR =====
+    // ===== SECTION 5: DELIVERY ACTIONS =====
+
+    public static final String SHARED_AUDIT_ACTION_DELIVERY_REASSIGNED = "DELIVERY_REASSIGNED";
+    public static final String SHARED_AUDIT_ACTION_CLIENT_INSTRUCTION_RECORDED_BY_ADMIN =
+            "CLIENT_INSTRUCTION_RECORDED_BY_ADMIN";
+    public static final String SHARED_AUDIT_ACTION_REDELIVERY_APPROVED = "REDELIVERY_APPROVED";
+    public static final String SHARED_AUDIT_ACTION_CANCELLATION_APPROVED = "CANCELLATION_APPROVED";
+    public static final String SHARED_AUDIT_ACTION_CLIENT_INSTRUCTION_REJECTED = "CLIENT_INSTRUCTION_REJECTED";
+    public static final String SHARED_AUDIT_ACTION_DELIVERY_REMINDER_SENT = "DELIVERY_REMINDER_SENT";
+
+    // ===== SECTION 6: CONSTRUCTOR =====
 
     /**
      * What it does: Keeps the fixed action words from being created as an object.

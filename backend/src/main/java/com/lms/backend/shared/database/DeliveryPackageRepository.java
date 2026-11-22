@@ -42,4 +42,13 @@ public interface DeliveryPackageRepository extends JpaRepository<DeliveryPackage
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<DeliveryPackage> findByOrderID(Long orderID);
+
+    /**
+     * What it does: Takes the package lock for reassignment without waiting for another writer.
+     * Input: The package ID.
+     * Output: The locked package, an empty result when absent, or a lock conflict.
+     */
+    @Query(value = "SELECT * FROM delivery_package WHERE package_id = :packageID FOR UPDATE NOWAIT",
+            nativeQuery = true)
+    Optional<DeliveryPackage> findByPackageIDForUpdateNowait(Long packageID);
 }

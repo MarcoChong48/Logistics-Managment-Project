@@ -9,5 +9,6 @@ public record AdminDecidedRowResponse(
         String adminDecidedRowWorkerUsername,
         String adminDecidedRowDecidedByUsername,
         Instant adminDecidedRowDecidedTime,
-        Long refundID) {
+        Long refundID,
+        boolean adminDecidedRowRefundIsNew) {
 }

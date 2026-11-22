@@ -16,6 +16,8 @@ import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_CUSTODY_
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_CUSTODY_STATUS_WAREHOUSE;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_FAILURE_REASON_CLIENT_NOT_HOME;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_INSTRUCTION_STATUS_APPROVED;
+import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_INSTRUCTION_STATUS_PENDING;
+import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_INSTRUCTION_TYPE_CANCEL;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_INSTRUCTION_TYPE_REDELIVER;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_PAYMENT_STATUS_ACCEPTED;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_PICKING_TASK_STATUS_IN_PROGRESS;
@@ -23,17 +25,27 @@ import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_PICKING_
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_PICKING_TASK_STATUS_PENDING;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_PICKUP_LIST_STATUS_CLOSED;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_PICKUP_LIST_STATUS_OPEN;
+import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_REFUND_STATUS_FAILED;
+import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_REFUND_STATUS_PENDING;
+import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_REFUND_STATUS_REFUNDED;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_REFUND_STATUS_REQUESTED;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_RESERVATION_STATUS_CONSUMED;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_RESERVATION_STATUS_HELD;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_RESERVATION_STATUS_RELEASED;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
 
@@ -44,11 +56,26 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.lms.backend.admin.delivery.AdminDeliveryCaseService;
+import com.lms.backend.admin.delivery.AdminHeldPackageService;
 import com.lms.backend.admin.log.AdminLogCleanupTask;
+import com.lms.backend.admin.log.AdminLogService;
+import com.lms.backend.admin.order.AdminOrderService;
+import com.lms.backend.admin.order.AdminSearchOrderResponse;
+import com.lms.backend.admin.order.AdminSearchOrderRow;
+import com.lms.backend.admin.picking.AdminPickingService;
+import com.lms.backend.admin.placeholder.AdminRefundProviderOutcome;
+import com.lms.backend.admin.placeholder.AdminRefundTemporary;
 import com.lms.backend.admin.placeholder.AdminShortageInputPlaceholder;
+import com.lms.backend.admin.product.AdminProductService;
+import com.lms.backend.admin.refund.AdminRefundService;
+import com.lms.backend.admin.shortage.AdminShortageService;
+import com.lms.backend.admin.user.AdminUserService;
 import com.lms.backend.shared.database.AppUser;
 import com.lms.backend.shared.database.AppUserRepository;
 import com.lms.backend.shared.database.PickingScanHistoryRepository;
@@ -65,9 +92,16 @@ import com.lms.backend.shared.value.SharedProofType;
 import com.lms.backend.shared.value.SharedScanResult;
 import com.lms.backend.shared.value.SharedUserRole;
 
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+
 @Service
 @Profile("admintest")
 public class AdminTemporaryTestToolService {
+
+    private static final List<String> ADMIN_TEMPORARY_RUN_PRIVACY_CHECK_MARKER_LIST = List.of(
+            "PRIVATE-RECIPIENT-MARKER", "PRIVATE-PHONE-MARKER", "PRIVATE-ADDRESS-MARKER",
+            "5550 0000 1234", "9123-4567");
 
     // TEMPORARY TEST CODE - remove before integration
     // Stage 4 creates low-stock and reservation-shortfall fixtures without a Warehouse page.
@@ -137,10 +171,21 @@ public class AdminTemporaryTestToolService {
     private final String adminTemporarySetUserStatusBootstrapUsername;
     private final SharedCurrentUserReader adminTemporaryCreateSampleOrderSetCurrentUserReader;
     private final AdminShortageInputPlaceholder adminTemporaryCreateShortageReportInput;
+    private final AdminRefundTemporary adminTemporarySetProviderAnswerProvider;
+    private final AdminUserService adminTemporaryRunPrivacyCheckUserService;
+    private final AdminProductService adminTemporaryRunPrivacyCheckProductService;
+    private final AdminOrderService adminTemporaryRunPrivacyCheckOrderService;
+    private final AdminLogService adminTemporaryRunPrivacyCheckLogService;
+    private final AdminShortageService adminTemporaryRunPrivacyCheckShortageService;
+    private final AdminPickingService adminTemporaryRunPrivacyCheckPickingService;
+    private final AdminDeliveryCaseService adminTemporaryRunPrivacyCheckDeliveryService;
+    private final AdminHeldPackageService adminTemporaryRunPrivacyCheckHeldPackageService;
+    private final AdminRefundService adminTemporaryRunPrivacyCheckRefundService;
+    private final JsonMapper adminTemporaryRunPrivacyCheckMapper;
 
     /**
      * What it does: Receives the database and password helpers for the local test tools.
-     * Input: Database and password helpers, the log writer, cleanup task, bootstrap Admin name and current user reader.
+     * Input: Fixture helpers, live Admin search and export services, and the web JSON mapper.
      * Output: A test tools service that only loads in test mode.
      */
     public AdminTemporaryTestToolService(AppUserRepository adminTemporaryTestUserRepository,
@@ -152,6 +197,17 @@ public class AdminTemporaryTestToolService {
             PickingScanHistoryRepository adminTemporaryCreateOldLogRowPickingScanRepository,
             SharedCurrentUserReader adminTemporaryCreateSampleOrderSetCurrentUserReader,
             AdminShortageInputPlaceholder adminTemporaryCreateShortageReportInput,
+            AdminRefundTemporary adminTemporarySetProviderAnswerProvider,
+            AdminUserService adminTemporaryRunPrivacyCheckUserService,
+            AdminProductService adminTemporaryRunPrivacyCheckProductService,
+            AdminOrderService adminTemporaryRunPrivacyCheckOrderService,
+            AdminLogService adminTemporaryRunPrivacyCheckLogService,
+            AdminShortageService adminTemporaryRunPrivacyCheckShortageService,
+            AdminPickingService adminTemporaryRunPrivacyCheckPickingService,
+            AdminDeliveryCaseService adminTemporaryRunPrivacyCheckDeliveryService,
+            AdminHeldPackageService adminTemporaryRunPrivacyCheckHeldPackageService,
+            AdminRefundService adminTemporaryRunPrivacyCheckRefundService,
+            JsonMapper adminTemporaryRunPrivacyCheckMapper,
             @Value("${lms.shared.bootstrap-admin-username:}") String adminTemporarySetUserStatusBootstrapUsername) {
         this.adminTemporaryTestUserRepository = adminTemporaryTestUserRepository;
         this.adminTemporaryCreateTestUserDatabase = adminTemporaryCreateTestUserDatabase;
@@ -164,6 +220,17 @@ public class AdminTemporaryTestToolService {
         this.adminTemporarySetUserStatusBootstrapUsername = adminTemporarySetUserStatusBootstrapUsername;
         this.adminTemporaryCreateSampleOrderSetCurrentUserReader = adminTemporaryCreateSampleOrderSetCurrentUserReader;
         this.adminTemporaryCreateShortageReportInput = adminTemporaryCreateShortageReportInput;
+        this.adminTemporarySetProviderAnswerProvider = adminTemporarySetProviderAnswerProvider;
+        this.adminTemporaryRunPrivacyCheckUserService = adminTemporaryRunPrivacyCheckUserService;
+        this.adminTemporaryRunPrivacyCheckProductService = adminTemporaryRunPrivacyCheckProductService;
+        this.adminTemporaryRunPrivacyCheckOrderService = adminTemporaryRunPrivacyCheckOrderService;
+        this.adminTemporaryRunPrivacyCheckLogService = adminTemporaryRunPrivacyCheckLogService;
+        this.adminTemporaryRunPrivacyCheckShortageService = adminTemporaryRunPrivacyCheckShortageService;
+        this.adminTemporaryRunPrivacyCheckPickingService = adminTemporaryRunPrivacyCheckPickingService;
+        this.adminTemporaryRunPrivacyCheckDeliveryService = adminTemporaryRunPrivacyCheckDeliveryService;
+        this.adminTemporaryRunPrivacyCheckHeldPackageService = adminTemporaryRunPrivacyCheckHeldPackageService;
+        this.adminTemporaryRunPrivacyCheckRefundService = adminTemporaryRunPrivacyCheckRefundService;
+        this.adminTemporaryRunPrivacyCheckMapper = adminTemporaryRunPrivacyCheckMapper;
     }
 
     // ===== SECTION 2: adminTemporaryViewTestMode =====
@@ -747,7 +814,339 @@ public class AdminTemporaryTestToolService {
         return new SharedMessageResponse("Created picking order " + orderReference + " for " + username + ".");
     }
 
-    // ===== SECTION 17: adminTemporaryCreateSampleOrder =====
+    // ===== SECTION 17: adminTemporaryCreateFailedDeliveryCase =====
+
+    // TEMPORARY TEST CODE - remove before integration
+    // Stage 7 needs controllable ages for the failed-delivery flags and the manual decision actions.
+    /**
+     * What it does: Builds a failed delivery case and optionally records a return and a tracking-page request.
+     * Input: The number of failed attempts, return confirmation, days since return and desired client request.
+     * Output: The new order reference and pending request number if created, or an input error.
+     */
+    @Transactional
+    public SharedMessageResponse adminTemporaryCreateFailedDeliveryCase(
+            AdminTemporaryCreateFailedDeliveryCaseRequest adminTemporaryCreateFailedDeliveryCaseRequest) {
+        // Check the fixture ranges before allocating the order and its related accounts.
+        adminTemporaryCheckFailedDeliveryCaseInput(adminTemporaryCreateFailedDeliveryCaseRequest);
+        String orderReference = adminTemporaryCreateSampleOrder(SharedOrderStatus.DELIVERY_FAILED, null, null, null,
+                null, adminTemporaryCreateFailedDeliveryCaseRequest);
+        String adminTemporaryCreateFailedDeliveryCaseMessage = "Created failed delivery case for order "
+                + orderReference + ".";
+        String instructionType =
+                adminTemporaryCreateFailedDeliveryCaseRequest.adminTemporaryCreateFailedDeliveryCaseClientRequest();
+        if ("NONE".equals(instructionType)) {
+            return new SharedMessageResponse(adminTemporaryCreateFailedDeliveryCaseMessage);
+        }
+
+        Long instructionID = adminTemporaryCreateTestUserDatabase.sql("""
+                SELECT instruction.instruction_id
+                FROM client_instruction instruction JOIN customer_order orders ON orders.order_id = instruction.order_id
+                WHERE orders.order_reference = :orderReference
+                """).param("orderReference", orderReference).query(Long.class).single();
+        return new SharedMessageResponse(adminTemporaryCreateFailedDeliveryCaseMessage + " Request number: "
+                + instructionID + ".");
+    }
+
+    // ===== SECTION 18: adminTemporaryCreateHeldPackage =====
+
+    // TEMPORARY TEST CODE - remove before integration
+    // Stage 7 needs packages physically held by known and generated Delivery Workers.
+    /**
+     * What it does: Creates a collected sample package held by a Delivery Worker.
+     * Input: The optional worker username and status SHIPPED or OUT_FOR_DELIVERY.
+     * Output: The new package ID, order reference and worker, or a status or worker error.
+     */
+    @Transactional
+    public SharedMessageResponse adminTemporaryCreateHeldPackage(
+            AdminTemporaryCreateHeldPackageRequest adminTemporaryCreateHeldPackageRequest) {
+        SharedOrderStatus orderStatus =
+                adminTemporaryCreateHeldPackageRequest.adminTemporaryCreateHeldPackageOrderStatus();
+        if (orderStatus != SharedOrderStatus.SHIPPED && orderStatus != SharedOrderStatus.OUT_FOR_DELIVERY) {
+            throw new SharedRuleException(HttpStatus.BAD_REQUEST, "SHARED_INPUT_INVALID",
+                    "Choose Shipped or Out for delivery.");
+        }
+
+        // An empty username leaves the builder to create a test worker; otherwise confirm the named worker's state.
+        String username = adminTemporaryCreateHeldPackageRequest.adminTemporaryCreateHeldPackageWorkerUsername();
+        Long deliveryWorkerUserID = null;
+        if (username != null && !username.isBlank()) {
+            AppUser adminTemporaryCreateHeldPackageWorker = adminTemporaryFindTestUser(username);
+            if (adminTemporaryCreateHeldPackageWorker.role != SharedUserRole.DELIVERY_WORKER
+                    || adminTemporaryCreateHeldPackageWorker.accountStatus != SharedAccountStatus.ACTIVE) {
+                throw new SharedRuleException(HttpStatus.CONFLICT, "ADMIN_WORKER_NOT_ALLOWED",
+                        "Choose an active Delivery Worker.");
+            }
+            deliveryWorkerUserID = adminTemporaryCreateHeldPackageWorker.userID;
+        }
+
+        String orderReference = adminTemporaryCreateSampleOrder(orderStatus, null, null, deliveryWorkerUserID);
+        String adminTemporaryCreateHeldPackageMessage = adminTemporaryCreateTestUserDatabase.sql("""
+                SELECT package.package_id, worker.username
+                FROM customer_order orders JOIN delivery_package package ON package.order_id = orders.order_id
+                JOIN app_user worker ON worker.user_id = package.current_handler_user_id
+                WHERE orders.order_reference = :orderReference
+                """).param("orderReference", orderReference)
+                .query((adminTemporaryCreateHeldPackageResult, adminTemporaryCreateHeldPackageRowNumber) ->
+                        "Created held package " + adminTemporaryCreateHeldPackageResult.getLong("package_id")
+                                + " for order " + orderReference + " with worker "
+                                + adminTemporaryCreateHeldPackageResult.getString("username") + ".")
+                .single();
+        return new SharedMessageResponse(adminTemporaryCreateHeldPackageMessage);
+    }
+
+    // ===== SECTION 19: adminTemporaryCreateRefundCase =====
+
+    // TEMPORARY TEST CODE - remove before integration
+    // Stage 8 needs a cancelled order with one refund in a chosen state and age.
+    /**
+     * What it does: Creates a refund fixture from the shared cancelled-order builder.
+     * Input: The requested stored refund status and age in whole hours.
+     * Output: The order reference, refund number and payment number, or an input error.
+     * Placeholder: PI-05. The fixture uses the shared provisional refund words.
+     */
+    @Transactional
+    public SharedMessageResponse adminTemporaryCreateRefundCase(
+            AdminTemporaryCreateRefundCaseRequest adminTemporaryCreateRefundCaseRequest) {
+        // PLACEHOLDER INPUT PI-05.
+        // From: Payment.
+        // What: The stored refund states.
+        // How to use: Take the states from SharedPlaceholderWord until the team confirms them.
+        String refundStatus = adminTemporaryCreateRefundCaseRequest.adminTemporaryCreateRefundCaseRefundStatus();
+        if (!SHARED_REFUND_STATUS_REQUESTED.equals(refundStatus)
+                && !SHARED_REFUND_STATUS_PENDING.equals(refundStatus)
+                && !SHARED_REFUND_STATUS_FAILED.equals(refundStatus)
+                && !SHARED_REFUND_STATUS_REFUNDED.equals(refundStatus)) {
+            throw new SharedRuleException(HttpStatus.BAD_REQUEST, "SHARED_INPUT_INVALID",
+                    "Choose Requested, Pending, Failed or Refunded.");
+        }
+        int adminTemporaryCreateRefundCaseAgeHours = adminTemporaryCheckRefundCaseAge(
+                adminTemporaryCreateRefundCaseRequest.adminTemporaryCreateRefundCaseAgeHours());
+
+        // Adjust the one refund the builder created instead of adding another attempt.
+        String orderReference = adminTemporaryCreateSampleOrder(SharedOrderStatus.CANCELLED, null, null, null);
+        String adminTemporaryCreateRefundCaseMessage = adminTemporaryCreateTestUserDatabase.sql("""
+                UPDATE refund
+                SET refund_status = :refundStatus,
+                    created_at = CURRENT_TIMESTAMP - :ageHours * INTERVAL '1 hour',
+                    completed_at = CASE WHEN :isCompleted THEN CURRENT_TIMESTAMP END
+                FROM payment JOIN customer_order orders ON orders.order_id = payment.order_id
+                WHERE refund.payment_id = payment.payment_id AND orders.order_reference = :orderReference
+                RETURNING refund.refund_id, refund.payment_id
+                """).param("refundStatus", refundStatus).param("ageHours", adminTemporaryCreateRefundCaseAgeHours)
+                .param("isCompleted", SHARED_REFUND_STATUS_REFUNDED.equals(refundStatus))
+                .param("orderReference", orderReference)
+                .query((adminTemporaryCreateRefundCaseResult, adminTemporaryCreateRefundCaseRowNumber) ->
+                        "Created order " + orderReference + ", refund "
+                                + adminTemporaryCreateRefundCaseResult.getLong("refund_id") + ", payment "
+                                + adminTemporaryCreateRefundCaseResult.getLong("payment_id") + ".")
+                .single();
+        return new SharedMessageResponse(adminTemporaryCreateRefundCaseMessage);
+    }
+
+    // ===== SECTION 20: adminTemporarySetProviderAnswer =====
+
+    // TEMPORARY TEST CODE - remove before integration
+    // Stage 8 uses a local answer for the selected refund until changed or the app stops.
+    /**
+     * What it does: Sets the stand-in provider outcome for an existing refund without writing its status.
+     * Input: The refund number and the requested test provider outcome.
+     * Output: The saved choice message, or an input or missing-refund error.
+     */
+    public SharedMessageResponse adminTemporarySetProviderAnswer(
+            AdminTemporarySetProviderAnswerRequest adminTemporarySetProviderAnswerRequest) {
+        Long refundID = adminTemporarySetProviderAnswerRequest.adminTemporarySetProviderAnswerRefundID();
+        AdminRefundProviderOutcome adminTemporarySetProviderAnswerOutcome =
+                adminTemporarySetProviderAnswerRequest.adminTemporarySetProviderAnswerOutcome();
+        if (refundID == null || refundID < 1 || adminTemporarySetProviderAnswerOutcome == null) {
+            throw new SharedRuleException(HttpStatus.BAD_REQUEST, "SHARED_INPUT_INVALID",
+                    "Enter a refund number and choose a provider answer.");
+        }
+
+        // Only change the stand-in. The real status still goes through the normal locked check.
+        boolean adminTemporarySetProviderAnswerRefundExists = adminTemporaryCreateTestUserDatabase
+                .sql("SELECT EXISTS (SELECT 1 FROM refund WHERE refund_id = :refundID)")
+                .param("refundID", refundID).query(Boolean.class).single();
+        if (!adminTemporarySetProviderAnswerRefundExists) {
+            throw new SharedRuleException(HttpStatus.NOT_FOUND, "ADMIN_REFUND_NOT_FOUND",
+                    "No refund was found with this number.");
+        }
+        adminTemporarySetProviderAnswerProvider.adminTemporarySetProviderAnswer(refundID,
+                adminTemporarySetProviderAnswerOutcome);
+        return new SharedMessageResponse("The provider answer for refund " + refundID + " is now "
+                + adminTemporarySetProviderAnswerOutcome.name()
+                + ". Open Refunds and click Check provider status on this refund to apply the answer.");
+    }
+
+    // ===== SECTION 21: adminTemporaryRunPrivacyCheck =====
+
+    // TEMPORARY TEST CODE - remove before integration
+    /**
+     * What it does: Checks the live Admin responses for synthetic private values and private field names.
+     * Input: None. The test tool uses unfiltered first pages and the current Admin session.
+     * Output: A count of answers, a count of findings and the function and kind of each finding.
+     */
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
+    public SharedMessageResponse adminTemporaryRunPrivacyCheck() {
+        // Use the same search projections, web mapper and CSV output as the Admin pages.
+        AdminSearchOrderResponse adminTemporaryRunPrivacyCheckOrders =
+                adminTemporaryRunPrivacyCheckOrderService.adminSearchOrder(null, null, null, null, 1);
+        Map<String, Object> adminTemporaryRunPrivacyCheckSearchMap = new LinkedHashMap<>();
+        adminTemporaryRunPrivacyCheckSearchMap.put("adminSearchUser",
+                adminTemporaryRunPrivacyCheckUserService.adminSearchUser(null, null, null, 1));
+        adminTemporaryRunPrivacyCheckSearchMap.put("adminSearchProduct",
+                adminTemporaryRunPrivacyCheckProductService.adminSearchProduct(null, null, false, 1));
+        adminTemporaryRunPrivacyCheckSearchMap.put("adminSearchOrder", adminTemporaryRunPrivacyCheckOrders);
+        adminTemporaryRunPrivacyCheckSearchMap.put("adminSearchShortageCase",
+                adminTemporaryRunPrivacyCheckShortageService.adminSearchShortageCase(null, 1));
+        adminTemporaryRunPrivacyCheckSearchMap.put("adminSearchPickingTask",
+                adminTemporaryRunPrivacyCheckPickingService.adminSearchPickingTask(1));
+        adminTemporaryRunPrivacyCheckSearchMap.put("adminSearchFailedDeliveryCase",
+                adminTemporaryRunPrivacyCheckDeliveryService.adminSearchFailedDeliveryCase("ALL", 1));
+        adminTemporaryRunPrivacyCheckSearchMap.put("adminSearchHeldPackage",
+                adminTemporaryRunPrivacyCheckHeldPackageService.adminSearchHeldPackage(1));
+        adminTemporaryRunPrivacyCheckSearchMap.put("adminSearchRefund",
+                adminTemporaryRunPrivacyCheckRefundService.adminSearchRefund(false, 1));
+        adminTemporaryRunPrivacyCheckSearchMap.put("adminSearchAuditLog",
+                adminTemporaryRunPrivacyCheckLogService.adminSearchAuditLog(null, null, null, null, null, null, 1));
+        adminTemporaryRunPrivacyCheckSearchMap.put("adminSearchSecurityLog",
+                adminTemporaryRunPrivacyCheckLogService.adminSearchSecurityLog(null, null, null, null, null, 1));
+        adminTemporaryRunPrivacyCheckSearchMap.put("adminSearchPickingScanHistory",
+                adminTemporaryRunPrivacyCheckLogService.adminSearchPickingScanHistory(null, null, null, null, null, 1));
+        for (AdminSearchOrderRow adminTemporaryRunPrivacyCheckOrder : adminTemporaryRunPrivacyCheckOrders
+                .adminSearchOrderRowList().stream().limit(20).toList()) {
+            Long orderID = adminTemporaryRunPrivacyCheckOrder.orderID();
+            adminTemporaryRunPrivacyCheckSearchMap.put("adminViewOrder (order " + orderID + ")",
+                    adminTemporaryRunPrivacyCheckOrderService.adminViewOrder(orderID));
+        }
+
+        Map<String, byte[]> adminTemporaryRunPrivacyCheckCSVMap = new LinkedHashMap<>();
+        adminTemporaryRunPrivacyCheckCSVMap.put("adminDownloadUserCSV",
+                adminTemporaryRunPrivacyCheckUserService.adminDownloadUserCSV(null, null, null).getBody());
+        adminTemporaryRunPrivacyCheckCSVMap.put("adminDownloadProductCSV",
+                adminTemporaryRunPrivacyCheckProductService.adminDownloadProductCSV(null, null, false).getBody());
+        adminTemporaryRunPrivacyCheckCSVMap.put("adminDownloadOrderCSV",
+                adminTemporaryRunPrivacyCheckOrderService.adminDownloadOrderCSV(null, null, null, null).getBody());
+        adminTemporaryRunPrivacyCheckCSVMap.put("adminDownloadShortageCaseCSV",
+                adminTemporaryRunPrivacyCheckShortageService.adminDownloadShortageCaseCSV(null).getBody());
+        adminTemporaryRunPrivacyCheckCSVMap.put("adminDownloadFailedDeliveryCaseCSV",
+                adminTemporaryRunPrivacyCheckDeliveryService.adminDownloadFailedDeliveryCaseCSV("ALL").getBody());
+        adminTemporaryRunPrivacyCheckCSVMap.put("adminDownloadRefundCSV",
+                adminTemporaryRunPrivacyCheckRefundService.adminDownloadRefundCSV(false).getBody());
+        adminTemporaryRunPrivacyCheckCSVMap.put("adminDownloadAuditLogCSV",
+                adminTemporaryRunPrivacyCheckLogService.adminDownloadAuditLogCSV(null, null, null, null, null, null)
+                        .getBody());
+        adminTemporaryRunPrivacyCheckCSVMap.put("adminDownloadSecurityLogCSV",
+                adminTemporaryRunPrivacyCheckLogService.adminDownloadSecurityLogCSV(null, null, null, null, null)
+                        .getBody());
+        adminTemporaryRunPrivacyCheckCSVMap.put("adminDownloadPickingScanHistoryCSV",
+                adminTemporaryRunPrivacyCheckLogService.adminDownloadPickingScanHistoryCSV(null, null, null, null, null)
+                        .getBody());
+        // The tool inspects CSV bytes locally. Discard the exporters' download audit rows.
+        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+
+        List<String> adminTemporaryRunPrivacyCheckFindingList = new ArrayList<>();
+        for (var adminTemporaryRunPrivacyCheckEntry : adminTemporaryRunPrivacyCheckSearchMap.entrySet()) {
+            JsonNode adminTemporaryRunPrivacyCheckAnswer =
+                    adminTemporaryRunPrivacyCheckMapper.valueToTree(adminTemporaryRunPrivacyCheckEntry.getValue());
+            var adminTemporaryRunPrivacyCheckFieldNameSet = new LinkedHashSet<String>();
+            var adminTemporaryRunPrivacyCheckNodeQueue = new ArrayDeque<JsonNode>();
+            adminTemporaryRunPrivacyCheckNodeQueue.add(adminTemporaryRunPrivacyCheckAnswer);
+            while (!adminTemporaryRunPrivacyCheckNodeQueue.isEmpty()) {
+                JsonNode adminTemporaryRunPrivacyCheckNode = adminTemporaryRunPrivacyCheckNodeQueue.removeFirst();
+                for (var adminTemporaryRunPrivacyCheckProperty : adminTemporaryRunPrivacyCheckNode.properties()) {
+                    adminTemporaryRunPrivacyCheckFieldNameSet.add(adminTemporaryRunPrivacyCheckProperty.getKey());
+                }
+                adminTemporaryRunPrivacyCheckNode.forEach(adminTemporaryRunPrivacyCheckNodeQueue::addLast);
+            }
+            adminTemporaryCheckPrivacyAnswer(adminTemporaryRunPrivacyCheckEntry.getKey(),
+                    adminTemporaryRunPrivacyCheckAnswer.toString(), adminTemporaryRunPrivacyCheckFieldNameSet,
+                    adminTemporaryRunPrivacyCheckFindingList);
+        }
+        for (var adminTemporaryRunPrivacyCheckCSV : adminTemporaryRunPrivacyCheckCSVMap.entrySet()) {
+            // The shared writer quotes each identifier in the first line and puts a UTF-8 mark before it.
+            String adminTemporaryRunPrivacyCheckCSVText =
+                    new String(adminTemporaryRunPrivacyCheckCSV.getValue(), StandardCharsets.UTF_8);
+            String adminTemporaryRunPrivacyCheckHeader = adminTemporaryRunPrivacyCheckCSVText.lines().findFirst()
+                    .orElseThrow().replace("\uFEFF", "").replace("\"", "");
+            adminTemporaryCheckPrivacyAnswer(adminTemporaryRunPrivacyCheckCSV.getKey(),
+                    adminTemporaryRunPrivacyCheckCSVText, List.of(adminTemporaryRunPrivacyCheckHeader.split(",")),
+                    adminTemporaryRunPrivacyCheckFindingList);
+        }
+        int adminTemporaryRunPrivacyCheckAnswerCount =
+                adminTemporaryRunPrivacyCheckSearchMap.size() + adminTemporaryRunPrivacyCheckCSVMap.size();
+        return new SharedMessageResponse(adminTemporaryRunPrivacyCheckFindingList.size() + " findings, "
+                + adminTemporaryRunPrivacyCheckAnswerCount + " answers checked."
+                + (adminTemporaryRunPrivacyCheckFindingList.isEmpty() ? ""
+                        : " " + String.join(" ", adminTemporaryRunPrivacyCheckFindingList)));
+    }
+
+    // TEMPORARY TEST CODE - remove before integration
+    /**
+     * What it does: Records matching synthetic markers or prohibited field names in a single answer.
+     * Input: The function name, its answer, the field names and the list of findings so far.
+     * Output: Any findings added to the list without copying private values from field contents.
+     */
+    private void adminTemporaryCheckPrivacyAnswer(String adminTemporaryCheckPrivacyAnswerFunction,
+            String adminTemporaryCheckPrivacyAnswerText, Iterable<String> adminTemporaryCheckPrivacyAnswerFieldNames,
+            List<String> adminTemporaryCheckPrivacyAnswerFindingList) {
+        for (String adminTemporaryCheckPrivacyAnswerMarker : ADMIN_TEMPORARY_RUN_PRIVACY_CHECK_MARKER_LIST) {
+            if (adminTemporaryCheckPrivacyAnswerText.contains(adminTemporaryCheckPrivacyAnswerMarker)) {
+                adminTemporaryCheckPrivacyAnswerFindingList.add(adminTemporaryCheckPrivacyAnswerFunction
+                        + ": found " + adminTemporaryCheckPrivacyAnswerMarker + ".");
+            }
+        }
+        for (String adminTemporaryCheckPrivacyAnswerField : adminTemporaryCheckPrivacyAnswerFieldNames) {
+            if (adminTemporaryCheckPrivacyAnswerField.equals("ipAddress")
+                    || adminTemporaryCheckPrivacyAnswerField.endsWith("WebAddress")) {
+                continue;
+            }
+            String adminTemporaryCheckPrivacyAnswerLowerCase = adminTemporaryCheckPrivacyAnswerField.toLowerCase(Locale.ROOT);
+            if (adminTemporaryCheckPrivacyAnswerLowerCase.contains("phone")
+                    || adminTemporaryCheckPrivacyAnswerLowerCase.contains("address")
+                    || adminTemporaryCheckPrivacyAnswerLowerCase.contains("recipient")) {
+                adminTemporaryCheckPrivacyAnswerFindingList.add(adminTemporaryCheckPrivacyAnswerFunction
+                        + ": private field " + adminTemporaryCheckPrivacyAnswerField + ".");
+            }
+        }
+    }
+
+    // ===== SECTION 22: adminTemporaryRemoveAllTestData =====
+
+    // TEMPORARY TEST CODE - remove before integration
+    /**
+     * What it does: Clears local fixture data and removes the test accounts and their delivery profiles.
+     * Input: The exact confirmation REMOVE and the active Admin session.
+     * Output: A shared success message after the cleanup commits, or an error without data changes.
+     */
+    @Transactional
+    public SharedMessageResponse adminTemporaryRemoveAllTestData(
+            AdminTemporaryRemoveAllTestDataRequest adminTemporaryRemoveAllTestDataRequest) {
+        if (!"REMOVE".equals(adminTemporaryRemoveAllTestDataRequest.adminTemporaryRemoveAllTestDataConfirmText())) {
+            throw new SharedRuleException(HttpStatus.BAD_REQUEST, "SHARED_INPUT_INVALID", "Type REMOVE to confirm.");
+        }
+        long userID = adminTemporaryCreateSampleOrderSetCurrentUserReader.sharedReadCurrentUser().userID();
+
+        // List the 25 tables explicitly so the cleanup cannot cascade into accounts or future tables.
+        adminTemporaryCreateTestUserDatabase.sql("""
+                TRUNCATE TABLE audit_log, security_log, notification, stock_movement, delivery_proof,
+                    delivery_attempt, package_custody_event, delivery_assignment_history, pickup_list_item,
+                    pickup_list, delivery_package, client_instruction, picking_scan_history,
+                    picking_assignment_history, picking_task, shortage_case, stock_reservation, refund,
+                    payment, order_delivery_detail, order_item, customer_order, inventory, product, client_profile
+                """).update();
+
+        // Keep the active Admin even when that account was made by a test tool.
+        adminTemporaryCreateTestUserDatabase.sql("""
+                DELETE FROM delivery_worker_profile
+                WHERE user_id IN (SELECT user_id FROM app_user WHERE left(username, 5) = 'test_' AND user_id <> :userID)
+                """).param("userID", userID).update();
+        adminTemporaryCreateTestUserDatabase.sql("""
+                DELETE FROM app_user WHERE left(username, 5) = 'test_' AND user_id <> :userID
+                """).param("userID", userID).update();
+        return new SharedMessageResponse("All test data was removed. Your account was kept.");
+    }
+
+    // ===== SECTION 23: adminTemporaryCreateSampleOrder =====
 
     // TEMPORARY TEST CODE - remove before integration
     // Stage 2 builds matching order, stock, picking and pickup fixtures in one transaction.
@@ -772,6 +1171,21 @@ public class AdminTemporaryTestToolService {
      */
     private String adminTemporaryCreateSampleOrder(SharedOrderStatus orderStatus, Long clientUserID,
             Long warehouseWorkerUserID, Long deliveryWorkerUserID, Long adminTemporaryCreateSampleOrderAdminUserID) {
+        return adminTemporaryCreateSampleOrder(orderStatus, clientUserID, warehouseWorkerUserID, deliveryWorkerUserID,
+                adminTemporaryCreateSampleOrderAdminUserID, null);
+    }
+
+    // TEMPORARY TEST CODE - remove before integration
+    // Stage 7 reuses the shared builder and supplies a failed delivery's attempt, return and request setup.
+    /**
+     * What it does: Builds the rows of a sample order with an optional custom failure history.
+     * Input: Order status, optional client and worker IDs, optional deciding Admin, and optional failure setup.
+     * Output: The order reference. The caller starts the transaction before creating the fixture.
+     * Placeholder: PI-05, the fixture uses the current shared status and type words.
+     */
+    private String adminTemporaryCreateSampleOrder(SharedOrderStatus orderStatus, Long clientUserID,
+            Long warehouseWorkerUserID, Long deliveryWorkerUserID, Long adminTemporaryCreateSampleOrderAdminUserID,
+            AdminTemporaryCreateFailedDeliveryCaseRequest adminTemporaryCreateSampleOrderFailureSetup) {
         // Work out which steps this status has reached before inserting any rows.
         // PLACEHOLDER INPUT PI-05
         // From: The other roles.
@@ -824,12 +1238,23 @@ public class AdminTemporaryTestToolService {
         String adminTemporaryCreateSampleOrderMugSKU = "TEST-MUG-" + adminTemporaryCreateSampleOrderReferenceNumber;
         String adminTemporaryCreateSampleOrderPenSKU = "TEST-PEN-" + adminTemporaryCreateSampleOrderReferenceNumber;
 
-        // Give the delivered example a story over two days, with no events in the future.
+        // Place the packed order in the past when the delivery fixture needs an older return.
         OffsetDateTime adminTemporaryCreateSampleOrderCurrentTime = adminTemporaryCreateTestUserDatabase
                 .sql("SELECT NOW()").query(OffsetDateTime.class).single();
+        OffsetDateTime adminTemporaryCreateSampleOrderFailureFinishTime = adminTemporaryCreateSampleOrderCurrentTime;
+        if (adminTemporaryCreateSampleOrderFailureSetup != null
+                && Boolean.TRUE.equals(adminTemporaryCreateSampleOrderFailureSetup
+                        .adminTemporaryCreateFailedDeliveryCaseIsReturned())) {
+            adminTemporaryCreateSampleOrderFailureFinishTime = adminTemporaryCreateSampleOrderCurrentTime.minusDays(
+                    adminTemporaryCreateSampleOrderFailureSetup.adminTemporaryCreateFailedDeliveryCaseDaysSinceReturn()
+                            .longValueExact());
+        }
         OffsetDateTime createdTime = adminTemporaryCreateSampleOrderIsDelivered
                 ? adminTemporaryCreateSampleOrderCurrentTime.minusHours(25)
                 : adminTemporaryCreateSampleOrderCurrentTime;
+        if (adminTemporaryCreateSampleOrderFailureSetup != null) {
+            createdTime = adminTemporaryCreateSampleOrderFailureFinishTime.minusHours(3);
+        }
         OffsetDateTime adminTemporaryCreateSampleOrderPaymentTime = adminTemporaryCreateSampleOrderIsDelivered
                 ? createdTime.plusMinutes(15) : createdTime;
         OffsetDateTime adminTemporaryCreateSampleOrderPickingTime = adminTemporaryCreateSampleOrderIsDelivered
@@ -839,6 +1264,9 @@ public class AdminTemporaryTestToolService {
         OffsetDateTime adminTemporaryCreateSampleOrderPickupTime = adminTemporaryCreateSampleOrderIsDelivered
                 ? adminTemporaryCreateSampleOrderCurrentTime.minusMinutes(45)
                 : adminTemporaryCreateSampleOrderCurrentTime;
+        if (adminTemporaryCreateSampleOrderFailureSetup != null) {
+            adminTemporaryCreateSampleOrderPickupTime = createdTime.plusHours(1);
+        }
 
         // Add the catalogue and balances first so the order uses the products' saved unit prices.
         adminTemporaryCreateTestUserDatabase.sql("""
@@ -1032,18 +1460,137 @@ public class AdminTemporaryTestToolService {
                 """).param("orderID", orderID).update();
 
         // Orders beyond collection have a delivery attempt, and a redelivery example also has a recorded return.
-        if (orderStatus != SharedOrderStatus.SHIPPED) {
+        if (adminTemporaryCreateSampleOrderFailureSetup != null) {
+            adminTemporaryCreateFailedDeliveryCase(orderID, paymentID, packageID, deliveryDetailID, clientUserID,
+                    warehouseWorkerUserID, deliveryWorkerUserID, pickupCustodyEventID,
+                    adminTemporaryCreateSampleOrderFailureFinishTime, adminTemporaryCreateSampleOrderFailureSetup);
+        } else if (orderStatus != SharedOrderStatus.SHIPPED) {
             adminTemporaryCreateSampleDeliveryAttempt(orderStatus, packageID, deliveryDetailID, deliveryWorkerUserID,
                     pickupCustodyEventID, adminTemporaryCreateSampleOrderCurrentTime);
         }
         if (orderStatus == SharedOrderStatus.READY_FOR_REDELIVERY) {
             adminTemporaryCreateSampleRedelivery(orderID, paymentID, packageID, deliveryDetailID, clientUserID,
-                    warehouseWorkerUserID, deliveryWorkerUserID, adminTemporaryCreateSampleOrderAdminUserID);
+                    warehouseWorkerUserID, deliveryWorkerUserID, adminTemporaryCreateSampleOrderAdminUserID,
+                    adminTemporaryCreateSampleOrderCurrentTime);
         }
         return orderReference;
     }
 
-    // ===== SECTION 18: HELPER FUNCTIONS =====
+    // ===== SECTION 24: HELPER FUNCTIONS =====
+
+    // TEMPORARY TEST CODE - remove before integration
+    // Stage 8 limits refund fixture ages to a whole number from 0 to 720 hours.
+    /**
+     * What it does: Validates a refund fixture age before creating any rows.
+     * Input: The requested age in hours.
+     * Output: The whole-number age, or a shared input error.
+     */
+    private int adminTemporaryCheckRefundCaseAge(BigDecimal adminTemporaryCheckRefundCaseAgeValue) {
+        if (adminTemporaryCheckRefundCaseAgeValue == null || adminTemporaryCheckRefundCaseAgeValue.signum() < 0
+                || adminTemporaryCheckRefundCaseAgeValue.compareTo(BigDecimal.valueOf(720)) > 0
+                || adminTemporaryCheckRefundCaseAgeValue.stripTrailingZeros().scale() > 0) {
+            throw new SharedRuleException(HttpStatus.BAD_REQUEST, "SHARED_INPUT_INVALID",
+                    "Enter a whole age in hours from 0 to 720.");
+        }
+        return adminTemporaryCheckRefundCaseAgeValue.intValueExact();
+    }
+
+    // TEMPORARY TEST CODE - remove before integration
+    // Stage 7 fixture counts and days have fixed whole-number ranges.
+    /**
+     * What it does: Validates the failed-delivery tool's input before creating any fixture rows.
+     * Input: The test tool request.
+     * Output: None. Throws a bad-input error for invalid choices or a missing return flag.
+     */
+    private void adminTemporaryCheckFailedDeliveryCaseInput(
+            AdminTemporaryCreateFailedDeliveryCaseRequest adminTemporaryCheckFailedDeliveryCaseRequest) {
+        BigDecimal adminTemporaryCheckFailedDeliveryCaseFailureCount =
+                adminTemporaryCheckFailedDeliveryCaseRequest.adminTemporaryCreateFailedDeliveryCaseFailureCount();
+        BigDecimal adminTemporaryCheckFailedDeliveryCaseDaysSinceReturn =
+                adminTemporaryCheckFailedDeliveryCaseRequest.adminTemporaryCreateFailedDeliveryCaseDaysSinceReturn();
+        if (adminTemporaryCheckFailedDeliveryCaseFailureCount == null
+                || adminTemporaryCheckFailedDeliveryCaseFailureCount.stripTrailingZeros().scale() > 0
+                || adminTemporaryCheckFailedDeliveryCaseFailureCount.compareTo(BigDecimal.ONE) < 0
+                || adminTemporaryCheckFailedDeliveryCaseFailureCount.compareTo(BigDecimal.valueOf(5)) > 0
+                || adminTemporaryCheckFailedDeliveryCaseDaysSinceReturn == null
+                || adminTemporaryCheckFailedDeliveryCaseDaysSinceReturn.stripTrailingZeros().scale() > 0
+                || adminTemporaryCheckFailedDeliveryCaseDaysSinceReturn.signum() < 0
+                || adminTemporaryCheckFailedDeliveryCaseDaysSinceReturn.compareTo(BigDecimal.valueOf(30)) > 0) {
+            throw new SharedRuleException(HttpStatus.BAD_REQUEST, "SHARED_INPUT_INVALID",
+                    "Enter 1 to 5 failures and 0 to 30 days as whole numbers.");
+        }
+
+        String instructionType =
+                adminTemporaryCheckFailedDeliveryCaseRequest.adminTemporaryCreateFailedDeliveryCaseClientRequest();
+        if (!"NONE".equals(instructionType) && !SHARED_INSTRUCTION_TYPE_REDELIVER.equals(instructionType)
+                && !SHARED_INSTRUCTION_TYPE_CANCEL.equals(instructionType)) {
+            throw new SharedRuleException(HttpStatus.BAD_REQUEST, "SHARED_INPUT_INVALID", "Choose a client request.");
+        }
+        if (adminTemporaryCheckFailedDeliveryCaseRequest.adminTemporaryCreateFailedDeliveryCaseIsReturned() == null) {
+            throw new SharedRuleException(HttpStatus.BAD_REQUEST, "SHARED_INPUT_INVALID",
+                    "Choose whether the package returned to Warehouse.");
+        }
+    }
+
+    // TEMPORARY TEST CODE - remove before integration
+    // Stage 7 creates synthetic failed attempts and time-controlled returns on the sample package.
+    /**
+     * What it does: Records failed attempts, an optional intact return and an optional pending client request.
+     * Input: IDs of the sample order and its related rows, the finish time and the requested failure setup.
+     * Output: None. Every history row belongs to the same order and its saved delivery details.
+     * Placeholder: PI-05, the fixture uses the shared failure, reservation, instruction and custody words.
+     */
+    private void adminTemporaryCreateFailedDeliveryCase(Long orderID, Long paymentID, Long packageID,
+            Long deliveryDetailID, Long clientUserID, Long warehouseWorkerUserID, Long deliveryWorkerUserID,
+            Long pickupCustodyEventID, OffsetDateTime adminTemporaryCreateFailedDeliveryCaseFinishTime,
+            AdminTemporaryCreateFailedDeliveryCaseRequest adminTemporaryCreateFailedDeliveryCaseRequest) {
+        // Failures finish in order, all after the recorded pickup and before any return.
+        // PLACEHOLDER INPUT PI-05
+        // From: Delivery and Client.
+        // What: Shared attempt outcomes, failure reasons and client-request states.
+        // How to use: Take the current stored words from SharedPlaceholderWord.
+        adminTemporaryCreateTestUserDatabase.sql("""
+                INSERT INTO delivery_attempt
+                    (package_id, delivery_detail_id, delivery_worker_user_id, pickup_custody_event_id,
+                     start_time, end_time, outcome, failure_reason, internal_note)
+                SELECT :packageID, :deliveryDetailID, :deliveryWorkerUserID, :pickupCustodyEventID,
+                       :attemptTime - number * INTERVAL '15 minutes' - INTERVAL '5 minutes',
+                       :attemptTime - number * INTERVAL '15 minutes',
+                       :outcome, :failureReason, 'Nobody answered the door'
+                FROM generate_series(:failureCount - 1, 0, -1) AS number
+                """).param("packageID", packageID).param("deliveryDetailID", deliveryDetailID)
+                .param("deliveryWorkerUserID", deliveryWorkerUserID).param("pickupCustodyEventID", pickupCustodyEventID)
+                .param("attemptTime", adminTemporaryCreateFailedDeliveryCaseFinishTime.minusMinutes(10))
+                .param("failureCount", adminTemporaryCreateFailedDeliveryCaseRequest
+                        .adminTemporaryCreateFailedDeliveryCaseFailureCount().intValueExact())
+                .param("outcome", SHARED_ATTEMPT_OUTCOME_FAILED)
+                .param("failureReason", SHARED_FAILURE_REASON_CLIENT_NOT_HOME).update();
+
+        Long returnCustodyEventID = null;
+        if (Boolean.TRUE.equals(adminTemporaryCreateFailedDeliveryCaseRequest
+                .adminTemporaryCreateFailedDeliveryCaseIsReturned())) {
+            returnCustodyEventID = adminTemporaryConfirmSampleReturn(orderID, paymentID, packageID,
+                    warehouseWorkerUserID, deliveryWorkerUserID,
+                    adminTemporaryCreateFailedDeliveryCaseFinishTime.minusMinutes(2),
+                    adminTemporaryCreateFailedDeliveryCaseFinishTime);
+        }
+
+        // The missing return-event link is intentional for the approval refusal fixture.
+        String instructionType =
+                adminTemporaryCreateFailedDeliveryCaseRequest.adminTemporaryCreateFailedDeliveryCaseClientRequest();
+        if (!"NONE".equals(instructionType)) {
+            adminTemporaryCreateTestUserDatabase.sql("""
+                    INSERT INTO client_instruction
+                        (order_id, client_user_id, delivery_detail_id, return_custody_event_id,
+                         instruction_type, status, source)
+                    VALUES (:orderID, :clientUserID, :deliveryDetailID, :returnCustodyEventID,
+                            :instructionType, :status, :source)
+                    """).param("orderID", orderID).param("clientUserID", clientUserID)
+                    .param("deliveryDetailID", deliveryDetailID).param("returnCustodyEventID", returnCustodyEventID)
+                    .param("instructionType", instructionType).param("status", SHARED_INSTRUCTION_STATUS_PENDING)
+                    .param("source", SharedInstructionSource.TRACKING_PAGE.name()).update();
+        }
+    }
 
     // TEMPORARY TEST CODE - remove before integration
     // Stage 5 shows a cancelled order with a requested refund and released stock.
@@ -1132,27 +1679,63 @@ public class AdminTemporaryTestToolService {
     // Stage 5 shows the return and approval history of a redelivery order.
     /**
      * What it does: Records the synthetic return of an intact package and the client's approved redelivery request.
-     * Input: The order, payment, package, delivery-details version, Client, both workers and resolving Admin.
+     * Input: The order, payment, package, delivery-details version, Client, both workers, resolving Admin and return time.
      * Output: None. The package is back in Warehouse and its original quantities are reserved again.
      * Placeholder: PI-05, the fixture uses the currently shared custody, reservation and instruction words.
      */
     private void adminTemporaryCreateSampleRedelivery(Long orderID, Long paymentID, Long packageID,
             Long deliveryDetailID, Long clientUserID, Long warehouseWorkerUserID, Long deliveryWorkerUserID,
-            Long resolvedByAdminID) {
+            Long resolvedByAdminID, OffsetDateTime adminTemporaryCreateSampleRedeliveryTime) {
+        Long returnCustodyEventID = adminTemporaryConfirmSampleReturn(orderID, paymentID, packageID,
+                warehouseWorkerUserID, deliveryWorkerUserID, adminTemporaryCreateSampleRedeliveryTime,
+                adminTemporaryCreateSampleRedeliveryTime);
+
         // PLACEHOLDER INPUT PI-05
-        // From: Delivery, Warehouse and Client.
-        // What: Return event types, warehouse custody, held stock and approved redelivery states.
+        // From: Client.
+        // What: Approved redelivery state and request type.
         // How to use: Take the current stored words from SharedPlaceholderWord.
         adminTemporaryCreateTestUserDatabase.sql("""
-                INSERT INTO package_custody_event (package_id, event_type, actor_user_id)
-                VALUES (:packageID, :eventType, :workerUserID)
+                INSERT INTO client_instruction
+                    (order_id, client_user_id, delivery_detail_id, return_custody_event_id, instruction_type,
+                     status, source, resolved_by_admin_id, resolved_at)
+                VALUES (:orderID, :clientUserID, :deliveryDetailID, :returnCustodyEventID, :instructionType,
+                        :status, :source, :resolvedByAdminID, NOW())
+                """).param("orderID", orderID).param("clientUserID", clientUserID)
+                .param("deliveryDetailID", deliveryDetailID).param("returnCustodyEventID", returnCustodyEventID)
+                .param("instructionType", SHARED_INSTRUCTION_TYPE_REDELIVER)
+                .param("status", SHARED_INSTRUCTION_STATUS_APPROVED)
+                .param("source", SharedInstructionSource.TRACKING_PAGE.name())
+                .param("resolvedByAdminID", resolvedByAdminID).update();
+    }
+
+    // TEMPORARY TEST CODE - remove before integration
+    // Stages 5 and 7 share the fixture steps that confirm an intact Warehouse return.
+    /**
+     * What it does: Returns a sample package intact and restores its reserved and physical quantities.
+     * Input: Order, payment, package and both workers, followed by the return request and receipt times.
+     * Output: The confirmed return event ID, for a request that uses this return.
+     * Placeholder: PI-05, the fixture uses the shared custody and reservation words.
+     */
+    private Long adminTemporaryConfirmSampleReturn(Long orderID, Long paymentID, Long packageID,
+            Long warehouseWorkerUserID, Long deliveryWorkerUserID,
+            OffsetDateTime adminTemporaryConfirmSampleReturnRequestedTime,
+            OffsetDateTime adminTemporaryConfirmSampleReturnReceivedTime) {
+        // PLACEHOLDER INPUT PI-05
+        // From: Delivery and Warehouse.
+        // What: Return event types, warehouse custody and held reservations.
+        // How to use: Take the current stored words from SharedPlaceholderWord.
+        adminTemporaryCreateTestUserDatabase.sql("""
+                INSERT INTO package_custody_event (package_id, event_type, actor_user_id, event_time)
+                VALUES (:packageID, :eventType, :workerUserID, :eventTime)
                 """).param("packageID", packageID).param("eventType", SHARED_CUSTODY_EVENT_RETURN_REQUESTED)
+                .param("eventTime", adminTemporaryConfirmSampleReturnRequestedTime)
                 .param("workerUserID", deliveryWorkerUserID).update();
         Long returnCustodyEventID = adminTemporaryCreateTestUserDatabase.sql("""
-                INSERT INTO package_custody_event (package_id, event_type, actor_user_id)
-                VALUES (:packageID, :eventType, :workerUserID)
+                INSERT INTO package_custody_event (package_id, event_type, actor_user_id, event_time)
+                VALUES (:packageID, :eventType, :workerUserID, :eventTime)
                 RETURNING custody_event_id
                 """).param("packageID", packageID).param("eventType", SHARED_CUSTODY_EVENT_RETURN_RECEIVED)
+                .param("eventTime", adminTemporaryConfirmSampleReturnReceivedTime)
                 .param("workerUserID", warehouseWorkerUserID).query(Long.class).single();
         adminTemporaryCreateTestUserDatabase.sql("""
                 UPDATE delivery_package SET custody_status = :custodyStatus, current_handler_user_id = NULL
@@ -1173,19 +1756,7 @@ public class AdminTemporaryTestToolService {
                 WHERE item.order_id = :orderID AND item.product_id = inventory.product_id
                 """).param("orderID", orderID).update();
 
-        // The client asked through tracking and the current Admin stands in for the approver.
-        adminTemporaryCreateTestUserDatabase.sql("""
-                INSERT INTO client_instruction
-                    (order_id, client_user_id, delivery_detail_id, return_custody_event_id, instruction_type,
-                     status, source, resolved_by_admin_id, resolved_at)
-                VALUES (:orderID, :clientUserID, :deliveryDetailID, :returnCustodyEventID, :instructionType,
-                        :status, :source, :resolvedByAdminID, NOW())
-                """).param("orderID", orderID).param("clientUserID", clientUserID)
-                .param("deliveryDetailID", deliveryDetailID).param("returnCustodyEventID", returnCustodyEventID)
-                .param("instructionType", SHARED_INSTRUCTION_TYPE_REDELIVER)
-                .param("status", SHARED_INSTRUCTION_STATUS_APPROVED)
-                .param("source", SharedInstructionSource.TRACKING_PAGE.name())
-                .param("resolvedByAdminID", resolvedByAdminID).update();
+        return returnCustodyEventID;
     }
 
     // TEMPORARY TEST CODE - remove before integration

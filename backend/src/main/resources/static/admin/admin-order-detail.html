@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Order - LMS Admin</title>
   <link rel="stylesheet" href="/shared/shared-common.css">
-  <script src="/shared/shared-common.js?v=4" defer></script>
+  <link rel="stylesheet" href="/shared/shared-table-scrollbar.css">
+  <script src="/shared/shared-common.js?v=5" defer></script>
   <script src="/admin/admin-common.js?v=4" defer></script>
   <script src="/admin/admin-order-detail.js" defer></script>
 </head>
@@ -64,12 +65,12 @@
         <table class="shared-table">
           <thead>
             <tr>
-              <th scope="col">SKU</th>
-              <th scope="col">Product</th>
-              <th class="shared-table-number" scope="col">Quantity</th>
-              <th class="shared-table-number" scope="col">Picked</th>
-              <th class="shared-table-number" scope="col">Unit price</th>
-              <th class="shared-table-number" scope="col">Line total</th>
+              <th class="shared-column-code" scope="col">SKU</th>
+              <th class="shared-column-fill" scope="col">Product</th>
+              <th class="shared-table-number shared-column-count" scope="col">Quantity</th>
+              <th class="shared-table-number shared-column-count" scope="col">Picked</th>
+              <th class="shared-table-number shared-column-money" scope="col">Unit price</th>
+              <th class="shared-table-number shared-column-money" scope="col">Line total</th>
             </tr>
           </thead>
           <tbody id="adminViewOrderItemTableBody"></tbody>
@@ -93,9 +94,9 @@
           <table class="shared-table shared-table-work">
             <thead>
               <tr>
-                <th class="shared-table-number" scope="col">Amount</th>
-                <th scope="col">Status</th>
-                <th scope="col">Times</th>
+                <th class="shared-table-number shared-column-money" scope="col">Amount</th>
+                <th class="shared-column-status-short" scope="col">Status</th>
+                <th class="shared-column-fill" scope="col">Times</th>
               </tr>
             </thead>
             <tbody id="adminViewOrderPaymentTableBody"></tbody>
@@ -111,11 +112,11 @@
           <table class="shared-table shared-table-work admin-order-detail-read-only-table">
             <thead>
               <tr>
-                <th scope="col">Refund</th>
-                <th scope="col">Payment</th>
-                <th class="shared-table-number" scope="col">Amount</th>
-                <th scope="col">Status</th>
-                <th scope="col">Times</th>
+                <th class="shared-column-count" scope="col">Refund</th>
+                <th class="shared-column-count" scope="col">Payment</th>
+                <th class="shared-table-number shared-column-money" scope="col">Amount</th>
+                <th class="shared-column-status" scope="col">Status</th>
+                <th class="shared-column-fill" scope="col">Times</th>
               </tr>
             </thead>
             <tbody id="adminViewOrderRefundTableBody"></tbody>
@@ -146,20 +147,22 @@
           </div>
         </dl>
       </div>
-      <h3 class="shared-card-part-title">Workers</h3>
+      <h3 class="shared-card-part-title">Workers 
+        <span class="shared-card-count" id="adminViewOrderPickingAssignmentCountText">0</span>
+      </h3>
       <div class="shared-table-scroll" role="region" aria-label="Workers table" hidden>
         <table class="shared-table">
           <thead>
             <tr>
-              <th scope="col">Worker</th>
-              <th class="shared-table-time" scope="col">Assigned</th>
-              <th class="shared-table-time" scope="col">Ended</th>
+              <th class="shared-column-username" scope="col">Worker</th>
+              <th class="shared-table-time shared-column-time" scope="col">Assigned</th>
+              <th class="shared-table-time shared-column-time" scope="col">Ended</th>
             </tr>
           </thead>
           <tbody id="adminViewOrderPickingAssignmentTableBody"></tbody>
         </table>
       </div>
-      <p class="shared-table-empty">No rows found.</p>
+      <p class="shared-table-empty" id="adminViewOrderPickingAssignmentEmptyMessage">No rows found.</p>
     </section>
 
     <section class="shared-card" id="adminViewOrderPackagePanel" hidden>
@@ -186,42 +189,46 @@
           </div>
         </dl>
       </div>
-      <h3 class="shared-card-part-title">Delivery attempts</h3>
+      <h3 class="shared-card-part-title">Delivery attempts 
+        <span class="shared-card-count" id="adminViewOrderDeliveryAttemptCountText">0</span>
+      </h3>
       <div class="shared-table-scroll" role="region" aria-label="Delivery attempts table" hidden>
         <table class="shared-table">
           <thead>
             <tr>
-              <th scope="col">Worker</th>
-              <th class="shared-table-time" scope="col">Started</th>
-              <th class="shared-table-time" scope="col">Ended</th>
-              <th scope="col">Outcome</th>
-              <th scope="col">Reason</th>
-              <th class="shared-table-wrap" scope="col">Note</th>
-              <th scope="col">Proof</th>
+              <th class="shared-column-username" scope="col">Worker</th>
+              <th class="shared-table-time shared-column-time" scope="col">Started</th>
+              <th class="shared-table-time shared-column-time" scope="col">Ended</th>
+              <th class="shared-column-status" scope="col">Outcome</th>
+              <th class="shared-column-phrase" scope="col">Reason</th>
+              <th class="shared-table-wrap shared-column-fill" scope="col">Note</th>
+              <th class="shared-column-fill" scope="col">Proof</th>
             </tr>
           </thead>
           <tbody id="adminViewOrderDeliveryAttemptTableBody"></tbody>
         </table>
       </div>
-      <p class="shared-table-empty">No rows found.</p>
-      <h3 class="shared-card-part-title">Client requests</h3>
+      <p class="shared-table-empty" id="adminViewOrderDeliveryAttemptEmptyMessage">No rows found.</p>
+      <h3 class="shared-card-part-title">Client requests 
+        <span class="shared-card-count" id="adminViewOrderClientInstructionCountText">0</span>
+      </h3>
       <div class="shared-table-scroll" role="region" aria-label="Client requests table" hidden>
         <table class="shared-table">
           <thead>
             <tr>
-              <th scope="col">Type</th>
-              <th scope="col">Status</th>
-              <th scope="col">Entered through</th>
-              <th class="shared-table-time" scope="col">Submitted</th>
-              <th scope="col">Decided by</th>
-              <th class="shared-table-time" scope="col">Decided</th>
-              <th class="shared-table-wrap" scope="col">Note</th>
+              <th class="shared-column-word" scope="col">Type</th>
+              <th class="shared-column-status" scope="col">Status</th>
+              <th class="shared-column-word" scope="col">Entered through</th>
+              <th class="shared-table-time shared-column-time" scope="col">Submitted</th>
+              <th class="shared-column-username" scope="col">Decided by</th>
+              <th class="shared-table-time shared-column-time" scope="col">Decided</th>
+              <th class="shared-table-wrap shared-column-fill" scope="col">Note</th>
             </tr>
           </thead>
           <tbody id="adminViewOrderClientInstructionTableBody"></tbody>
         </table>
       </div>
-      <p class="shared-table-empty">No rows found.</p>
+      <p class="shared-table-empty" id="adminViewOrderClientInstructionEmptyMessage">No rows found.</p>
     </section>
 
     <!-- Shortage cases and timeline -->
@@ -238,12 +245,12 @@
         <table class="shared-table shared-table-work admin-order-detail-read-only-table">
           <thead>
             <tr>
-              <th scope="col">Case</th>
-              <th scope="col">SKU</th>
-              <th class="shared-table-number" scope="col">Missing</th>
-              <th scope="col">Status</th>
-              <th scope="col">Decision</th>
-              <th scope="col">Times</th>
+              <th class="shared-column-word" scope="col">Case</th>
+              <th class="shared-column-fill" scope="col">SKU</th>
+              <th class="shared-table-number shared-column-count" scope="col">Missing</th>
+              <th class="shared-column-status-long" scope="col">Status</th>
+              <th class="shared-column-fill" scope="col">Decision</th>
+              <th class="shared-column-fill" scope="col">Times</th>
             </tr>
           </thead>
           <tbody id="adminViewOrderShortageCaseTableBody"></tbody>

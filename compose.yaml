@@ -52,6 +52,11 @@ services:
       - ./README.md:/flow-docs/README.md:ro
       - ./TEAM_GUIDE.md:/flow-docs/TEAM_GUIDE.md:ro
       - ./docs/DESIGN_NOTES_GENERAL.md:/flow-docs/DESIGN_NOTES_GENERAL.md:ro
+      # TEMPORARY TEST CODE - remove before integration (Stage 9 inventory checks).
+      - ./PLACEHOLDER_LIST.md:/flow-docs/PLACEHOLDER_LIST.md:ro
+      - ./TEMPORARY_CODE_LIST.md:/flow-docs/TEMPORARY_CODE_LIST.md:ro
+      - ./backend/Dockerfile:/flow-docs/Dockerfile:ro
+      - ./compose.yaml:/flow-docs/compose.yaml:ro
       - flow_check_lock:/flow-lock
       - flow_check_maven:/root/.m2
     depends_on:

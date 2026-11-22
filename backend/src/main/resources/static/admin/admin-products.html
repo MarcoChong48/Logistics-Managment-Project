@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Products - LMS Admin</title>
   <link rel="stylesheet" href="/shared/shared-common.css">
-  <script src="/shared/shared-common.js?v=4" defer></script>
+  <link rel="stylesheet" href="/shared/shared-table-scrollbar.css">
+  <script src="/shared/shared-common.js?v=5" defer></script>
   <script src="/admin/admin-common.js?v=4" defer></script>
   <script src="/admin/admin-products.js?v=4" defer></script>
 </head>
@@ -65,15 +66,15 @@
         <table class="shared-table" id="adminSearchProductResultTable">
           <thead>
             <tr>
-              <th scope="col">SKU</th>
-              <th scope="col" class="shared-table-wrap">Name</th>
-              <th scope="col" class="shared-table-number">Price</th>
-              <th scope="col" class="shared-table-number">Physical</th>
-              <th scope="col" class="shared-table-number">Reserved</th>
-              <th scope="col" class="shared-table-number">Available</th>
-              <th scope="col" class="shared-table-number">Low below</th>
-              <th scope="col">Status</th>
-              <th scope="col" class="shared-table-actions">Actions</th>
+              <th class="shared-column-code" scope="col">SKU</th>
+              <th scope="col" class="shared-table-wrap shared-column-fill">Name</th>
+              <th scope="col" class="shared-table-number shared-column-money">Price</th>
+              <th scope="col" class="shared-table-number shared-column-count">Physical</th>
+              <th scope="col" class="shared-table-number shared-column-count">Reserved</th>
+              <th scope="col" class="shared-table-number shared-column-count">Available</th>
+              <th scope="col" class="shared-table-number shared-column-count">Low below</th>
+              <th class="shared-column-status-short" scope="col">Status</th>
+              <th scope="col" class="shared-table-actions shared-column-actions">Actions</th>
             </tr>
           </thead>
           <tbody id="adminSearchProductResultTableBody"></tbody>
@@ -207,8 +208,8 @@
           <table class="shared-table">
             <thead>
               <tr>
-                <th scope="col" class="shared-table-number">Line</th>
-                <th scope="col" class="shared-table-wrap">Reason</th>
+                <th scope="col" class="shared-table-number shared-column-count">Line</th>
+                <th scope="col" class="shared-table-wrap shared-column-fill">Reason</th>
               </tr>
             </thead>
             <tbody id="adminImportProductCSVRejectedTableBody"></tbody>

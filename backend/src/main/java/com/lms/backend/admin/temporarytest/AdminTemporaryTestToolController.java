@@ -257,4 +257,94 @@ public class AdminTemporaryTestToolController {
             @RequestBody AdminTemporaryCreatePickingOrderRequest adminTemporaryCreatePickingOrderRequest) {
         return adminTemporaryViewTestModeService.adminTemporaryCreatePickingOrder(adminTemporaryCreatePickingOrderRequest);
     }
+
+    // ===== SECTION 18: POST /api/admin/temporary-test/failed-delivery-case =====
+
+    // TEMPORARY TEST CODE - remove before integration
+    // Stage 7 exercises age, reminders, request decisions and refusal before confirmed return.
+    /**
+     * What it does: Sends a failed delivery fixture request to the test service.
+     * Input: Failure count, whether it returned, return age in days and desired request type.
+     * Output: Order reference and request number if created, or an input error.
+     */
+    @PostMapping("/api/admin/temporary-test/failed-delivery-case")
+    public SharedMessageResponse adminTemporaryCreateFailedDeliveryCase(
+            @RequestBody AdminTemporaryCreateFailedDeliveryCaseRequest adminTemporaryCreateFailedDeliveryCaseRequest) {
+        return adminTemporaryViewTestModeService.adminTemporaryCreateFailedDeliveryCase(
+                adminTemporaryCreateFailedDeliveryCaseRequest);
+    }
+
+    // ===== SECTION 19: POST /api/admin/temporary-test/held-package =====
+
+    // TEMPORARY TEST CODE - remove before integration
+    // Stage 7 exercises delivery reassignment separately from physical custody.
+    /**
+     * What it does: Sends a held package fixture request to the test service.
+     * Input: The optional worker username and the sample order's status.
+     * Output: The package ID, order reference and holder username, or a validation error.
+     */
+    @PostMapping("/api/admin/temporary-test/held-package")
+    public SharedMessageResponse adminTemporaryCreateHeldPackage(
+            @RequestBody AdminTemporaryCreateHeldPackageRequest adminTemporaryCreateHeldPackageRequest) {
+        return adminTemporaryViewTestModeService.adminTemporaryCreateHeldPackage(adminTemporaryCreateHeldPackageRequest);
+    }
+
+    // ===== SECTION 20: POST /api/admin/temporary-test/refund-case =====
+
+    // TEMPORARY TEST CODE - remove before integration
+    // Stage 8 exercises refunds with known starting states and ages.
+    /**
+     * What it does: Creates a synthetic refund through the test service.
+     * Input: The starting refund status and age in whole hours.
+     * Output: The order reference, refund number and payment number, or a validation error.
+     */
+    @PostMapping("/api/admin/temporary-test/refund-case")
+    public SharedMessageResponse adminTemporaryCreateRefundCase(
+            @RequestBody AdminTemporaryCreateRefundCaseRequest adminTemporaryCreateRefundCaseRequest) {
+        return adminTemporaryViewTestModeService.adminTemporaryCreateRefundCase(adminTemporaryCreateRefundCaseRequest);
+    }
+
+    // ===== SECTION 21: POST /api/admin/temporary-test/provider-answer =====
+
+    // TEMPORARY TEST CODE - remove before integration
+    // Stage 8 simulates the next status checks without connecting a provider.
+    /**
+     * What it does: Changes the test provider's answer for one refund.
+     * Input: The refund number and the new provider outcome.
+     * Output: A shared success message, or an input or missing-refund error.
+     */
+    @PostMapping("/api/admin/temporary-test/provider-answer")
+    public SharedMessageResponse adminTemporarySetProviderAnswer(
+            @RequestBody AdminTemporarySetProviderAnswerRequest adminTemporarySetProviderAnswerRequest) {
+        return adminTemporaryViewTestModeService.adminTemporarySetProviderAnswer(
+                adminTemporarySetProviderAnswerRequest);
+    }
+
+    // ===== SECTION 22: POST /api/admin/temporary-test/privacy-check =====
+
+    // TEMPORARY TEST CODE - remove before integration
+    /**
+     * What it does: Runs the privacy check on the live Admin search, order and export answers.
+     * Input: None.
+     * Output: A plain-text count and any findings.
+     */
+    @PostMapping("/api/admin/temporary-test/privacy-check")
+    public SharedMessageResponse adminTemporaryRunPrivacyCheck() {
+        return adminTemporaryViewTestModeService.adminTemporaryRunPrivacyCheck();
+    }
+
+    // ===== SECTION 23: POST /api/admin/temporary-test/remove-all-test-data =====
+
+    // TEMPORARY TEST CODE - remove before integration
+    /**
+     * What it does: Clears the local test database after the Admin confirms the action.
+     * Input: The confirmation text.
+     * Output: A shared success message or a refusal.
+     */
+    @PostMapping("/api/admin/temporary-test/remove-all-test-data")
+    public SharedMessageResponse adminTemporaryRemoveAllTestData(
+            @RequestBody AdminTemporaryRemoveAllTestDataRequest adminTemporaryRemoveAllTestDataRequest) {
+        return adminTemporaryViewTestModeService.adminTemporaryRemoveAllTestData(
+                adminTemporaryRemoveAllTestDataRequest);
+    }
 }

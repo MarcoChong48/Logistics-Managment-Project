@@ -339,7 +339,8 @@ public class AdminProductService {
      * Output: Matching low-stock rows in SKU order.
      * Placeholder: PI-06. Warehouse provides the number of unavailable units, currently zero.
      */
-    private List<AdminSearchProductRow> adminReadLowStockProducts(String adminSearchProductKeyword,
+    @Transactional(readOnly = true)
+    public List<AdminSearchProductRow> adminReadLowStockProducts(String adminSearchProductKeyword,
             SharedListingStatus listingStatus) {
         return adminProductRepository.adminSearchProduct(adminSearchProductKeyword, listingStatus, Pageable.unpaged())
                 .stream().map(this::adminReadProductRow).filter(AdminSearchProductRow::adminSearchProductIsLowStock)

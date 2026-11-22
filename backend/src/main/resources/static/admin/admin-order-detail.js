@@ -182,6 +182,8 @@ function adminViewOrderRenderPaymentAndRefund(adminViewOrderResponse) {
 // Output: The picking card and its assignment table or empty message.
 function adminViewOrderRenderPicking(adminViewOrderResponse) {
   const adminViewOrderPickingTask = adminViewOrderResponse.adminViewOrderPickingTask;
+  // A missing task hides its facts. Its Workers part still shows the count and empty line.
+  adminViewOrderPickingPanel.querySelector(".shared-card-body").hidden = !adminViewOrderPickingTask;
   adminViewOrderFillFacts(adminViewOrderPickingPanel, [
     adminViewOrderBuildBadge(adminViewOrderPickingTask?.taskStatus),
     sharedFormatTime(adminViewOrderPickingTask?.startTime),
@@ -205,6 +207,8 @@ function adminViewOrderRenderPicking(adminViewOrderResponse) {
 // Output: The delivery card with separate tables for attempts and requests.
 function adminViewOrderRenderDelivery(adminViewOrderResponse) {
   const adminViewOrderPackage = adminViewOrderResponse.adminViewOrderPackage;
+  // A missing package hides its facts while the delivery history parts stay visible.
+  adminViewOrderPackagePanel.querySelector(".shared-card-body").hidden = !adminViewOrderPackage;
   adminViewOrderFillFacts(adminViewOrderPackagePanel, [
     adminViewOrderPackage?.packageQRCode, adminViewOrderBuildBadge(adminViewOrderPackage?.custodyStatus),
     adminViewOrderPackage?.adminViewOrderPackageCurrentHandlerUsername,
@@ -331,7 +335,7 @@ function adminViewOrderFillFacts(adminViewOrderFactPanel, adminViewOrderFactValu
 
 // What it does: Draw read-only rows, sharing the sizing and headings already declared in the table.
 // Input: The table body and rows of cell values, each text, number or a safe DOM node.
-// Output: Rows with semantic headings or the matching empty message.
+// Output: Rows with semantic headings or the matching empty message, plus a count for card parts.
 function adminViewOrderFillTable(adminViewOrderTableBody, adminViewOrderTableRowList) {
   const adminViewOrderTable = adminViewOrderTableBody.closest("table");
   const adminViewOrderColumnList = adminViewOrderTable.tHead.rows[0].cells;
@@ -344,7 +348,8 @@ function adminViewOrderFillTable(adminViewOrderTableBody, adminViewOrderTableRow
       if (adminViewOrderCellIndex === 0) {
         adminViewOrderCell.scope = "row";
       }
-      adminViewOrderCell.className = adminViewOrderColumn.className;
+      // Width classes belong only to the headings. Keep each cell's alignment and wrapping.
+      adminViewOrderCell.className = adminViewOrderColumn.className.replace(/(?:^|\s)shared-column-\S+/g, "").trim();
       if (adminViewOrderIsWorkTable) {
         adminViewOrderCell.dataset.title = adminViewOrderColumn.textContent;
       }
@@ -354,8 +359,12 @@ function adminViewOrderFillTable(adminViewOrderTableBody, adminViewOrderTableRow
     adminViewOrderTableBody.append(adminViewOrderTableRow);
   }
 
-  // Some cards replace their table with a message when there are no rows.
+  // Card parts show their row count even when an empty message replaces the table.
   const adminViewOrderTableScroll = adminViewOrderTable.parentElement;
+  const adminViewOrderTablePartTitle = adminViewOrderTableScroll.previousElementSibling;
+  if (adminViewOrderTablePartTitle?.classList.contains("shared-card-part-title")) {
+    adminViewOrderTablePartTitle.querySelector(".shared-card-count").textContent = adminViewOrderTableRowList.length;
+  }
   const adminViewOrderTableEmpty = adminViewOrderTableScroll.nextElementSibling;
   if (adminViewOrderTableEmpty?.classList.contains("shared-table-empty")) {
     adminViewOrderTableScroll.hidden = adminViewOrderTableRowList.length === 0;

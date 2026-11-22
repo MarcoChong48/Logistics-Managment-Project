@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Orders - LMS Admin</title>
   <link rel="stylesheet" href="/shared/shared-common.css">
-  <script src="/shared/shared-common.js?v=4" defer></script>
+  <link rel="stylesheet" href="/shared/shared-table-scrollbar.css">
+  <script src="/shared/shared-common.js?v=5" defer></script>
   <script src="/admin/admin-common.js?v=4" defer></script>
   <script src="/admin/admin-orders.js" defer></script>
 </head>
@@ -74,13 +75,13 @@
         <table class="shared-table" id="adminSearchOrderResultTable">
           <thead>
             <tr>
-              <th scope="col">Order</th>
-              <th scope="col">Client</th>
-              <th class="shared-table-time" scope="col">Created</th>
-              <th class="shared-table-number" scope="col">Total</th>
-              <th scope="col">Order status</th>
-              <th scope="col">Payment</th>
-              <th scope="col">Refund</th>
+              <th class="shared-column-order-flag" scope="col">Order</th>
+              <th class="shared-column-username" scope="col">Client</th>
+              <th class="shared-table-time shared-column-time" scope="col">Created</th>
+              <th class="shared-table-number shared-column-money" scope="col">Total</th>
+              <th class="shared-column-status-long" scope="col">Order status</th>
+              <th class="shared-column-status-short" scope="col">Payment</th>
+              <th class="shared-column-status-short" scope="col">Refund</th>
             </tr>
           </thead>
           <tbody id="adminSearchOrderResultTableBody"></tbody>

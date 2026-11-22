@@ -660,6 +660,91 @@ class AdminWarehouseCaseFlowCheckTest extends SharedFlowCheck {
         reportPartial("The browser rendering of the zero-payment row and cancellation window is omitted.");
     }
 
+    // TEMPORARY TEST CODE - remove before integration
+    // Stage 7 repeats the shortage cancellation with both a positive and a newer zero-value payment.
+    // What it does: Checks that the paid preview and refund use the positive payment.
+    // Input: A picking shortage with an accepted payment, plus a newer zero-value payment.
+    // Output: A new full refund associated with the older positive payment only.
+    @Test
+    @DisplayName("S6-T22")
+    void checkS6T22() {
+        Session checkS6T22Admin = admin();
+        JsonNode checkS6T22Shortage = adminCreateFlowShortage(checkS6T22Admin, "PICKING");
+        long orderID = checkS6T22Shortage.path("orderID").asLong();
+        long paymentID = database.sql("SELECT payment_id FROM payment WHERE order_id = :orderID")
+                .param("orderID", orderID).query(Long.class).single();
+        assertEquals(1, database.sql("""
+                INSERT INTO payment (order_id, amount, payment_status, accepted_at)
+                VALUES (:orderID, 0, 'ACCEPTED', now())
+                """).param("orderID", orderID).update());
+
+        JsonNode checkS6T22OpenCase = adminReadFlowShortage(checkS6T22Admin, "OPEN_AND_WAITING",
+                checkS6T22Shortage.path("shortageCaseID"));
+        assertTrue(checkS6T22OpenCase.path("adminSearchShortageCaseOrderIsPaid").asBoolean());
+        JsonNode checkS6T22Decision = adminCancelFlowShortage(checkS6T22Admin, checkS6T22OpenCase, true)
+                .expect(200).json();
+        assertEquals("Order " + adminReadFlowShortageReference(checkS6T22OpenCase)
+                + " was cancelled. A full refund was requested.", checkS6T22Decision.path("message").asText());
+        assertTrue(checkS6T22Decision.path("adminDecidedRowRefundIsNew").asBoolean());
+
+        List<Map<String, Object>> checkS6T22RefundList = database.sql("""
+                SELECT refund.refund_id, refund.payment_id, refund.amount, payment.amount AS paid_amount
+                FROM refund JOIN payment USING (payment_id) WHERE payment.order_id = :orderID
+                """).param("orderID", orderID).query().listOfRows();
+        assertEquals(1, checkS6T22RefundList.size());
+        Map<String, Object> checkS6T22Refund = checkS6T22RefundList.getFirst();
+        assertEquals(paymentID, checkS6T22Refund.get("payment_id"));
+        assertEquals(checkS6T22Refund.get("paid_amount"), checkS6T22Refund.get("amount"));
+        assertEquals(checkS6T22Refund.get("refund_id"), checkS6T22Decision.path("refundID").asLong());
+        reportPartial("The browser rendering of the paid cancellation window is omitted.");
+    }
+
+    // TEMPORARY TEST CODE - remove before integration
+    // Stage 7 checks that shortage cancellation recognizes a completed refund.
+    // What it does: Cancels a shortage with a pre-existing completed refund and checks the saved result.
+    // Input: A picking shortage with one accepted payment and one REFUNDED refund.
+    // Output: A final cancellation that reuses the refund ID, records the result and notifies the client.
+    @Test
+    @DisplayName("S6-T23")
+    void checkS6T23() {
+        Session checkS6T23Admin = admin();
+        JsonNode checkS6T23Shortage = adminCreateFlowShortage(checkS6T23Admin, "PICKING");
+        long orderID = checkS6T23Shortage.path("orderID").asLong();
+        long shortageCaseID = checkS6T23Shortage.path("shortageCaseID").asLong();
+        long refundID = database.sql("""
+                INSERT INTO refund (payment_id, amount, refund_status, completed_at)
+                SELECT payment_id, amount, 'REFUNDED', now()
+                FROM payment WHERE order_id = :orderID AND accepted_at IS NOT NULL
+                RETURNING refund_id
+                """).param("orderID", orderID).query(Long.class).single();
+
+        JsonNode checkS6T23Decision = adminCancelFlowShortage(checkS6T23Admin, checkS6T23Shortage, true)
+                .expect(200).json();
+        assertEquals("Order " + adminReadFlowShortageReference(checkS6T23Shortage)
+                + " was cancelled. Refund " + refundID
+                + " of this payment already existed, so no new refund was requested.",
+                checkS6T23Decision.path("message").asText());
+        assertEquals(refundID, checkS6T23Decision.path("refundID").asLong());
+        assertFalse(checkS6T23Decision.path("adminDecidedRowRefundIsNew").asBoolean(true));
+        assertEquals(1, adminCountFlowRefunds(orderID));
+        assertEquals(0L, database.sql("""
+                SELECT count(*) FROM audit_log WHERE action = 'REFUND_REQUESTED' AND target_id = :targetID
+                """).param("targetID", Long.toString(orderID)).query(Long.class).single());
+        assertEquals(Long.toString(refundID), database.sql("""
+                SELECT new_value ->> 'existingRefundID' FROM audit_log
+                WHERE action = 'SHORTAGE_CANCEL_DECIDED' AND target_id = :targetID
+                """).param("targetID", Long.toString(shortageCaseID)).query(String.class).single());
+
+        JsonNode checkS6T23Order = adminReadFlowOrder(checkS6T23Admin, checkS6T23Shortage);
+        assertEquals("CANCELLED", checkS6T23Order.path("orderStatus").asText());
+        Map<String, Object> checkS6T23Notification = adminReadFlowNotifications().getFirst();
+        adminCheckFlowNotification(checkS6T23Notification, checkS6T23Shortage,
+                checkS6T23Order.path("clientUserID").asLong(), "CLIENT_SHORTAGE_CANCELLED_REFUND_EXISTS");
+        assertTrue(checkS6T23Notification.get("message").toString()
+                .contains("A refund for this order had already been started."));
+        reportPartial("The rendered Warehouse row's existing-refund line is omitted.");
+    }
+
     // ===== SECTION 5: FLOW HELPERS =====
 
     // TEMPORARY TEST CODE - remove before integration

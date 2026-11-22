@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Delivery cases - LMS Admin</title>
+  <link rel="stylesheet" href="/shared/shared-common.css">
+  <link rel="stylesheet" href="/shared/shared-table-scrollbar.css">
+  <script src="/shared/shared-common.js?v=5" defer></script>
+  <script src="/admin/admin-common.js?v=4" defer></script>
+  <script src="/admin/admin-delivery-cases.js" defer></script>
+</head>
+<body>
+  <!-- Page frame -->
+  <main hidden>
+    <div class="shared-page-header">
+      <div class="shared-page-header-text">
+        <h1 class="shared-page-title">Delivery cases</h1>
+      </div>
+    </div>
+
+    <section class="shared-card" id="adminSearchFailedDeliveryCasePanel">
+      <div class="shared-card-header">
+        <h2 class="shared-card-title">Failed deliveries
+          <span class="shared-card-count" id="adminSearchFailedDeliveryCaseTotalRowCountText" aria-live="polite"></span>
+        </h2>
+        <form class="shared-card-actions">
+          <span class="shared-select">
+            <select id="adminSearchFailedDeliveryCaseFilterSelect" aria-label="Show">
+              <option value="ALL">All</option>
+              <option value="WAITING_FOR_RETURN">Waiting for return</option>
+              <option value="NEEDS_DECISION">Needs decision</option>
+              <option value="NO_CLIENT_REQUEST">Waiting for client</option>
+              <option value="FLAGGED">Flagged</option>
+            </select>
+            <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+          </span>
+          <button class="shared-button" type="submit" id="adminSearchFailedDeliveryCaseSubmitButton">Search</button>
+          <button class="shared-button" type="button" id="adminDownloadFailedDeliveryCaseCSVButton" disabled>
+            <svg class="shared-icon" aria-hidden="true"><use href="#icon-download"/></svg> Download CSV
+          </button>
+        </form>
+      </div>
+      <div class="shared-card-strip" hidden>
+        <p class="shared-note" id="adminSearchFailedDeliveryCaseSettingText"></p>
+      </div>
+      <div class="shared-table-scroll" role="region" aria-label="Failed deliveries table" hidden>
+        <table class="shared-table shared-table-work">
+          <thead>
+            <tr><th class="shared-column-order-flag" scope="col">Order</th><th class="shared-column-fill" scope="col">Failure</th><th class="shared-column-fill" scope="col">State</th>
+              <th scope="col" class="shared-table-actions shared-column-actions">Actions</th></tr>
+          </thead>
+          <tbody id="adminSearchFailedDeliveryCaseResultTableBody"></tbody>
+        </table>
+      </div>
+      <p class="shared-table-empty" id="adminSearchFailedDeliveryCaseEmptyMessage" hidden>No failed deliveries found.</p>
+      <div class="shared-pager" id="adminSearchFailedDeliveryCasePager" hidden></div>
+    </section>
+
+    <section class="shared-card" id="adminSearchHeldPackagePanel">
+      <div class="shared-card-header">
+        <h2 class="shared-card-title">Held packages
+          <span class="shared-card-count" id="adminSearchHeldPackageTotalRowCountText" aria-live="polite"></span>
+        </h2>
+      </div>
+      <div class="shared-table-scroll" role="region" aria-label="Held packages table" hidden>
+        <table class="shared-table shared-table-work">
+          <thead>
+            <tr><th class="shared-column-order-flag" scope="col">Order</th><th class="shared-column-fill" scope="col">Package</th><th class="shared-column-username" scope="col">Held by</th>
+              <th class="shared-column-username" scope="col">Responsible worker</th><th class="shared-column-time" scope="col">Last reassigned</th>
+              <th scope="col" class="shared-table-actions shared-column-button">Actions</th></tr>
+          </thead>
+          <tbody id="adminSearchHeldPackageResultTableBody"></tbody>
+        </table>
+      </div>
+      <p class="shared-table-empty" id="adminSearchHeldPackageEmptyMessage" hidden>No held packages found.</p>
+      <div class="shared-pager" id="adminSearchHeldPackagePager" hidden></div>
+    </section>
+  </main>
+
+  <!-- Decision windows that need more than a single reason or note -->
+  <dialog class="shared-dialog" id="adminRecordClientInstructionDialog" aria-labelledby="adminRecordClientInstructionDialogTitle">
+    <h2 class="shared-dialog-title" id="adminRecordClientInstructionDialogTitle">
+      Record a client request for order <span id="adminRecordClientInstructionOrderReferenceText"></span>
+    </h2>
+    <form>
+      <div class="shared-dialog-body">
+        <p>Use this when the client cannot use the tracking page.</p>
+        <p class="shared-note" hidden></p>
+        <div class="shared-message-place" id="adminRecordClientInstructionMessage" aria-live="polite"></div>
+        <button class="shared-button shared-button-quiet" type="button" id="adminRecordClientInstructionRefreshButton" hidden>
+          Refresh request
+        </button>
+        <label class="shared-field">
+          <span class="shared-field-label">Request type</span>
+          <span class="shared-select shared-select-wide">
+            <select id="adminRecordClientInstructionTypeSelect">
+              <option value="REDELIVER">Redelivery</option>
+              <option value="CANCEL">Cancellation</option>
+            </select>
+            <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+          </span>
+        </label>
+        <label class="shared-checkbox">
+          <input type="checkbox" id="adminRecordClientInstructionIdentityIsConfirmedCheckbox" data-required-tick>
+          <span>I have checked who this person is</span>
+        </label>
+        <label class="shared-field">
+          <span class="shared-field-label">How was the person checked?</span>
+          <input class="shared-input" type="text" id="adminRecordClientInstructionIdentityCheckMethodInput" data-reason>
+          <span class="shared-field-help">At least 5 characters, for example: caller answered the account questions.</span>
+        </label>
+        <p class="shared-note" id="adminRecordClientInstructionNoteText">You cannot enter a new address or phone number. A client who needs different delivery details must use the tracking page.</p>
+      </div>
+      <div class="shared-dialog-footer">
+        <button class="shared-button" type="button" id="adminRecordClientInstructionCancelButton">Cancel</button>
+        <button class="shared-button shared-button-primary" type="submit" id="adminRecordClientInstructionConfirmButton" disabled>Record request</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="shared-dialog" id="adminReassignDeliveryDialog" aria-labelledby="adminReassignDeliveryDialogTitle">
+    <h2 class="shared-dialog-title" id="adminReassignDeliveryDialogTitle">
+      Reassign the delivery of order <span id="adminReassignDeliveryOrderReferenceText"></span>
+    </h2>
+    <form>
+      <div class="shared-dialog-body">
+        <dl class="shared-fact-list">
+          <div class="shared-fact">
+            <dt class="shared-fact-label">Held by</dt>
+            <dd class="shared-fact-value" id="adminReassignDeliveryCurrentHandlerText"></dd>
+          </div>
+          <div class="shared-fact">
+            <dt class="shared-fact-label">Responsible worker</dt>
+            <dd class="shared-fact-value" id="adminReassignDeliveryCurrentResponsibleText"></dd>
+          </div>
+        </dl>
+        <label class="shared-field">
+          <span class="shared-field-label">New worker</span>
+          <span class="shared-select shared-select-wide">
+            <select id="adminReassignDeliveryNewWorkerSelect"></select>
+            <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+          </span>
+        </label>
+        <label class="shared-field">
+          <span class="shared-field-label">Reason</span>
+          <textarea class="shared-textarea" id="adminReassignDeliveryReasonInput" data-reason></textarea>
+          <span class="shared-field-help">At least 5 characters.</span>
+        </label>
+        <p class="shared-note" id="adminReassignDeliveryNoteText">The package only changes hands after Warehouse confirms its return and the new worker collects it.</p>
+        <div class="shared-message-place" aria-live="polite"></div>
+      </div>
+      <div class="shared-dialog-footer">
+        <button class="shared-button" type="button" id="adminReassignDeliveryCancelButton">Cancel</button>
+        <button class="shared-button shared-button-primary" type="submit" id="adminReassignDeliveryConfirmButton" disabled>Reassign delivery</button>
+      </div>
+    </form>
+  </dialog>
+</body>
+</html>

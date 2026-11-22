@@ -83,7 +83,7 @@ class SharedRoleProtectionFlowCheckTest extends SharedFlowCheck {
             assertTrue(sharedCheckTeamGuideHeadingList.get(headingIndex).startsWith("## " + (headingIndex + 1) + ". "));
         }
         assertTrue(Files.readString(sharedCheckTeamGuideFolder.resolve("DESIGN_NOTES_GENERAL.md"))
-                .contains("Version 2.6, 20 November 2026."));
+                .contains("Version 2.7, 22 November 2026."));
     }
 
     // What it does: Switches to the Warehouse Worker before checking that role's page and both API path forms.

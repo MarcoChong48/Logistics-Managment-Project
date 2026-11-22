@@ -47,6 +47,16 @@ public final class SharedPlaceholderWord {
     public static final String SHARED_PICKING_TASK_STATUS_CANCELLED = "CANCELLED";
     public static final String SHARED_MOVEMENT_TYPE_RESERVATION_RELEASED = "RESERVATION_RELEASED";
 
+    // ===== SECTION 4: STAGE 7 WORDS =====
+
+    public static final String SHARED_INSTRUCTION_TYPE_CANCEL = "CANCEL";
+    public static final String SHARED_INSTRUCTION_STATUS_WITHDRAWN = "WITHDRAWN";
+
+    // ===== SECTION 5: STAGE 8 WORDS =====
+
+    public static final String SHARED_REFUND_STATUS_PENDING = "PENDING";
+    public static final String SHARED_REFUND_STATUS_REFUNDED = "REFUNDED";
+
     /**
      * What it does: Keeps the shared words on the class.
      * Input: None.

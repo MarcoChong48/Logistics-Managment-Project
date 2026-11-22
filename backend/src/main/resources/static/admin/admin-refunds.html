@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Refunds - LMS Admin</title>
+  <link rel="stylesheet" href="/shared/shared-common.css">
+  <link rel="stylesheet" href="/shared/shared-table-scrollbar.css">
+  <script src="/shared/shared-common.js?v=5" defer></script>
+  <script src="/admin/admin-common.js?v=5" defer></script>
+  <script src="/admin/admin-refunds.js?v=2" defer></script>
+</head>
+<body>
+  <!-- Page frame -->
+  <main hidden>
+    <div class="shared-page-header">
+      <div class="shared-page-header-text">
+        <h1 class="shared-page-title">Refunds</h1>
+      </div>
+    </div>
+    <section class="shared-card">
+      <!-- Filter bar -->
+      <div class="shared-card-header">
+        <h2 class="shared-card-title">
+          Refunds <span class="shared-card-count" id="adminSearchRefundTotalRowCountText" aria-live="polite"></span>
+        </h2>
+        <form class="shared-card-actions">
+          <label class="shared-checkbox">
+            <input id="adminSearchRefundIsUnresolvedOnlyCheckbox" type="checkbox" checked>
+            <span>Unresolved only</span>
+          </label>
+          <button class="shared-button" id="adminSearchRefundSubmitButton" type="submit">Search</button>
+          <button class="shared-button" id="adminDownloadRefundCSVButton" type="button" disabled>
+            <svg class="shared-icon" aria-hidden="true"><use href="#icon-download"/></svg> Download CSV
+          </button>
+        </form>
+      </div>
+      <div class="shared-card-strip">
+        <p class="shared-note" id="adminSearchRefundNoteText">
+          A refund is shown as Refunded only after the payment provider confirmed it. It cannot be set by hand.
+        </p>
+      </div>
+      <!-- Table -->
+      <div class="shared-table-scroll" role="region" aria-label="Refunds table" hidden>
+        <table class="shared-table shared-table-work">
+          <thead>
+            <tr>
+              <th class="shared-column-order" scope="col">Order</th>
+              <th class="shared-table-number shared-column-fill" scope="col">Amount</th>
+              <th class="shared-column-status" scope="col">Status</th>
+              <th class="shared-column-word" scope="col">Age</th>
+              <th class="shared-column-time" scope="col">Last check</th>
+              <th class="shared-table-actions shared-column-actions" scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="adminSearchRefundResultTableBody"></tbody>
+        </table>
+      </div>
+      <p class="shared-table-empty" id="adminSearchRefundEmptyMessage" hidden>No refunds found.</p>
+      <!-- Pager -->
+      <div class="shared-pager" id="adminSearchRefundPager" hidden></div>
+    </section>
+  </main>
+  <!-- The retry window is built by the shared reason-dialog helper. -->
+</body>
+</html>

@@ -2,9 +2,9 @@
 
 `feature/admin-system` contains the Admin module and shared sign-in for the team's Logistics Management System. It builds on `feature/database-setup` using Java 21, Spring Boot 4.1.2, PostgreSQL 17, and Docker Compose.
 
-**Stage 6 (Warehouse cases) passed on 21 November 2026.** Seven of ten stages are complete. Stage 5 passed all eight hand tests and Stage 6 passed all nine. Stage 7 (Delivery cases) is next.
+**Stage 9 passed on 22 November 2026.** All ten Admin implementation stages are complete. The final stage passed all 13 hand tests. The combined suite passed 175 rule checks and 199 flow checks with zero failures and six documented skips.
 
-Start with the [team integration guide](TEAM_GUIDE.md) to add a role to the shared application.
+Use these references to build another role in the shared application. [Team integration guide](TEAM_GUIDE.md) · [Placeholder register](PLACEHOLDER_LIST.md) · [Final hand-in checklist](TEMPORARY_CODE_LIST.md)
 
 ## What's included
 
@@ -16,6 +16,9 @@ Start with the [team integration guide](TEAM_GUIDE.md) to add a role to the shar
 - **Super admin.** The bootstrap Admin can create and manage other Admin accounts and recover access with the local reset setting. Other Admins manage non-Admin accounts.
 - **Orders.** Search and export orders, open order details, and review status history, payment and refund state, and operational events.
 - **Warehouse cases.** Review stock shortages, choose whether to wait or cancel, export case results, and reassign picking work. Paid cancellations record a refund request through a local payment stand-in.
+- **Delivery cases.** Review failed deliveries and returned packages, record or decide client requests, send reminders, and reassign held packages.
+- **Refunds.** Review unresolved refunds, check provider status, retry confirmed failures, and export matching rows. Test tools provide synthetic provider answers.
+- **Dashboard and final checks.** Open filtered lists from order, stock, and case counts. The three work-list counters update after successful decisions. Test tools include a privacy check and local test-data cleanup.
 
 ## Ten-stage roadmap
 
@@ -28,9 +31,9 @@ Start with the [team integration guide](TEAM_GUIDE.md) to add a role to the shar
 | 4 | Products | Passed |
 | 5 | Orders | Passed |
 | 6 | Warehouse cases | Passed |
-| 7 | Delivery cases | Planned next |
-| 8 | Refund problems | Planned |
-| 9 | Dashboard and final checks | Planned |
+| 7 | Delivery cases | Passed |
+| 8 | Refund problems | Passed |
+| 9 | Dashboard and final checks | Passed |
 
 ## Set up and test locally
 
@@ -44,6 +47,6 @@ Start with the [team integration guide](TEAM_GUIDE.md) to add a role to the shar
    docker compose ps
    ```
 
-5. Open `http://127.0.0.1:8081/`. Sign in as `admin_local` with the temporary password you set and change it when prompted. Use **Test tools** to create sample orders or shortage reports, then open **Orders** or **Warehouse cases** to exercise the new workflows.
+5. Open `http://127.0.0.1:8081/`. Sign in as `admin_local` with the temporary password you set, change it when prompted, and sign in again with the new password. Use **Test tools** to create sample work, then use the Dashboard links to open the matching lists.
 
 For password requirements, database checks, and automated tests, see the [Admin setup guide](ADMIN_README.md).

@@ -32,10 +32,25 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     List<AdminViewOrderPaymentRow> adminViewOrderPayments(Long orderID);
 
     /**
-     * What it does: Reads and locks the newest accepted payment before checking for refunds.
+     * What it does: Reads and locks the newest positive accepted payment before checking for refunds.
      * Input: The order ID.
-     * Output: The latest accepted payment by creation time and ID, or empty when none was accepted.
+     * Output: The latest positive payment by acceptance time and ID, or empty when nothing was paid.
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    Optional<Payment> findFirstByOrderIDAndAcceptedTimeIsNotNullOrderByCreatedTimeDescPaymentIDDesc(Long orderID);
+    @Query("""
+            SELECT payment FROM Payment payment
+            WHERE payment.orderID = :orderID AND payment.acceptedTime IS NOT NULL AND payment.amount > 0
+            ORDER BY payment.acceptedTime DESC, payment.paymentID DESC
+            LIMIT 1
+            """)
+    Optional<Payment> findPaidPaymentByOrderIDForUpdate(Long orderID);
+
+    /**
+     * What it does: Locks the payment that owns a refund before checking or retrying the attempt.
+     * Input: The payment ID.
+     * Output: The locked payment, or empty if it no longer exists.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT payment FROM Payment payment WHERE payment.paymentID = :paymentID")
+    Optional<Payment> findPaymentByPaymentIDForUpdate(Long paymentID);
 }

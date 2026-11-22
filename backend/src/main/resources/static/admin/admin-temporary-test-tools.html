@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="/shared/shared-common.css">
   <script src="/shared/shared-common.js?v=1" defer></script>
   <script src="/admin/admin-common.js?v=1" defer></script>
-  <script src="/admin/admin-temporary-test-tools.js?v=2" defer></script>
+  <script src="/admin/admin-temporary-test-tools.js?v=4" defer></script>
 </head>
 <body>
   <!-- Page frame: wait for test mode to be confirmed before showing the content. -->
@@ -29,6 +29,22 @@
         <div class="shared-card-body">
           <h3 class="shared-card-title">Create test user</h3>
           <p>Creates an active account with a temporary password.</p>
+          <details class="shared-disclosure">
+            <summary class="shared-disclosure-summary">
+              How to use <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+            </summary>
+            <dl class="shared-disclosure-body">
+              <div class="shared-disclosure-line">
+                <dt>Creates</dt>
+                <dd>An active account named after its role, for example test_warehouse_3, with a temporary password
+                  that is valid for 24 hours.</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>See it on</dt>
+                <dd>Users. The first login with this password asks for a new one.</dd>
+              </div>
+            </dl>
+          </details>
           <label class="shared-field">
             <span class="shared-field-label">Role</span>
             <span class="shared-select shared-select-wide">
@@ -51,9 +67,29 @@
         <div class="shared-card-body">
           <h3 class="shared-card-title">End lock</h3>
           <p>Ends the 15-minute lock of an account, as if the time had run out.</p>
+          <details class="shared-disclosure">
+            <summary class="shared-disclosure-summary">
+              How to use <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+            </summary>
+            <dl class="shared-disclosure-body">
+              <div class="shared-disclosure-line">
+                <dt>Changes</dt>
+                <dd>The 15-minute lock of the account ends now, as if the time had run out.</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>Before</dt>
+                <dd>Lock the account with 5 wrong passwords on the login page.</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>See it on</dt>
+                <dd>Users: the account can log in again.</dd>
+              </div>
+            </dl>
+          </details>
           <label class="shared-field">
             <span class="shared-field-label">Username</span>
-            <input class="shared-input" type="text" id="adminTemporaryEndUserLockUsernameInput">
+            <input class="shared-input" type="text" id="adminTemporaryEndUserLockUsernameInput"
+              placeholder="e.g. test_client_4">
           </label>
           <div class="shared-button-row">
             <button class="shared-button" type="button" id="adminTemporaryEndUserLockButton">End lock</button>
@@ -65,9 +101,33 @@
         <div class="shared-card-body">
           <h3 class="shared-card-title">Expire temporary password</h3>
           <p>Lets the temporary password of an account run out at once.</p>
+          <details class="shared-disclosure">
+            <summary class="shared-disclosure-summary">
+              How to use <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+            </summary>
+            <dl class="shared-disclosure-body">
+              <div class="shared-disclosure-line">
+                <dt>Changes</dt>
+                <dd>The temporary password of the account runs out now.</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>Before</dt>
+                <dd>Give the account a temporary password with "Create test user" or "Reset password".</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>Not for</dt>
+                <dd>The super admin.</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>See it on</dt>
+                <dd>The login page: the password no longer works.</dd>
+              </div>
+            </dl>
+          </details>
           <label class="shared-field">
             <span class="shared-field-label">Username</span>
-            <input class="shared-input" type="text" id="adminTemporaryExpireTemporaryPasswordUsernameInput">
+            <input class="shared-input" type="text" id="adminTemporaryExpireTemporaryPasswordUsernameInput"
+              placeholder="e.g. test_warehouse_3">
           </label>
           <div class="shared-button-row">
             <button class="shared-button" type="button" id="adminTemporaryExpireTemporaryPasswordButton">
@@ -81,9 +141,29 @@
         <div class="shared-card-body">
           <h3 class="shared-card-title">Set user status</h3>
           <p>Sets only the stored status of an account.</p>
+          <details class="shared-disclosure">
+            <summary class="shared-disclosure-summary">
+              How to use <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+            </summary>
+            <dl class="shared-disclosure-body">
+              <div class="shared-disclosure-line">
+                <dt>Changes</dt>
+                <dd>Only the stored status. Everything else about the account stays as it is.</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>Not for</dt>
+                <dd>The super admin.</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>See it on</dt>
+                <dd>Users, after a reload.</dd>
+              </div>
+            </dl>
+          </details>
           <label class="shared-field">
             <span class="shared-field-label">Username</span>
-            <input class="shared-input" type="text" id="adminTemporarySetUserStatusUsernameInput">
+            <input class="shared-input" type="text" id="adminTemporarySetUserStatusUsernameInput"
+              placeholder="e.g. test_client_4">
           </label>
           <label class="shared-field">
             <span class="shared-field-label">Status</span>
@@ -125,6 +205,26 @@
         <div class="shared-card-body">
           <h3 class="shared-card-title">Create worker with active work</h3>
           <p>Creates a Warehouse Worker and a Delivery Worker who both have work in progress.</p>
+          <details class="shared-disclosure">
+            <summary class="shared-disclosure-summary">
+              How to use <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+            </summary>
+            <dl class="shared-disclosure-body">
+              <div class="shared-disclosure-line">
+                <dt>Creates</dt>
+                <dd>A Warehouse Worker with 2 orders being picked, and a Delivery Worker who holds 1 package and
+                  has claimed 1 pickup list.</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>Shows</dt>
+                <dd>Both usernames, their temporary passwords and the order references.</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>Next</dt>
+                <dd>Try "Change role", "Ban" or "Deactivate" on Users: each names the active work.</dd>
+              </div>
+            </dl>
+          </details>
           <div class="shared-button-row">
             <button class="shared-button" type="button" id="adminTemporaryCreateWorkerWithActiveWorkButton">
               Create worker with active work
@@ -143,6 +243,25 @@
         <div class="shared-card-body">
           <h3 class="shared-card-title">Create picking scan rows</h3>
           <p>Creates a sample order that is being picked, with six scan rows.</p>
+          <details class="shared-disclosure">
+            <summary class="shared-disclosure-summary">
+              How to use <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+            </summary>
+            <dl class="shared-disclosure-body">
+              <div class="shared-disclosure-line">
+                <dt>Creates</dt>
+                <dd>One order being picked, with 6 scan rows: 3 accepted, 1 reversed and 2 rejected.</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>Shows</dt>
+                <dd>The order reference.</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>See it on</dt>
+                <dd>Logs, tab Picking scans, with the reference as the order filter.</dd>
+              </div>
+            </dl>
+          </details>
           <div class="shared-button-row">
             <button class="shared-button" type="button" id="adminTemporaryCreatePickingScanRowButton">
               Create picking scan rows
@@ -155,6 +274,21 @@
         <div class="shared-card-body">
           <h3 class="shared-card-title">Create old log rows</h3>
           <p>Adds log rows just older and just newer than the keeping times.</p>
+          <details class="shared-disclosure">
+            <summary class="shared-disclosure-summary">
+              How to use <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+            </summary>
+            <dl class="shared-disclosure-body">
+              <div class="shared-disclosure-line">
+                <dt>Creates</dt>
+                <dd>Log rows just older and just newer than the keeping times. A second press replaces them.</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>Next</dt>
+                <dd>Press "Run log clean-up now": only the newer rows stay in Logs.</dd>
+              </div>
+            </dl>
+          </details>
           <div class="shared-button-row">
             <button class="shared-button" type="button" id="adminTemporaryCreateOldLogRowButton">
               Create old log rows
@@ -167,6 +301,17 @@
         <div class="shared-card-body">
           <h3 class="shared-card-title">Run log clean-up now</h3>
           <p>Runs the daily clean-up of old log rows at once.</p>
+          <details class="shared-disclosure">
+            <summary class="shared-disclosure-summary">
+              How to use <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+            </summary>
+            <dl class="shared-disclosure-body">
+              <div class="shared-disclosure-line">
+                <dt>See it on</dt>
+                <dd>Logs: the card "Log clean-up" shows the run and the rows deleted.</dd>
+              </div>
+            </dl>
+          </details>
           <div class="shared-button-row">
             <button class="shared-button" type="button" id="adminTemporaryRunLogCleanupButton">
               Run log clean-up now
@@ -179,6 +324,21 @@
         <div class="shared-card-body">
           <h3 class="shared-card-title">Create private value log rows</h3>
           <p>Adds one audit row and one security row that hold private test values.</p>
+          <details class="shared-disclosure">
+            <summary class="shared-disclosure-summary">
+              How to use <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+            </summary>
+            <dl class="shared-disclosure-body">
+              <div class="shared-disclosure-line">
+                <dt>Creates</dt>
+                <dd>One audit row and one security row that hold private test values, such as a phone number.</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>See it on</dt>
+                <dd>Logs: the private values are hidden.</dd>
+              </div>
+            </dl>
+          </details>
           <div class="shared-button-row">
             <button class="shared-button" type="button" id="adminTemporaryCreatePrivateValueLogRowButton">
               Create private value log rows
@@ -196,19 +356,37 @@
         <form class="shared-card-body">
           <h3 class="shared-card-title">Set product stock</h3>
           <p>Sets the two stock numbers of a product, which Admin itself may not change.</p>
+          <details class="shared-disclosure">
+            <summary class="shared-disclosure-summary">
+              How to use <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+            </summary>
+            <dl class="shared-disclosure-body">
+              <div class="shared-disclosure-line">
+                <dt>Changes</dt>
+                <dd>The two stock numbers of the product, which Admin itself may not change.</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>See it on</dt>
+                <dd>Products, after a reload, with the flags "Low stock" and "Shortfall".</dd>
+              </div>
+            </dl>
+          </details>
           <label class="shared-field">
             <span class="shared-field-label">SKU</span>
-            <input class="shared-input" id="adminTemporarySetProductStockSKUInput" type="text" required>
+            <input class="shared-input" id="adminTemporarySetProductStockSKUInput" type="text" required
+              placeholder="e.g. TEST-MUG-0012">
           </label>
           <label class="shared-field">
             <span class="shared-field-label">Physical stock</span>
             <input class="shared-input" id="adminTemporarySetProductStockPhysicalStockInput" type="number"
-                   min="0" step="1" required>
+                   min="0" step="1" required placeholder="e.g. 10">
+            <span class="shared-field-help">Available stock is physical minus reserved, but never below 0.</span>
           </label>
           <label class="shared-field">
             <span class="shared-field-label">Reserved stock</span>
             <input class="shared-input" id="adminTemporarySetProductStockReservedStockInput" type="number"
-                   min="0" step="1" required>
+                   min="0" step="1" required placeholder="e.g. 2">
+            <span class="shared-field-help">More reserved than physical shows the flag "Shortfall".</span>
           </label>
           <div class="shared-button-row">
             <button class="shared-button" type="submit" id="adminTemporarySetProductStockButton">Set product stock</button>
@@ -225,6 +403,25 @@
         <div class="shared-card-body">
           <h3 class="shared-card-title">Create sample order set</h3>
           <p>Creates one sample order in each of the ten order statuses.</p>
+          <details class="shared-disclosure">
+            <summary class="shared-disclosure-summary">
+              How to use <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+            </summary>
+            <dl class="shared-disclosure-body">
+              <div class="shared-disclosure-line">
+                <dt>Creates</dt>
+                <dd>10 orders, one in each order status.</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>Shows</dt>
+                <dd>The 10 order references with their status.</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>See it on</dt>
+                <dd>Orders, and the order page of each reference.</dd>
+              </div>
+            </dl>
+          </details>
           <div class="shared-button-row">
             <button class="shared-button" type="button" id="adminTemporaryCreateSampleOrderSetButton">
               Create sample order set
@@ -242,6 +439,31 @@
         <form class="shared-card-body">
           <h3 class="shared-card-title">Create shortage report</h3>
           <p>Reports a missing item of a sample order, as Warehouse would.</p>
+          <details class="shared-disclosure">
+            <summary class="shared-disclosure-summary">
+              How to use <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+            </summary>
+            <dl class="shared-disclosure-body">
+              <div class="shared-disclosure-line">
+                <dt>Creates</dt>
+                <dd>A shortage case, as Warehouse reports it. With the order reference empty, also a new sample
+                  order with 3 mugs and 1 pen.</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>Shows</dt>
+                <dd>The order reference and the case number.</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>See it on</dt>
+                <dd>Warehouse cases.</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>Example</dt>
+                <dd>Press it with the order reference empty, then again with the reference it showed: that order
+                  then has two cases.</dd>
+              </div>
+            </dl>
+          </details>
           <label class="shared-field">
             <span class="shared-field-label">Order status</span>
             <span class="shared-select"><select id="adminTemporaryCreateShortageReportOrderStatusSelect">
@@ -253,10 +475,14 @@
           <label class="shared-field">
             <span class="shared-field-label">Missing quantity</span>
             <input class="shared-input" id="adminTemporaryCreateShortageReportMissingQuantityInput" type="number" min="1" step="1" value="1" required>
+            <span class="shared-field-help">From 1 to the number ordered: up to 3 for the mug, 1 for the pen.</span>
           </label>
           <label class="shared-field">
             <span class="shared-field-label">Order reference<span class="shared-field-optional"> (optional)</span></span>
-            <input class="shared-input" id="adminTemporaryCreateShortageReportOrderReferenceInput" type="text">
+            <input class="shared-input" id="adminTemporaryCreateShortageReportOrderReferenceInput" type="text"
+              placeholder="e.g. TEST-0055">
+            <span class="shared-field-help">Empty: a new sample order whose mug is missing. Filled: the pen of
+              that order is missing.</span>
           </label>
           <div class="shared-button-row">
             <button class="shared-button" type="submit" id="adminTemporaryCreateShortageReportButton">
@@ -270,9 +496,25 @@
         <form class="shared-card-body">
           <h3 class="shared-card-title">Mark shortage resolved</h3>
           <p>Closes a waiting shortage case, as Warehouse would after restock.</p>
+          <details class="shared-disclosure">
+            <summary class="shared-disclosure-summary">
+              How to use <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+            </summary>
+            <dl class="shared-disclosure-body">
+              <div class="shared-disclosure-line">
+                <dt>Before</dt>
+                <dd>Decide "Wait for restock" for the case on Warehouse cases.</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>See it on</dt>
+                <dd>Warehouse cases, with the filter Resolved.</dd>
+              </div>
+            </dl>
+          </details>
           <label class="shared-field">
             <span class="shared-field-label">Case number</span>
-            <input class="shared-input" id="adminTemporaryResolveShortageCaseShortageCaseIDInput" type="number" min="1" step="1" required>
+            <input class="shared-input" id="adminTemporaryResolveShortageCaseShortageCaseIDInput" type="number" min="1" step="1" required
+              placeholder="e.g. 9">
           </label>
           <div class="shared-button-row">
             <button class="shared-button" type="submit" id="adminTemporaryResolveShortageCaseButton">
@@ -286,9 +528,30 @@
         <form class="shared-card-body">
           <h3 class="shared-card-title">Create picking order</h3>
           <p>Creates a sample order that a Warehouse Worker is picking.</p>
+          <details class="shared-disclosure">
+            <summary class="shared-disclosure-summary">
+              How to use <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+            </summary>
+            <dl class="shared-disclosure-body">
+              <div class="shared-disclosure-line">
+                <dt>Creates</dt>
+                <dd>An order being picked, with 1 of 3 mugs picked.</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>Shows</dt>
+                <dd>The order reference and the worker.</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>See it on</dt>
+                <dd>Warehouse cases, card Picking tasks in progress.</dd>
+              </div>
+            </dl>
+          </details>
           <label class="shared-field">
             <span class="shared-field-label">Worker username<span class="shared-field-optional"> (optional)</span></span>
-            <input class="shared-input" id="adminTemporaryCreatePickingOrderWorkerUsernameInput" type="text">
+            <input class="shared-input" id="adminTemporaryCreatePickingOrderWorkerUsernameInput" type="text"
+              placeholder="e.g. test_warehouse_3">
+            <span class="shared-field-help">Empty: a new test worker.</span>
           </label>
           <div class="shared-button-row">
             <button class="shared-button" type="submit" id="adminTemporaryCreatePickingOrderButton">
@@ -296,6 +559,272 @@
             </button>
           </div>
           <p class="shared-note" id="adminTemporaryCreatePickingOrderResultText" aria-live="polite" hidden></p>
+        </form>
+      </section>
+    </div>
+    <!-- TEMPORARY TEST CODE - remove before integration
+         Stage 7 supplies failed-delivery and held-package fixtures. -->
+    <h2 class="shared-section-title" hidden>Stage 7</h2>
+    <div class="shared-grid-two" hidden>
+      <section class="shared-card" id="adminTemporaryCreateFailedDeliveryCasePanel">
+        <form class="shared-card-body">
+          <h3 class="shared-card-title">Create failed delivery case</h3>
+          <p>Creates a sample order whose delivery failed.</p>
+          <details class="shared-disclosure">
+            <summary class="shared-disclosure-summary">
+              How to use <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+            </summary>
+            <dl class="shared-disclosure-body">
+              <div class="shared-disclosure-line">
+                <dt>Creates</dt>
+                <dd>An order whose delivery failed, with that many failed attempts.</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>Shows</dt>
+                <dd>The order reference and the request number.</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>See it on</dt>
+                <dd>Delivery cases.</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>Example</dt>
+                <dd>1 failure, returned 8 days ago, no request: the flag "Final review".</dd>
+              </div>
+            </dl>
+          </details>
+          <label class="shared-field">
+            <span class="shared-field-label">Failures</span>
+            <input class="shared-input" id="adminTemporaryCreateFailedDeliveryCaseFailureCountInput"
+              type="number" min="1" max="5" step="1" required placeholder="e.g. 2">
+            <span class="shared-field-help">1 to 5. 2 or more show the flag "Review".</span>
+          </label>
+          <label class="shared-checkbox">
+            <input type="checkbox" id="adminTemporaryCreateFailedDeliveryCaseIsReturnedCheckbox">
+            <span>Returned to Warehouse</span>
+          </label>
+          <label class="shared-field">
+            <span class="shared-field-label">Days since return</span>
+            <input class="shared-input" id="adminTemporaryCreateFailedDeliveryCaseDaysSinceReturnInput"
+              type="number" min="0" max="30" step="1" required placeholder="e.g. 3">
+            <span class="shared-field-help">0 to 30, only with "Returned to Warehouse". 3 days show "Reminder
+              due", 7 days "Final review", unless a client request waits.</span>
+          </label>
+          <label class="shared-field">
+            <span class="shared-field-label">Client request</span>
+            <span class="shared-select"><select id="adminTemporaryCreateFailedDeliveryCaseClientRequestSelect">
+              <option value="NONE">None</option>
+              <option value="REDELIVER">Redeliver</option>
+              <option value="CANCEL">Cancel</option>
+            </select><svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg></span>
+            <span class="shared-field-help">Redeliver or Cancel adds a request that waits for a decision.</span>
+          </label>
+          <div class="shared-button-row">
+            <button class="shared-button" type="submit" id="adminTemporaryCreateFailedDeliveryCaseButton">
+              Create failed delivery case
+            </button>
+          </div>
+          <p class="shared-note" id="adminTemporaryCreateFailedDeliveryCaseResultText" aria-live="polite" hidden></p>
+        </form>
+      </section>
+      <section class="shared-card" id="adminTemporaryCreateHeldPackagePanel">
+        <form class="shared-card-body">
+          <h3 class="shared-card-title">Create held package</h3>
+          <p>Creates a sample order whose package a Delivery Worker holds.</p>
+          <details class="shared-disclosure">
+            <summary class="shared-disclosure-summary">
+              How to use <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+            </summary>
+            <dl class="shared-disclosure-body">
+              <div class="shared-disclosure-line">
+                <dt>Creates</dt>
+                <dd>An order whose package a Delivery Worker holds.</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>Shows</dt>
+                <dd>The order reference, the package number and the worker.</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>See it on</dt>
+                <dd>Delivery cases, card Held packages.</dd>
+              </div>
+            </dl>
+          </details>
+          <label class="shared-field">
+            <span class="shared-field-label">Worker username<span class="shared-field-optional"> (optional)</span></span>
+            <input class="shared-input" id="adminTemporaryCreateHeldPackageWorkerUsernameInput" type="text"
+              placeholder="e.g. test_delivery_2">
+            <span class="shared-field-help">Empty: a new test worker.</span>
+          </label>
+          <label class="shared-field">
+            <span class="shared-field-label">Order status</span>
+            <span class="shared-select"><select id="adminTemporaryCreateHeldPackageOrderStatusSelect">
+              <option value="SHIPPED">Shipped</option>
+              <option value="OUT_FOR_DELIVERY">Out for delivery</option>
+            </select><svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg></span>
+          </label>
+          <div class="shared-button-row">
+            <button class="shared-button" type="submit" id="adminTemporaryCreateHeldPackageButton">
+              Create held package
+            </button>
+          </div>
+          <p class="shared-note" id="adminTemporaryCreateHeldPackageResultText" aria-live="polite" hidden></p>
+        </form>
+      </section>
+    </div>
+    <!-- TEMPORARY TEST CODE - remove before integration
+         Stage 8 supplies refund attempts and stand-in provider answers. -->
+    <h2 class="shared-section-title" hidden>Stage 8</h2>
+    <div class="shared-grid-two" hidden>
+      <section class="shared-card" id="adminTemporaryCreateRefundCasePanel">
+        <form class="shared-card-body">
+          <h3 class="shared-card-title">Create refund case</h3>
+          <p>Creates a cancelled sample order with one refund.</p>
+          <details class="shared-disclosure">
+            <summary class="shared-disclosure-summary">
+              How to use <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+            </summary>
+            <dl class="shared-disclosure-body">
+              <div class="shared-disclosure-line">
+                <dt>Creates</dt>
+                <dd>A cancelled order with an accepted payment and one refund in the chosen status.</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>Shows</dt>
+                <dd>The order reference, the refund number and the payment number.</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>See it on</dt>
+                <dd>Refunds.</dd>
+              </div>
+            </dl>
+          </details>
+          <label class="shared-field">
+            <span class="shared-field-label">Refund status</span>
+            <span class="shared-select">
+              <select id="adminTemporaryCreateRefundCaseRefundStatusSelect">
+                <option value="REQUESTED">Requested</option>
+                <option value="PENDING">Pending</option>
+                <option value="FAILED">Failed</option>
+                <option value="REFUNDED">Refunded</option>
+              </select>
+              <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+            </span>
+          </label>
+          <label class="shared-field">
+            <span class="shared-field-label">Age in hours</span>
+            <input class="shared-input" id="adminTemporaryCreateRefundCaseAgeHoursInput" type="number"
+              min="0" max="720" step="1" placeholder="e.g. 30" required>
+            <span class="shared-field-help">0 to 720, which is 30 days.</span>
+          </label>
+          <div class="shared-button-row">
+            <button class="shared-button" type="submit" id="adminTemporaryCreateRefundCaseButton">Create refund case</button>
+          </div>
+          <p class="shared-note" id="adminTemporaryCreateRefundCaseResultText" aria-live="polite" hidden></p>
+        </form>
+      </section>
+      <section class="shared-card" id="adminTemporarySetProviderAnswerPanel">
+        <form class="shared-card-body">
+          <h3 class="shared-card-title">Set provider answer</h3>
+          <p>Sets the answer that the stand-in payment provider gives for one refund.</p>
+          <details class="shared-disclosure">
+            <summary class="shared-disclosure-summary">
+              How to use <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+            </summary>
+            <dl class="shared-disclosure-body">
+              <div class="shared-disclosure-line">
+                <dt>Changes</dt>
+                <dd>The answer that the stand-in payment provider gives for that refund.</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>Next</dt>
+                <dd>Press "Check provider status" in the row of that refund on Refunds.</dd>
+              </div>
+            </dl>
+          </details>
+          <label class="shared-field">
+            <span class="shared-field-label">Refund number</span>
+            <input class="shared-input" id="adminTemporarySetProviderAnswerRefundIDInput" type="number"
+              min="1" step="1" placeholder="e.g. 12" required>
+          </label>
+          <label class="shared-field">
+            <span class="shared-field-label">Outcome</span>
+            <span class="shared-select">
+              <select id="adminTemporarySetProviderAnswerOutcomeSelect">
+                <option value="REFUNDED">Refunded</option>
+                <option value="FAILED">Failed</option>
+                <option value="PENDING">Pending</option>
+                <option value="UNKNOWN">Unknown</option>
+              </select>
+              <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+            </span>
+          </label>
+          <div class="shared-button-row">
+            <button class="shared-button" type="submit" id="adminTemporarySetProviderAnswerButton">
+              Set provider answer
+            </button>
+          </div>
+          <p class="shared-note" id="adminTemporarySetProviderAnswerResultText" aria-live="polite" hidden></p>
+        </form>
+      </section>
+    </div>
+    <!-- TEMPORARY TEST CODE - remove before integration
+         Stage 9 checks the final Admin data and cleans up the local test database. -->
+    <h2 class="shared-section-title" hidden>Stage 9</h2>
+    <div class="shared-grid-two" hidden>
+      <section class="shared-card" id="adminTemporaryRunPrivacyCheckPanel">
+        <div class="shared-card-body">
+          <h3 class="shared-card-title">Run privacy check</h3>
+          <p>Searches every Admin answer for private data.</p>
+          <details class="shared-disclosure">
+            <summary class="shared-disclosure-summary">
+              How to use <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+            </summary>
+            <dl class="shared-disclosure-body">
+              <div class="shared-disclosure-line">
+                <dt>Shows</dt>
+                <dd>How many answers were checked, and each finding with its function and what was found.</dd>
+              </div>
+            </dl>
+          </details>
+          <div class="shared-button-row">
+            <button class="shared-button" type="button" id="adminTemporaryRunPrivacyCheckButton">
+              Run privacy check
+            </button>
+          </div>
+          <p class="shared-note" id="adminTemporaryRunPrivacyCheckResultText" aria-live="polite" hidden></p>
+        </div>
+      </section>
+      <section class="shared-card" id="adminTemporaryRemoveAllTestDataPanel">
+        <form class="shared-card-body">
+          <h3 class="shared-card-title">Remove all test data</h3>
+          <p>Empties every table except the accounts that are not test accounts.</p>
+          <details class="shared-disclosure">
+            <summary class="shared-disclosure-summary">
+              How to use <svg class="shared-icon" aria-hidden="true"><use href="#icon-chevron"/></svg>
+            </summary>
+            <dl class="shared-disclosure-body">
+              <div class="shared-disclosure-line">
+                <dt>Removes</dt>
+                <dd>Every row of every table and every test account. This cannot be undone.</dd>
+              </div>
+              <div class="shared-disclosure-line">
+                <dt>Keeps</dt>
+                <dd>Your own account and every account that is not a test account.</dd>
+              </div>
+            </dl>
+          </details>
+          <label class="shared-field">
+            <span class="shared-field-label">Type REMOVE to confirm</span>
+            <input class="shared-input" id="adminTemporaryRemoveAllTestDataConfirmTextInput" type="text"
+              autocomplete="off" required>
+          </label>
+          <div class="shared-button-row">
+            <button class="shared-button shared-button-danger" type="submit" id="adminTemporaryRemoveAllTestDataButton">
+              Remove all test data
+            </button>
+          </div>
+          <p class="shared-note" id="adminTemporaryRemoveAllTestDataResultText" aria-live="polite" hidden></p>
         </form>
       </section>
     </div>

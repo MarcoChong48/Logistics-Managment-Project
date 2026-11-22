@@ -376,38 +376,83 @@ function sharedBuildPager(sharedBuildPagerElement, sharedBuildPagerPageNumber, s
 
 // ===== SECTION 13: sharedWatchTableScroll =====
 
-// What it does: Keep a wide list keyboard-scrollable and pin its first column.
-// Input: None. Finds the named list regions on the page.
-// Output: Regions update when their box or their table changes width.
+// What it does: Show a permanent horizontal thumb for each table that needs extra room.
+// Input: None. Finds the table scroll regions on the page.
+// Output: The thumb follows table scrolling and named regions keep their pinned first column.
 function sharedWatchTableScroll() {
-  const sharedWatchTableScrollRegionList = document.querySelectorAll('.shared-table-scroll[role="region"]');
-
-  // What it does: Use the latest width of every watched box and table to update the overflow state.
-  // Input: None. Reads the named list regions captured above.
-  // Output: A wide list can be focused and its first-column width is available to the stylesheet.
-  const sharedWatchTableScrollUpdate = () => {
-    for (const sharedWatchTableScrollRegion of sharedWatchTableScrollRegionList) {
-      const sharedWatchTableScrollHasOverflow = sharedWatchTableScrollRegion.clientWidth > 0
-        && sharedWatchTableScrollRegion.scrollWidth > sharedWatchTableScrollRegion.clientWidth + 1;
-      sharedWatchTableScrollRegion.classList.toggle("shared-table-scroll-overflow", sharedWatchTableScrollHasOverflow);
-      if (sharedWatchTableScrollHasOverflow) {
-        const sharedWatchTableScrollFirstHeading = sharedWatchTableScrollRegion.querySelector("thead th");
-        const sharedWatchTableScrollWidth = sharedWatchTableScrollFirstHeading.getBoundingClientRect().width;
-        sharedWatchTableScrollRegion.tabIndex = 0;
-        sharedWatchTableScrollRegion.style.setProperty("--shared-table-pinned-width", sharedWatchTableScrollWidth + "px");
-      } else {
-        sharedWatchTableScrollRegion.removeAttribute("tabindex");
-        sharedWatchTableScrollRegion.style.removeProperty("--shared-table-pinned-width");
-      }
-    }
-  };
-
-  // Observe the table as well as its scroll box so replacing rows updates the pin.
-  const sharedWatchTableScrollObserver = new ResizeObserver(sharedWatchTableScrollUpdate);
+  const sharedWatchTableScrollRegionList = document.querySelectorAll(".shared-table-scroll");
   for (const sharedWatchTableScrollRegion of sharedWatchTableScrollRegionList) {
+    const sharedWatchTableScrollTable = sharedWatchTableScrollRegion.querySelector(":scope > .shared-table");
+    if (!sharedWatchTableScrollTable || sharedWatchTableScrollRegion.querySelector(".shared-table-scrollbar")) {
+      continue;
+    }
+
+    const sharedWatchTableScrollBar = sharedBuildTableScrollbar(sharedWatchTableScrollRegion);
+    const sharedWatchTableScrollFirstHeading = sharedWatchTableScrollRegion.matches('[role="region"]')
+      ? sharedWatchTableScrollTable.querySelector("thead th")
+      : null;
+
+    // What it does: Update the thumb and pinned column after the table or its frame changes size.
+    // Input: The observed table and its scroll box. Output: A usable control only for visible overflow.
+    const sharedWatchTableScrollUpdate = () => {
+      const sharedWatchTableScrollWidth = sharedWatchTableScrollRegion.clientWidth;
+      const sharedWatchTableScrollFullWidth = sharedWatchTableScrollRegion.scrollWidth;
+      const sharedWatchTableScrollMaximum = sharedWatchTableScrollFullWidth - sharedWatchTableScrollWidth;
+      const sharedWatchTableScrollHasOverflow = sharedWatchTableScrollWidth > 0 && sharedWatchTableScrollMaximum > 0;
+      sharedWatchTableScrollBar.hidden = !sharedWatchTableScrollHasOverflow;
+      if (sharedWatchTableScrollHasOverflow) {
+        sharedWatchTableScrollBar.max = sharedWatchTableScrollMaximum;
+        sharedWatchTableScrollBar.value = sharedWatchTableScrollRegion.scrollLeft;
+        sharedWatchTableScrollBar.style.setProperty("--shared-table-scrollbar-thumb-width",
+          (100 * sharedWatchTableScrollWidth / sharedWatchTableScrollFullWidth) + "%");
+      }
+      if (sharedWatchTableScrollFirstHeading) {
+        sharedWatchTableScrollRegion.classList.toggle("shared-table-scroll-overflow",
+          sharedWatchTableScrollHasOverflow);
+        if (sharedWatchTableScrollHasOverflow) {
+          sharedWatchTableScrollRegion.tabIndex = 0;
+          sharedWatchTableScrollRegion.style.setProperty("--shared-table-pinned-width",
+            sharedWatchTableScrollFirstHeading.getBoundingClientRect().width + "px");
+        } else {
+          sharedWatchTableScrollRegion.removeAttribute("tabindex");
+          sharedWatchTableScrollRegion.style.removeProperty("--shared-table-pinned-width");
+        }
+      }
+    };
+
+    const sharedWatchTableScrollObserver = new ResizeObserver(sharedWatchTableScrollUpdate);
     sharedWatchTableScrollObserver.observe(sharedWatchTableScrollRegion);
-    sharedWatchTableScrollObserver.observe(sharedWatchTableScrollRegion.querySelector(".shared-table"));
+    sharedWatchTableScrollObserver.observe(sharedWatchTableScrollTable);
+    sharedWatchTableScrollUpdate();
   }
+}
+
+// What it does: Put a native drag and keyboard control inside the bottom of the scroll box.
+// Input: The table's scroll box. Output: The slider, linked in both directions to horizontal scrolling.
+function sharedBuildTableScrollbar(sharedBuildTableScrollbarRegion) {
+  const sharedBuildTableScrollbarInput = document.createElement("input");
+  sharedBuildTableScrollbarInput.type = "range";
+  sharedBuildTableScrollbarInput.className = "shared-table-scrollbar";
+  sharedBuildTableScrollbarInput.min = "0";
+  sharedBuildTableScrollbarInput.max = "0";
+  sharedBuildTableScrollbarInput.value = "0";
+  sharedBuildTableScrollbarInput.hidden = true;
+  const sharedBuildTableScrollbarName = sharedBuildTableScrollbarRegion.getAttribute("aria-label")
+    || sharedBuildTableScrollbarRegion.closest(".shared-card")?.querySelector(".shared-card-title")?.textContent.trim()
+    || "table";
+  sharedBuildTableScrollbarInput.setAttribute(
+    "aria-label", "Scroll " + sharedBuildTableScrollbarName + " horizontally");
+
+  // What it does: Pan the content when the slider moves. Input: Slider value. Output: The table's new offset.
+  sharedBuildTableScrollbarInput.addEventListener("input", () => {
+    sharedBuildTableScrollbarRegion.scrollLeft = sharedBuildTableScrollbarInput.valueAsNumber;
+  });
+  // What it does: Follow swipes, wheel and keyboard scrolling. Input: Table offset. Output: The slider's new value.
+  sharedBuildTableScrollbarRegion.addEventListener("scroll", () => {
+    sharedBuildTableScrollbarInput.value = sharedBuildTableScrollbarRegion.scrollLeft;
+  }, { passive: true });
+  sharedBuildTableScrollbarRegion.append(sharedBuildTableScrollbarInput);
+  return sharedBuildTableScrollbarInput;
 }
 
 // ===== SECTION 14: sharedPlaceActionMenu =====
