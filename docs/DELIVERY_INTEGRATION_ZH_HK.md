@@ -24,3 +24,9 @@ Admin 原有 Java、頁面、`compose.yaml` 和 `01`／`03` 遷移是基底。De
 
 - [交接清單和驗收次序](DELIVERY_TEAM_HANDOFF_ZH_HK.md)
 - [Delivery 資料庫遷移](../database/07_delivery_changes.sql)
+
+## 合併前驗證
+
+已在獨立 Docker PostgreSQL 驗證本分支的正式登入、自動分派、逐件提貨、Admin 讀取同一筆 `SHIPPED` 訂單，以及派送失敗後申報退件。Delivery 示範接口均未註冊。
+
+以 Client `fac82e6` 進行三方合併預覽時，`backend/pom.xml`、共用訂單／商品／庫存程式、登入安全設定、共用網頁及兩份原有 README 出現重疊。合併時請共同保留兩邊所需的依賴、角色權限、交易和頁面行為。整個小組合併後的程式、正式 Supabase 和實體相機仍需驗收。
