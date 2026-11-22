@@ -228,8 +228,24 @@ public class WarehouseOrderService {
     public byte[] warehouseViewOrderQRCode(String orderReference) {
         String savedReference = warehouseOrderPickingService.warehouseReadTaskState(orderReference, false)
                 .orderReference();
+        return warehouseEncodeQRCode(savedReference);
+    }
+
+    @Transactional(readOnly = true)
+    public String warehouseReadPackedPackageQR(String orderReference) {
+        return warehouseOrderDatabase.sql("""
+                SELECT p.package_qr_code FROM customer_order o JOIN delivery_package p USING (order_id)
+                JOIN picking_task t USING (order_id)
+                WHERE o.order_reference = :reference AND t.task_status = 'PACKED'
+                  AND t.confirm_packing_time IS NOT NULL
+                """).param("reference", orderReference.strip()).query(String.class).optional()
+                .orElseThrow(() -> new SharedRuleException(HttpStatus.NOT_FOUND, "WAREHOUSE_PACKAGE_NOT_FOUND",
+                        "No packed package matches this order."));
+    }
+
+    static byte[] warehouseEncodeQRCode(String payload) {
         try {
-            BitMatrix matrix = new QRCodeWriter().encode(savedReference, BarcodeFormat.QR_CODE,
+            BitMatrix matrix = new QRCodeWriter().encode(payload, BarcodeFormat.QR_CODE,
                     WAREHOUSE_ORDER_QR_CODE_IMAGE_SIZE, WAREHOUSE_ORDER_QR_CODE_IMAGE_SIZE);
             BufferedImage image = new BufferedImage(WAREHOUSE_ORDER_QR_CODE_IMAGE_SIZE,
                     WAREHOUSE_ORDER_QR_CODE_IMAGE_SIZE, BufferedImage.TYPE_BYTE_BINARY);
@@ -245,7 +261,7 @@ public class WarehouseOrderService {
             }
             return imageBytes.toByteArray();
         } catch (WriterException | IOException warehouseViewOrderQRCodeError) {
-            throw new IllegalStateException("The order QR code could not be generated.", warehouseViewOrderQRCodeError);
+            throw new IllegalStateException("The QR code could not be generated.", warehouseViewOrderQRCodeError);
         }
     }
 

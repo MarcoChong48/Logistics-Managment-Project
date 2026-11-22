@@ -140,3 +140,38 @@ Surefire XML confirmed **19 passes** across the following named regression group
 | `clientCancellationRecordsEachTimestampedPaymentExactlyOnce` | 1 |
 
 Full migration versioning, Warehouse import and wiring, live Delivery pickup, physical returns and integrated cross-role acceptance remain open.
+
+## Warehouse backend and Pickup List handoff
+
+The Warehouse picking and packing checkpoint is `98a35e1d5818d3a8e61a2f3f4294ff5de2fe5b10`, built on the Step 2 commit `41dc8c26d5bf99a170af235be18640a8141f2252`. Fresh PostgreSQL installations use migrations 01, 03, 04, 06, 07 and 08 for 33 public tables. Optional Stripe fixture migration 05 brings the total to 35. Existing databases need migration 08 applied explicitly.
+
+Confirm Packing commits the package and the `READY_FOR_PICKUP` order state with their reservations still `HELD`. A Warehouse worker can then use these authenticated operations.
+
+| Operation | Route under `/api/warehouse/orders/{orderReference}` |
+| --- | --- |
+| Read the package QR payload or PNG | `GET /package` or `GET /package/qr-code` |
+| Create a Pickup List | `POST /pickup-list` with a UUID `requestId` and the shared CSRF token |
+| Read the active Pickup List or its QR PNG | `GET /pickup-list` or `GET /pickup-list/{listId}/qr-code` |
+
+Picking, packing and package labels are available with the default profile. Pickup List operations require `delivery-full`. The handoff takes Delivery's transaction advisory lock before the package and order row locks. Before creating a list, it verifies committed packing, Warehouse custody, an address, no return history and no active list for the package. It also reuses the picking and collection payment gate, which requires one positive, timestamped accepted payment, exact payment-linked held quantities and clear payment and refund history. Delivery's command store saves the creation response in the same transaction as the list and audit event. The same request ID returns the saved result, and a second request for a package with an active list is rejected. Shipping and stock consumption occur at actual Delivery collection.
+
+| File | Handoff change |
+| --- | --- |
+| `WarehousePickupListController.java` and `WarehousePickupListService.java` | Add profile-gated creation, active-list lookup and order-scoped QR PNG. Reuse shared identity, Delivery assignment and replay handling, and the shared fulfilment eligibility check. |
+| `WarehouseController.java` and `WarehouseOrderService.java` | Expose the packed package QR payload and PNG and share the existing QR encoder. |
+| `WarehouseApiTest.java` and `WarehouseDeliveryApiTest.java` | Exercise both profile configurations and committed packing, Warehouse role protection, list creation and replay, payment rejection, collector claim, one stock movement after replay, and Client tracking and Admin read access. |
+
+Warehouse browser pages, physical return receipt and redelivery remain open. The Step 2 Admin inventory-clamping risk and manual payment reconciliation runbook still apply.
+
+### Handoff regression evidence
+
+| Suite | Passed | Failed | Skipped | Log |
+| --- | ---: | ---: | ---: | --- |
+| Maven/JUnit on isolated PostgreSQL 17.11 | 383 | 0 | 0 | `backend/target/warehouse-handoff-junit.log` |
+| Full Admin/Shared HTTP flow suite | 199 | 0 | 6 | `backend/target/warehouse-handoff-admin-http.log` |
+| Admin/Shared rule rerun within the Compose suite | 175 | 0 | 0 | Included in the Maven/JUnit total above |
+| Client Chromium fixtures | 64 | 0 | 6 | `backend/target/warehouse-handoff-retry-chromium.log` |
+
+Maven test compilation passed first. The 36 Warehouse JUnit executions include both Delivery profile configurations. Chromium fixture testing completed in Edge after Chrome's temporary DevTools startup file was locked. Six Chromium cases require a live Client backend. The six Admin/Shared skips are the existing flow-suite skips.
+
+The isolated loopback-only Delivery Compose overlay passed the live handoff using a synthetic accepted payment with demo mode disabled. The real Warehouse session packed the order and created the list in separate HTTP requests. Delivery claimed and collected the package, and a replay returned the saved response across HTTP transactions. Client tracking reached SHIPPED and the authenticated Admin order read succeeded. PostgreSQL recorded physical stock 8, reserved stock 0, one consumed reservation, one list item, one PICKUP movement and one custody event. The log is `backend/target/warehouse-handoff-live.log`.

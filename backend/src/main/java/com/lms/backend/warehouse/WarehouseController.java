@@ -128,6 +128,18 @@ public class WarehouseController {
                 .body(warehouseOrderService.warehouseViewOrderQRCode(orderReference));
     }
 
+    @GetMapping("/orders/{orderReference}/package")
+    public Map<String, Object> warehouseViewPackage(@PathVariable String orderReference) {
+        return Map.of("packageQrCode", warehouseOrderService.warehouseReadPackedPackageQR(orderReference));
+    }
+
+    @GetMapping("/orders/{orderReference}/package/qr-code")
+    public ResponseEntity<byte[]> warehouseViewPackageQR(@PathVariable String orderReference) {
+        return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).cacheControl(CacheControl.noStore())
+                .body(WarehouseOrderService.warehouseEncodeQRCode(
+                        warehouseOrderService.warehouseReadPackedPackageQR(orderReference)));
+    }
+
     // ===== SECTION 4: PICKING TASK =====
 
     /**

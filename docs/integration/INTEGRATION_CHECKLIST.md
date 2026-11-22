@@ -12,7 +12,7 @@
 - [x] Confirm that the merge preserves existing Client order ownership, idempotency, checkout, order tracking and notification tests.
 - [x] Preserve Admin Stage 9's role policies, shared mappings and cancellation and refund policy.
 - [x] Share Client and Admin cancellation mutation under the order lock. Verify duplicate cancellation, expiry, late payment and rollback.
-- [ ] Exercise Client cancellation racing the first Warehouse scan after Warehouse integration.
+- [x] Verify that Client cancellation and the first Warehouse scan cannot both advance an order.
 - [x] Verify late and duplicate captures, separate paid attempts and Admin refund selection and retry behavior on disposable data.
 - [ ] Track the legacy Admin inventory clamp. A reserved balance below the reservation quantity can produce a ledger delta larger than the stock decremented. A change to this policy requires separate approval.
 - [ ] Follow the [manual reconciliation runbook](STEP_2_PAYMENT_RECONCILIATION.md) for active legacy claims. Step 2 provides a runbook, with no implemented Admin API for clearing the marker or advancing the order.
@@ -20,7 +20,7 @@
 
 ## Database and Payment
 
-- [x] Verify default migrations 01, 03, 04, 06 and 07 in a disposable database with 32 public tables.
+- [x] Verify default migrations 01, 03, 04, 06, 07 and 08 in a disposable database with 33 public tables.
 - [x] Run optional migration 05 and module tests on disposable data with mocked provider responses. Keep Stripe disabled by default.
 - [ ] Rehearse the ordered migration plan and version checks on a disposable copy of any intended existing schema. Verify the FK, unique and CHECK constraints before rollout.
 - [ ] Confirm which provider record proves capture and settlement for each supported source. Reconcile timestamp-less `ACCEPTED` records before authorizing refund attempts.
@@ -28,9 +28,9 @@
 ## Warehouse and Delivery
 
 - [ ] Import Warehouse Java and connect the supplied pages to authenticated `/api/warehouse` endpoints with CSRF.
-- [ ] Verify Product SKU scanning, exact order-item quantities and the first-scan lock. Keep Order Reference, Package QR and Pickup List QR distinct.
-- [ ] Check accepted payment and all required held quantities before picking and packing. Keep inventory consumption at Delivery collection and test that a repeated pickup never consumes twice.
-- [ ] Connect eligible packed packages to `DeliveryPickupService.createList` and verify assignment, claim and actual pickup under the `delivery-full` profile.
+- [x] Verify Product SKU scanning, exact order-item quantities and the first-scan lock. Keep Order Reference, Package QR and Pickup List QR distinct.
+- [x] Check accepted payment and all required held quantities before picking and packing. Verify one stock consumption at Delivery collection when a pickup is replayed.
+- [x] Connect eligible packed packages to `DeliveryPickupService.createList` through an authenticated post-packing action. Verify assignment, claim and collection under `delivery-full`.
 - [ ] Implement physical return receipt and inventory condition handling after the team approves the rules for quantity discrepancies and damaged goods.
 
 ## Integration testing

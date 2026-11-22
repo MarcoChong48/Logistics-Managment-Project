@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -47,10 +48,11 @@ class WarehouseApiTest {
     private static final String PASSWORD = "WarehouseFixture123!";
 
     @Autowired private MockMvc mvc;
-    @Autowired private JdbcClient db;
+    @Autowired private Environment environment;
+    @Autowired JdbcClient db;
     @Autowired private PasswordEncoder passwords;
     @Autowired private EntityManager entities;
-    @Autowired private PlatformTransactionManager transactions;
+    @Autowired PlatformTransactionManager transactions;
     @MockitoBean private SharedSecurityLogWriter securityLogs;
 
     @Test
@@ -171,7 +173,7 @@ class WarehouseApiTest {
     }
 
     @Test
-    void packingDoesNotConsumeStockAndIsIdempotentWithDeliveryProfileOff() throws Exception {
+    void packingDoesNotConsumeStockAndIsIdempotent() throws Exception {
         var order = order(2);
         var worker = signIn(user("WAREHOUSE_WORKER"));
         scan(order, worker, order.sku(), UUID.randomUUID()).andExpect(status().isOk());
@@ -257,7 +259,7 @@ class WarehouseApiTest {
         }
     }
 
-    private void deleteRaceFixture(FixtureOrder order, long workerId) {
+    void deleteRaceFixture(FixtureOrder order, long workerId) {
         db.sql("DELETE FROM audit_log WHERE actor_user_id IN (?, ?)").param(order.client().id()).param(workerId).update();
         db.sql("DELETE FROM warehouse_picking_command WHERE order_id = ?").param(order.id()).update();
         db.sql("""
@@ -274,13 +276,15 @@ class WarehouseApiTest {
         db.sql("DELETE FROM order_item WHERE order_id = ?").param(order.id()).update();
         db.sql("DELETE FROM refund WHERE payment_id = ?").param(order.paymentId()).update();
         db.sql("DELETE FROM payment WHERE order_id = ?").param(order.id()).update();
+        db.sql("DELETE FROM delivery_package WHERE order_id = ?").param(order.id()).update();
+        db.sql("DELETE FROM order_delivery_detail WHERE order_id = ?").param(order.id()).update();
         db.sql("DELETE FROM customer_order WHERE order_id = ?").param(order.id()).update();
         db.sql("DELETE FROM inventory WHERE product_id = ?").param(order.productId()).update();
         db.sql("DELETE FROM product WHERE product_id = ?").param(order.productId()).update();
         db.sql("DELETE FROM app_user WHERE user_id IN (?, ?)").param(order.client().id()).param(workerId).update();
     }
 
-    private ResultActions scan(FixtureOrder order, Session worker, String sku, UUID requestId) throws Exception {
+    ResultActions scan(FixtureOrder order, Session worker, String sku, UUID requestId) throws Exception {
         return write(taskPath(order) + "/scans", worker,
                 """
                 {"scannedIdentifier":"%s","requestId":"%s"}
@@ -293,8 +297,19 @@ class WarehouseApiTest {
                 """.formatted(id, reason);
     }
 
-    private static String taskPath(FixtureOrder order) {
+    static String taskPath(FixtureOrder order) {
         return PATH + "/orders/" + order.reference() + "/picking-task";
+    }
+
+    @Test
+    void pickupListRouteFollowsDeliveryProfile() throws Exception {
+        var worker = signIn(user("WAREHOUSE_WORKER"));
+        var response = read("/api/warehouse/orders/unknown/pickup-list", worker);
+        if (environment.matchesProfiles("delivery-full")) {
+            response.andExpect(status().isOk()).andExpect(jsonPath("$.pickupListId").doesNotExist());
+        } else {
+            response.andExpect(status().isNotFound());
+        }
     }
 
     private long scanCount(FixtureOrder order, String result) {
@@ -314,7 +329,7 @@ class WarehouseApiTest {
                 .query(Integer.class).single();
     }
 
-    private FixtureOrder order(int quantity) {
+    FixtureOrder order(int quantity) {
         FixtureUser client = user("CLIENT");
         String reference = "Warehouse-" + UUID.randomUUID();
         String sku = "SKU-" + UUID.randomUUID();
@@ -340,14 +355,14 @@ class WarehouseApiTest {
         return new FixtureOrder(orderId, reference, productId, itemId, paymentId, sku, client);
     }
 
-    private record FixtureOrder(long id, String reference, long productId, long itemId, long paymentId, String sku,
+    record FixtureOrder(long id, String reference, long productId, long itemId, long paymentId, String sku,
             FixtureUser client) {}
 
-    private ResultActions read(String path, Session session) throws Exception {
+    ResultActions read(String path, Session session) throws Exception {
         return mvc.perform(get(path).servletPath(path).session(session.session()));
     }
 
-    private ResultActions write(String path, Session session, String body) throws Exception {
+    ResultActions write(String path, Session session, String body) throws Exception {
         var request = post(path).servletPath(path).session(session.session())
                 .header(session.csrfHeader(), session.csrfToken());
         if (body != null) {
@@ -356,7 +371,7 @@ class WarehouseApiTest {
         return mvc.perform(request);
     }
 
-    private Session signIn(FixtureUser user) throws Exception {
+    Session signIn(FixtureUser user) throws Exception {
         Session guest = sessionInfo(null, user.id());
         String login = "/api/shared/login";
         var result = mvc.perform(post(login).servletPath(login).session(guest.session())
@@ -380,7 +395,7 @@ class WarehouseApiTest {
                 userId);
     }
 
-    private FixtureUser user(String role) {
+    FixtureUser user(String role) {
         String username = "warehouse-" + UUID.randomUUID();
         long id = db.sql("INSERT INTO app_user (username, password_hash, role) VALUES (:name, :hash, :role) RETURNING user_id")
                 .param("name", username).param("hash", passwords.encode(PASSWORD)).param("role", role)
@@ -388,6 +403,6 @@ class WarehouseApiTest {
         return new FixtureUser(id, username);
     }
 
-    private record FixtureUser(long id, String username) {}
-    private record Session(MockHttpSession session, String csrfHeader, String csrfToken, long userId) {}
+    record FixtureUser(long id, String username) {}
+    record Session(MockHttpSession session, String csrfHeader, String csrfToken, long userId) {}
 }
