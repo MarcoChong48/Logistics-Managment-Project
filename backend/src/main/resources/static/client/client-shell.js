@@ -4,7 +4,7 @@ const signIn = "/shared/shared-login.html";
 const passwordPage = "/shared/shared-change-password.html";
 const accessDenied = "/shared/shared-welcome.html?sharedShowWelcomeNotice=ACCESS_DENIED";
 
-export function startClientShell({ activePage, onReady, onClear }) {
+export function startClientShell({ activePage, onReady, onClear, preservePendingRequest = () => false }) {
   const entry = document.getElementById("clientEntry");
   const status = document.getElementById("clientEntryStatus");
   const retrySession = document.getElementById("clientRetrySession");
@@ -23,7 +23,7 @@ export function startClientShell({ activePage, onReady, onClear }) {
         </div>
         <nav aria-label="Client pages">
           <ul class="client-navigation-list">
-            <li><span class="client-nav-item" aria-disabled="true"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Create Order <small>Planned</small></span></li>
+            <li><a class="client-nav-item" href="/client/create-order.html" data-client-page="create-order"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Create Order</a></li>
             <li><span class="client-nav-item" aria-disabled="true"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M8 9h8m-8 4h8m-8 4h5"/></svg>My Orders &amp; Tracking <small>Planned</small></span></li>
             <li><span class="client-nav-item" aria-disabled="true"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M9 19a3 3 0 0 0 6 0M6 9a6 6 0 0 1 12 0c0 4 1 5 2 7H4c1-2 2-3 2-7Z"/></svg>Notifications <small>Planned</small></span></li>
             <li><a class="client-nav-item" href="/client/account-settings.html" data-client-page="account-settings"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="2.5"/><circle cx="15" cy="17" r="2.5"/></svg>Account Settings</a></li>
@@ -132,7 +132,8 @@ export function startClientShell({ activePage, onReady, onClear }) {
       session = await request;
     } catch (error) {
       if (attempt === check && !handleAccessError(error)) {
-        clearIdentity();
+        // Keep a pending mutation in memory while the portal is hidden and the Client retries verification.
+        if (!preservePendingRequest()) clearIdentity();
         status.textContent = clientErrorMessage(error);
         retrySession.hidden = false;
       }
@@ -250,6 +251,6 @@ export function startClientShell({ activePage, onReady, onClear }) {
   });
 
   verifySession();
-  return { handleAccessError, currentIdentity: () => portal.hidden ? null : identity,
+  return { handleAccessError, recheckSession: verifySession, currentIdentity: () => portal.hidden ? null : identity,
     isCurrent: (candidate) => candidate === identity };
 }

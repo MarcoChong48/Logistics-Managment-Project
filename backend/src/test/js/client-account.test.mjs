@@ -1,32 +1,18 @@
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
-import { existsSync } from "node:fs";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
-import { createServer } from "node:http";
-import { tmpdir } from "node:os";
-import { resolve, sep } from "node:path";
 import { after, before, test } from "node:test";
 import { setTimeout as delay } from "node:timers/promises";
-import { fileURLToPath } from "node:url";
+import { browser, startBrowser, until } from "./client-browser-harness.mjs";
 
 // Run with node --test backend/src/test/js/client-account.test.mjs.
 // Optionally supply a disposable Spring Boot stack through LMS_M10A_TEST_URL and its fixture username and password.
 const liveUrl = process.env.LMS_M10A_TEST_URL;
-const browser = [
-  process.env.CHROME_BIN,
-  "C:/Program Files/Google/Chrome/Application/chrome.exe",
-  "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
-  "/usr/bin/google-chrome", "/usr/bin/chromium", "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-].find((path) => path && existsSync(path));
-const staticRoot = fileURLToPath(new URL("../../main/resources/static/", import.meta.url));
 const accountPath = "/client/account-settings.html";
 const api = "/api/client/account";
 const defaultsPath = api + "/delivery-defaults";
 const empty = { recipientName: null, contactPhone: null, deliveryAddress: null };
-const types = { html: "text/html", css: "text/css", js: "text/javascript", woff2: "font/woff2" };
-let state, requests, origin, server, chrome, profile, socket;
-let nextId = 0;
-const waiting = new Map();
+let state, requests, origin, harness;
+const command = (...args) => harness.command(...args);
+const evaluate = (...args) => harness.evaluate(...args);
 const observedClears = [];
 
 function prepare(overrides = {}) {
@@ -99,50 +85,6 @@ async function fixture(request, response) {
     }
     return json(404, {});
   }
-  const file = resolve(staticRoot, "." + path);
-  if (!file.startsWith(resolve(staticRoot) + sep)) {
-    response.writeHead(404).end();
-    return;
-  }
-  try {
-    const body = await readFile(file);
-    response.writeHead(200, { "Content-Type": types[file.split(".").at(-1)] ?? "text/plain" }).end(body);
-  } catch {
-    response.writeHead(404).end();
-  }
-}
-
-function command(method, params = {}) {
-  const id = ++nextId;
-  return new Promise((resolveRequest, reject) => {
-    waiting.set(id, { resolveRequest, reject });
-    socket.send(JSON.stringify({ id, method, params }));
-  });
-}
-
-async function evaluate(expression) {
-  const reply = await command("Runtime.evaluate", { expression, returnByValue: true, awaitPromise: true });
-  if (reply.exceptionDetails) {
-    throw new Error(reply.exceptionDetails.exception?.description ?? reply.exceptionDetails.text);
-  }
-  return reply.result.value;
-}
-
-async function until(condition, label) {
-  for (let i = 0; i < 120; i++) {
-    try {
-      const value = await condition();
-      if (value) {
-        return value;
-      }
-    } catch (error) {
-      if (!/context|ENOENT|fetch failed/i.test(error.message)) {
-        throw error;
-      }
-    }
-    await delay(50);
-  }
-  assert.fail("Timed out waiting for " + label);
 }
 
 async function openAccount() {
@@ -179,55 +121,17 @@ async function expectClearedBeforeSignIn(trigger) {
 before(async () => {
   if (!browser) return;
   prepare();
-  server = createServer((request, response) => {
-    fixture(request, response).catch(() => {
-      if (!response.headersSent) response.writeHead(500);
-      response.end();
-    });
-  });
-  await new Promise((ready) => server.listen(0, "127.0.0.1", ready));
-  origin = "http://127.0.0.1:" + server.address().port;
-  profile = await mkdtemp(resolve(tmpdir(), "lms-client-browser-"));
-  chrome = spawn(browser, ["--headless=new", "--disable-background-networking", "--no-first-run",
-    "--window-size=1440,900", "--remote-debugging-port=0", "--user-data-dir=" + profile, "about:blank"],
-    { windowsHide: true, stdio: "ignore" });
-  const endpoint = await until(async () => {
-    const [port] = (await readFile(resolve(profile, "DevToolsActivePort"), "utf8")).split("\n");
-    const pages = await (await fetch("http://127.0.0.1:" + port + "/json/list")).json();
-    return pages.find((page) => page.type === "page")?.webSocketDebuggerUrl;
-  }, "headless Chromium");
-  socket = new WebSocket(endpoint);
-  await new Promise((ready, fail) => {
-    socket.addEventListener("open", ready, { once: true });
-    socket.addEventListener("error", fail, { once: true });
-  });
-  socket.addEventListener("message", (event) => {
-    const message = JSON.parse(event.data);
-    if (message.method === "Runtime.bindingCalled" && message.params.name === "m10aObserveClear") {
-      observedClears.push(message.params.payload);
-    }
-    const request = waiting.get(message.id);
-    if (request) {
-      waiting.delete(message.id);
-      if (message.error) request.reject(new Error(message.error.message));
-      else request.resolveRequest(message.result);
+  harness = await startBrowser(fixture, ({ method, params }) => {
+    if (method === "Runtime.bindingCalled" && params.name === "m10aObserveClear") {
+      observedClears.push(params.payload);
     }
   });
-  await command("Page.enable");
-  await command("Runtime.enable");
+  origin = harness.origin;
   await command("Runtime.addBinding", { name: "m10aObserveClear" });
 });
 
 after(async () => {
-  if (chrome?.exitCode === null) {
-    await Promise.race([command("Browser.close").catch(() => {}), delay(500)]);
-    chrome.kill();
-  }
-  socket?.close();
-  server?.close();
-  if (profile) {
-    await rm(profile, { recursive: true, force: true, maxRetries: 8, retryDelay: 200 });
-  }
+  await harness?.close();
 });
 
 test("Client bootstrap verifies session and renders only API data", { skip: !browser }, async () => {
@@ -238,7 +142,7 @@ test("Client bootstrap verifies session and renders only API data", { skip: !bro
   assert.equal(await evaluate('document.querySelectorAll("#clientUsername img,#accountUsername img").length'), 0);
   assert.equal(await evaluate('!document.getElementById("deliveryEmpty").hidden && !window.injected'), true);
   assert.match(await evaluate('document.getElementById("sharedStartSessionCountdownText").textContent'), /^\d+:\d{2}$/);
-  assert.equal(await evaluate('document.querySelectorAll(".client-nav-item[aria-disabled=true]:not([href])").length'), 3);
+  assert.equal(await evaluate('document.querySelectorAll(".client-nav-item[aria-disabled=true]:not([href])").length'), 2);
   assert.equal(await evaluate('getComputedStyle(clientNavigation).display !== "none" && getComputedStyle(clientMenuToggle).display === "none"'), true);
   const fonts = await evaluate("document.fonts.ready.then(() => Array.from(document.fonts, ({family, status}) => [family, status]))");
   assert.deepEqual(fonts.map(([family, status]) => [family.replaceAll('"', ""), status]).sort(), [

@@ -4,6 +4,11 @@ function invalidResponse() {
   return { code: "CLIENT_RESPONSE_INVALID", message: "Could not read the server’s answer.", status: 0 };
 }
 
+function isHkdAmount(value) {
+  return typeof value === "number" && value >= 0 && value <= 9999999999.99
+    && Math.round(value * 100) / 100 === value;
+}
+
 function readDefaults(value) {
   const fields = ["recipientName", "contactPhone", "deliveryAddress"];
   if (!value || !fields.every((field) => value[field] === null || typeof value[field] === "string")) {
@@ -44,6 +49,56 @@ export async function readClientAccount(session) {
 
 export async function saveDeliveryDefaults(defaults) {
   return readDefaults(await window.sharedSendRequest("PUT", defaultsUrl, defaults));
+}
+
+export async function readClientProducts(name) {
+  // Reading the JSON text preserves bigint IDs before the browser rounds JSON numbers.
+  let response;
+  try {
+    response = await fetch("/api/client/products?name=" + encodeURIComponent(name), {
+      headers: { Accept: "application/json" }, cache: "no-store"
+    });
+  } catch {
+    throw { code: "CLIENT_NETWORK_ERROR", status: 0 };
+  }
+  if (!response.ok) {
+    const error = await response.json().catch(() => null);
+    throw { status: response.status, code: error?.code, message: error?.message };
+  }
+  let catalogue;
+  try {
+    catalogue = JSON.parse(await response.text(), (key, value, context) => {
+      if (key !== "productId") return value;
+      if (typeof value !== "number" || !Number.isInteger(value) || value < 1) throw invalidResponse();
+      if (Number.isSafeInteger(value)) return context?.source ?? String(value);
+      // Older browsers can still order safe IDs without risking a rounded ID on the wire.
+      return typeof JSON.rawJSON === "function" ? context?.source ?? null : null;
+    });
+  } catch {
+    throw invalidResponse();
+  }
+  if (!Array.isArray(catalogue) || !catalogue.every((product) => product
+      && (product.productId === null || (typeof product.productId === "string"
+        && /^[1-9]\d{0,18}$/.test(product.productId) && BigInt(product.productId) <= 9223372036854775807n))
+      && typeof product.sku === "string" && typeof product.name === "string"
+      && Number.isInteger(product.availableStock) && product.availableStock >= 0 && product.availableStock <= 2147483647
+      && isHkdAmount(product.currentPriceHkd))) {
+    throw invalidResponse();
+  }
+  const ids = catalogue.map(({ productId }) => productId).filter((id) => id !== null);
+  if (new Set(ids).size !== ids.length) throw invalidResponse();
+  return catalogue;
+}
+
+export async function createClientOrder(payload, key) {
+  const order = await window.sharedSendRequest("POST", "/api/client/orders", payload, null, key);
+  if (!order || typeof order.orderReference !== "string" || !order.orderReference.trim()
+      || order.orderReference.length > 60 || order.orderStatus !== "AWAITING_PAYMENT"
+      || !isHkdAmount(order.totalAmount)
+      || typeof order.paymentDeadline !== "string" || Number.isNaN(Date.parse(order.paymentDeadline))) {
+    throw invalidResponse();
+  }
+  return order;
 }
 
 export function clientErrorMessage(error) {
