@@ -12,6 +12,7 @@ public final class SharedPlaceholderWord {
     public static final String SHARED_PAYMENT_STATUS_ACCEPTED = "ACCEPTED";
     public static final String SHARED_PAYMENT_STATUS_ENDED_UNPAID = "ENDED_UNPAID";
     public static final String SHARED_PAYMENT_STATUS_REFUND_REQUIRED = "REFUND_REQUIRED";
+    public static final String SHARED_PAYMENT_STATUS_RECONCILIATION_REQUIRED = "RECONCILIATION_REQUIRED";
     public static final String SHARED_PICKING_TASK_STATUS_PENDING = "PENDING";
     public static final String SHARED_PICKING_TASK_STATUS_IN_PROGRESS = "IN_PROGRESS";
     public static final String SHARED_PICKING_TASK_STATUS_PACKED = "PACKED";

@@ -78,13 +78,17 @@ class StripeSandboxRepository {
 
     List<LinkedSession> dueSessions() {
         return database.sql("""
-                SELECT sc.payment_id, sc.session_id FROM client_stripe_checkout sc JOIN payment p USING (payment_id)
+                SELECT sc.payment_id, sc.session_id, p.payment_status = 'PENDING' AS entry_can_close
+                FROM client_stripe_checkout sc JOIN payment p USING (payment_id)
                 JOIN customer_order o USING (order_id)
-                WHERE sc.session_id IS NOT NULL AND p.payment_status = 'PENDING' AND p.accepted_at IS NULL
-                    AND (p.ended_at IS NOT NULL OR p.checkout_expires_at <= statement_timestamp()
-                        OR o.payment_deadline <= statement_timestamp() OR o.order_status <> 'AWAITING_PAYMENT')
+                WHERE sc.session_id IS NOT NULL AND p.accepted_at IS NULL AND (
+                    p.payment_status IN ('ACCEPTED', 'RECONCILIATION_REQUIRED')
+                    OR (p.payment_status = 'PENDING' AND
+                        (p.ended_at IS NOT NULL OR p.checkout_expires_at <= statement_timestamp()
+                         OR o.payment_deadline <= statement_timestamp() OR o.order_status <> 'AWAITING_PAYMENT'))
+                )
                 ORDER BY sc.last_checked_at NULLS FIRST, sc.payment_id LIMIT 20
-                """).query((row, i) -> new LinkedSession(row.getLong("payment_id"), row.getString("session_id"))).list();
+                """).query((row, i) -> new LinkedSession(row.getLong("payment_id"), row.getString("session_id"), row.getBoolean("entry_can_close"))).list();
     }
 
     void markSessionChecked(long checkoutId) {
@@ -92,6 +96,6 @@ class StripeSandboxRepository {
                 .param("id", checkoutId).update();
     }
 
-    record LinkedSession(long checkoutId, String sessionId) {
+    record LinkedSession(long checkoutId, String sessionId, boolean entryCanClose) {
     }
 }

@@ -28,6 +28,13 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
             """, nativeQuery = true)
     int adminCancelOrderReleaseReservation(Long productID, int quantity, Instant updatedTime);
 
+    @Modifying
+    @Query(value = """
+            UPDATE inventory SET reserved_stock = reserved_stock - :quantity, updated_at = :updatedTime
+            WHERE product_id = :productID AND reserved_stock >= :quantity
+            """, nativeQuery = true)
+    int releaseExactReservation(Long productID, int quantity, Instant updatedTime);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     List<Inventory> findByProductIDInOrderByProductIDAsc(Collection<Long> productIds);
 }

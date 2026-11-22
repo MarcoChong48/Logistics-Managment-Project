@@ -427,7 +427,7 @@ class ClientOrderApiTest {
         checkout(session, reference).andExpect(status().isConflict());
         assertEquals(1L, database.sql("""
                 SELECT count(*) FROM stock_movement WHERE product_id = :productId
-                    AND movement_type = 'RELEASE' AND reserved_delta = -3 AND quantity_delta = 0
+                    AND movement_type = 'RESERVATION_RELEASED' AND reserved_delta = -3 AND quantity_delta = 0
                     AND actor_user_id = :clientId AND reason = :reason
                 """).param("productId", product.productID).param("clientId", owner.userID)
                 .param("reason", "CLIENT_CANCELLED: " + reference).query(Long.class).single());
@@ -500,7 +500,7 @@ class ClientOrderApiTest {
         assertEquals(1L, countReservations(reference, "RELEASED"));
         assertTrue(entryClosedWhilePending(reference));
         assertEquals(1L, database.sql("""
-                SELECT count(*) FROM stock_movement WHERE movement_type = 'RELEASE'
+                SELECT count(*) FROM stock_movement WHERE movement_type = 'RESERVATION_RELEASED'
                     AND actor_user_id IS NULL AND reason = :reason
                 """).param("reason", "PAYMENT_DEADLINE_EXPIRED: " + reference).query(Long.class).single());
     }
@@ -538,7 +538,7 @@ class ClientOrderApiTest {
         assertEquals("CANCELLED", orderStatus(reference));
         assertEquals(2L, countReservations(reference, "RELEASED"));
         assertEquals(2L, countForProducts("""
-                SELECT count(*) FROM stock_movement WHERE product_id IN (:ids) AND movement_type = 'RELEASE'
+                SELECT count(*) FROM stock_movement WHERE product_id IN (:ids) AND movement_type = 'RESERVATION_RELEASED'
                 """));
         assertEquals(1, reservedStock(first));
         assertEquals(2, reservedStock(second));
@@ -593,10 +593,60 @@ class ClientOrderApiTest {
         assertEquals(2L, countReservations(reference, "HELD"));
         assertEquals(0L, countReservations(reference, "RELEASED"));
         assertEquals(0L, countForProducts("""
-                SELECT count(*) FROM stock_movement WHERE product_id IN (:ids) AND movement_type = 'RELEASE'
+                SELECT count(*) FROM stock_movement WHERE product_id IN (:ids) AND movement_type = 'RESERVATION_RELEASED'
                 """));
         assertEquals(3, reservedStock(first));
         assertEquals(1, reservedStock(second));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void inconsistentHeldReservationLeavesOrderInventoryAndHistoryUnchanged(boolean hasConsumptionTime)
+            throws Exception {
+        Product first = createProduct("4.00", "ACTIVE", 8, 1);
+        Product second = createProduct("5.00", "ACTIVE", 8, 1);
+        var owner = signIn(createUser(SharedUserRole.CLIENT));
+        String reference = createReservedOrder(owner, item(first, 3) + "," + item(second, 2));
+        long id = orderId(reference);
+        assertTrue(first.productID < second.productID);
+        assertEquals(1, database.sql("""
+                UPDATE stock_reservation r
+                SET released_at = CASE WHEN NOT :consumed THEN GREATEST(r.reserved_at, statement_timestamp()) END,
+                    consumed_at = CASE WHEN :consumed THEN GREATEST(r.reserved_at, statement_timestamp()) END
+                FROM order_item i
+                WHERE i.order_item_id = r.order_item_id AND i.order_id = :id AND i.product_id = :product
+                    AND r.status = 'HELD'
+                """).param("consumed", hasConsumptionTime).param("id", id)
+                .param("product", second.productID).update());
+
+        var inventoryRows = database.sql("SELECT * FROM inventory WHERE product_id IN (:ids) ORDER BY product_id")
+                .param("ids", List.of(first.productID, second.productID));
+        var reservations = database.sql("""
+                SELECT r.* FROM stock_reservation r JOIN order_item i USING (order_item_id)
+                WHERE i.order_id = :id ORDER BY r.reservation_id
+                """).param("id", id);
+        var movements = database.sql("SELECT * FROM stock_movement WHERE product_id IN (:ids) ORDER BY movement_id")
+                .param("ids", List.of(first.productID, second.productID));
+        var inventoryBefore = inventoryRows.query().listOfRows();
+        var reservationsBefore = reservations.query().listOfRows();
+        var movementsBefore = movements.query().listOfRows();
+        assertEquals(2, reservationsBefore.size());
+
+        var response = cancel(owner, reference);
+        if (hasConsumptionTime) {
+            response.andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.code").value("CLIENT_ORDER_CANCELLATION_NOT_ALLOWED"));
+        } else {
+            response.andExpect(status().isInternalServerError())
+                    .andExpect(jsonPath("$.code").value("SHARED_UNEXPECTED_ERROR"));
+        }
+
+        assertEquals("AWAITING_PAYMENT", orderStatus(reference));
+        assertFalse(entryClosedWhilePending(reference));
+        assertEquals(inventoryBefore, inventoryRows.query().listOfRows());
+        assertEquals(reservationsBefore, reservations.query().listOfRows());
+        assertEquals(movementsBefore, movements.query().listOfRows());
     }
 
     @Test
@@ -1154,6 +1204,160 @@ class ClientOrderApiTest {
         capture(checkoutId, providerReference, "12.00");
         assertEquals("READY_FOR_PICKING", orderStatus(reference));
         assertEquals(1L, notificationCount(reference));
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void statusOnlyAcceptanceEntersReconciliationUntilACaptureIsVerified() throws Exception {
+        Product product = createProduct("4.00", "ACTIVE", 8, 1);
+        var owner = signIn(createUser(SharedUserRole.CLIENT));
+        String reference = createOrder(owner, item(product, 3));
+        long checkoutId = checkoutId(owner, reference);
+        database.sql("UPDATE payment SET payment_status = 'ACCEPTED' WHERE payment_id = :id")
+                .param("id", checkoutId).update();
+
+        checkout(owner, reference).andExpect(status().isConflict());
+        cancel(owner, reference).andExpect(status().isOk());
+        cancel(owner, reference).andExpect(status().isOk());
+        reconcile(checkoutId, Outcome.UNRESOLVED);
+        assertEquals("RECONCILIATION_REQUIRED", database.sql("SELECT payment_status FROM payment WHERE payment_id = :id")
+                .param("id", checkoutId).query(String.class).single());
+        assertEquals(0L, database.sql("SELECT count(*) FROM refund WHERE payment_id = :id")
+                .param("id", checkoutId).query(Long.class).single());
+        assertEquals(1, reservedStock(product));
+        assertEquals(1L, countReservations(reference, "RELEASED"));
+
+        capture(checkoutId, "sandbox-reconciled-" + checkoutId, "12.00");
+        capture(checkoutId, "sandbox-reconciled-" + checkoutId, "12.00");
+        assertRequestedRefund(checkoutId);
+        assertEquals("CANCELLED", orderStatus(reference));
+        assertEquals(0L, notificationCount(reference));
+        assertTrue(database.sql("""
+                SELECT payment_status = 'REFUND_REQUIRED' AND accepted_at IS NULL
+                FROM payment WHERE payment_id = :id
+                """).param("id", checkoutId).query(Boolean.class).single());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void verifiedLegacyCaptureOnActiveOrderStaysInReconciliation(boolean pickingStarted) throws Exception {
+        Product product = createProduct("4.00", "ACTIVE", 8, 1);
+        var owner = signIn(createUser(SharedUserRole.CLIENT));
+        String reference = createOrder(owner, item(product, 3));
+        long checkoutId = checkoutId(owner, reference);
+        long id = orderId(reference);
+        database.sql("UPDATE payment SET payment_status = 'ACCEPTED' WHERE payment_id = :id")
+                .param("id", checkoutId).update();
+        if (pickingStarted) {
+            database.sql("UPDATE customer_order SET order_status = 'PICKING' WHERE order_id = :id")
+                    .param("id", id).update();
+            database.sql("INSERT INTO picking_task (order_id, task_status) VALUES (:id, 'IN_PROGRESS')")
+                    .param("id", id).update();
+        }
+
+        String captureReference = "sandbox-active-legacy-" + checkoutId;
+        capture(checkoutId, captureReference, "12.00");
+        capture(checkoutId, captureReference, "12.00");
+
+        assertEquals(pickingStarted ? "PICKING" : "AWAITING_PAYMENT", orderStatus(reference));
+        assertTrue(database.sql("""
+                SELECT payment_status = 'RECONCILIATION_REQUIRED' AND accepted_at IS NULL
+                FROM payment WHERE payment_id = :id
+                """).param("id", checkoutId).query(Boolean.class).single());
+        assertEquals(0L, database.sql("SELECT count(*) FROM refund WHERE payment_id = :id")
+                .param("id", checkoutId).query(Long.class).single());
+        assertEquals(0L, notificationCount(reference));
+        assertEquals(4, reservedStock(product));
+        assertEquals(1L, countReservations(reference, "HELD"));
+        assertEquals(0L, countReservations(reference, "RELEASED"));
+        if (pickingStarted) {
+            assertEquals("IN_PROGRESS", database.sql("SELECT task_status FROM picking_task WHERE order_id = :id")
+                    .param("id", id).query(String.class).single());
+        }
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void clientCancellationRecordsEachTimestampedPaymentExactlyOnce() throws Exception {
+        Product product = createProduct("4.00", "ACTIVE", 8, 0);
+        var owner = signIn(createUser(SharedUserRole.CLIENT));
+        String reference = createOrder(owner, item(product, 3));
+        long checkoutId = checkoutId(owner, reference);
+        capture(checkoutId, "sandbox-original-" + checkoutId, "12.00");
+        long otherPayment = database.sql("""
+                INSERT INTO payment (order_id, amount, payment_status, provider_reference, accepted_at)
+                VALUES (:order, 6.25, 'ACCEPTED', :reference, statement_timestamp())
+                RETURNING payment_id
+                """).param("order", orderId(reference)).param("reference", "sandbox-second-" + checkoutId)
+                .query(Long.class).single();
+
+        cancel(owner, reference).andExpect(status().isOk());
+        cancel(owner, reference).andExpect(status().isOk());
+        capture(checkoutId, "sandbox-original-" + checkoutId, "12.00");
+
+        assertRequestedRefund(checkoutId);
+        assertRequestedRefund(otherPayment, "6.25");
+        assertEquals(0, reservedStock(product));
+        assertEquals(1L, countReservations(reference, "RELEASED"));
+        assertEquals(1L, notificationCount(reference));
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void inconsistentRefundHistoryRollsBackCancellationAndReservationRelease() throws Exception {
+        Product product = createProduct("4.00", "ACTIVE", 8, 0);
+        var owner = signIn(createUser(SharedUserRole.CLIENT));
+        String reference = createOrder(owner, item(product, 3));
+        long checkoutId = checkoutId(owner, reference);
+        capture(checkoutId, "sandbox-mismatched-refund-" + checkoutId, "12.00");
+        database.sql("INSERT INTO refund (payment_id, amount) VALUES (:id, 1.00)")
+                .param("id", checkoutId).update();
+
+        cancel(owner, reference).andExpect(status().isInternalServerError());
+
+        assertEquals("READY_FOR_PICKING", orderStatus(reference));
+        assertEquals(3, reservedStock(product));
+        assertEquals(1L, countReservations(reference, "HELD"));
+        assertEquals(0L, countReservations(reference, "RELEASED"));
+        assertRequestedRefund(checkoutId, "1.00");
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void concurrentReplayedLateCaptureRecordsOneRequestedRefund() throws Exception {
+        Product product = createProduct("4.00", "ACTIVE", 8, 1);
+        var owner = signIn(createUser(SharedUserRole.CLIENT));
+        String reference = createOrder(owner, item(product, 3));
+        long checkoutId = checkoutId(owner, reference);
+        var providerStarted = new CountDownLatch(1);
+        var verified = new CompletableFuture<VerifiedCheckout>();
+        String providerReference = "sandbox-cancelled-while-verifying-" + checkoutId;
+
+        try (var workers = Executors.newFixedThreadPool(2)) {
+            var payment = workers.submit(() -> checkouts.reconcile(checkoutId, id -> {
+                providerStarted.countDown();
+                return verified.join();
+            }));
+            try {
+                assertTrue(providerStarted.await(5, TimeUnit.SECONDS));
+                cancel(owner, reference).andExpect(status().isOk());
+                cancel(owner, reference).andExpect(status().isOk());
+                assertEquals(1L, countReservations(reference, "RELEASED"));
+            } finally {
+                verified.complete(new VerifiedCheckout(Outcome.CAPTURED, providerReference,
+                        new BigDecimal("12.00"), "HKD"));
+            }
+            var replay = workers.submit(() -> capture(checkoutId, providerReference, "12.00"));
+            payment.get(15, TimeUnit.SECONDS);
+            replay.get(15, TimeUnit.SECONDS);
+        }
+
+        assertRequestedRefund(checkoutId);
+        assertEquals("CANCELLED", orderStatus(reference));
+        assertEquals(1, reservedStock(product));
+        assertEquals(1L, countReservations(reference, "RELEASED"));
+        assertEquals(0L, notificationCount(reference));
     }
 
     @Test

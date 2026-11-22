@@ -27,7 +27,8 @@ const eventLabels = new Map([
 ]);
 const paymentLabels = new Map([
   ["PENDING", "Payment pending"], ["ACCEPTED", "Payment accepted"],
-  ["ENDED_UNPAID", "Checkout ended unpaid"], ["REFUND_REQUIRED", "Payment requires a refund"]
+  ["ENDED_UNPAID", "Checkout ended unpaid"], ["REFUND_REQUIRED", "Payment requires a refund"],
+  ["RECONCILIATION_REQUIRED", "Payment under review"]
 ]);
 const refundLabels = new Map([
   ["REQUESTED", "Refund requested"], ["PENDING", "Refund pending"],

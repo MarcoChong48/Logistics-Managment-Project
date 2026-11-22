@@ -4,6 +4,7 @@ import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_CUSTODY_
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_PAYMENT_STATUS_ACCEPTED;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_PAYMENT_STATUS_ENDED_UNPAID;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_PAYMENT_STATUS_PENDING;
+import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_PAYMENT_STATUS_RECONCILIATION_REQUIRED;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_PAYMENT_STATUS_REFUND_REQUIRED;
 import static java.util.stream.Collectors.groupingBy;
 
@@ -164,7 +165,9 @@ class ClientOrderReadService {
 
     private static String paymentStatus(PaymentRow payment) {
         return switch (payment.status()) {
-            case SHARED_PAYMENT_STATUS_ACCEPTED, SHARED_PAYMENT_STATUS_ENDED_UNPAID,
+            case SHARED_PAYMENT_STATUS_ACCEPTED -> payment.acceptedAt() == null
+                    ? SHARED_PAYMENT_STATUS_RECONCILIATION_REQUIRED : SHARED_PAYMENT_STATUS_ACCEPTED;
+            case SHARED_PAYMENT_STATUS_ENDED_UNPAID, SHARED_PAYMENT_STATUS_RECONCILIATION_REQUIRED,
                     SHARED_PAYMENT_STATUS_REFUND_REQUIRED -> payment.status();
             case SHARED_PAYMENT_STATUS_PENDING -> payment.acceptedAt() == null ? SHARED_PAYMENT_STATUS_PENDING
                     : SHARED_PAYMENT_STATUS_ACCEPTED;

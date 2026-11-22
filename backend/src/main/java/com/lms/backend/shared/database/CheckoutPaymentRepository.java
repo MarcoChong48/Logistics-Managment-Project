@@ -3,6 +3,7 @@ package com.lms.backend.shared.database;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_PAYMENT_STATUS_ACCEPTED;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_PAYMENT_STATUS_ENDED_UNPAID;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_PAYMENT_STATUS_PENDING;
+import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_PAYMENT_STATUS_RECONCILIATION_REQUIRED;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_PAYMENT_STATUS_REFUND_REQUIRED;
 
 import java.math.BigDecimal;
@@ -45,11 +46,21 @@ public class CheckoutPaymentRepository {
                 .query(CheckoutPaymentRepository::readAttempt).optional();
     }
 
-    public List<Attempt> findAccepted(long orderId) {
+    // Apparent acceptance blocks new checkout and expiry while the provider or an operator reconciles it.
+    public boolean hasAcceptedOrUnresolvedPayment(long orderId) {
         return database.sql("""
-                SELECT * FROM payment WHERE order_id = :order AND (payment_status = :accepted OR accepted_at IS NOT NULL)
+                SELECT EXISTS (SELECT 1 FROM payment WHERE order_id = :order
+                    AND (accepted_at IS NOT NULL OR payment_status IN (:accepted, :reconciliation)))
                 """).param("order", orderId).param("accepted", SHARED_PAYMENT_STATUS_ACCEPTED)
-                .query(CheckoutPaymentRepository::readAttempt).list();
+                .param("reconciliation", SHARED_PAYMENT_STATUS_RECONCILIATION_REQUIRED).query(Boolean.class).single();
+    }
+
+    public void markUnverifiedAcceptanceForReconciliation(long orderId) {
+        database.sql("""
+                UPDATE payment SET payment_status = :reconciliation
+                WHERE order_id = :order AND payment_status = :accepted AND accepted_at IS NULL
+                """).param("order", orderId).param("accepted", SHARED_PAYMENT_STATUS_ACCEPTED)
+                .param("reconciliation", SHARED_PAYMENT_STATUS_RECONCILIATION_REQUIRED).update();
     }
 
     public Attempt createPending(long orderId, BigDecimal amountHkd, Instant startedAt, Instant entryDeadline) {
@@ -96,24 +107,6 @@ public class CheckoutPaymentRepository {
                 .param("reference", providerReference).update();
     }
 
-    public void requestFullRefund(long paymentId, BigDecimal amountHkd) {
-        if (amountHkd.signum() <= 0) {
-            return;
-        }
-        var existing = database.sql("SELECT amount FROM refund WHERE payment_id = :id")
-                .param("id", paymentId).query(BigDecimal.class).list();
-        if (!existing.isEmpty()) {
-            if (existing.size() != 1 || existing.getFirst().compareTo(amountHkd) != 0) {
-                throw new IllegalStateException("Existing refund amounts require reconciliation for payment " + paymentId);
-            }
-            return;
-        }
-        database.sql("""
-                INSERT INTO refund (payment_id, amount, refund_status)
-                VALUES (:id, :amount, 'REQUESTED')
-                """).param("id", paymentId).param("amount", amountHkd).update();
-    }
-
     private static Attempt readAttempt(ResultSet row, int index) throws SQLException {
         var entryDeadline = row.getObject("checkout_expires_at", OffsetDateTime.class);
         return new Attempt(row.getLong("payment_id"), row.getBigDecimal("amount"), row.getString("payment_status"),
@@ -125,12 +118,13 @@ public class CheckoutPaymentRepository {
     public record Attempt(long paymentId, BigDecimal amountHkd, String status, String providerReference,
             Instant entryDeadline, boolean entryClosed, boolean hasAcceptanceTime) {
 
-        public boolean isAccepted() {
-            return hasAcceptanceTime || SHARED_PAYMENT_STATUS_ACCEPTED.equals(status);
+        public boolean needsAcceptanceReconciliation() {
+            return !hasAcceptanceTime && (SHARED_PAYMENT_STATUS_ACCEPTED.equals(status)
+                    || SHARED_PAYMENT_STATUS_RECONCILIATION_REQUIRED.equals(status));
         }
 
         public boolean isPending() {
-            return !isAccepted() && SHARED_PAYMENT_STATUS_PENDING.equals(status);
+            return !hasAcceptanceTime && SHARED_PAYMENT_STATUS_PENDING.equals(status);
         }
     }
 }

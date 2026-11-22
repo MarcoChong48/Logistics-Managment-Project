@@ -228,6 +228,37 @@ class StripeSandboxCheckoutTest {
     }
 
     @Test
+    void signedPaidEventWithNoCaptureEvidenceCannotRefundAStatusOnlyPayment() throws Exception {
+        long id = startOpenSession();
+        db.sql("UPDATE payment SET payment_status='ACCEPTED' WHERE payment_id=:id")
+                .param("id", id).update();
+        asOwner(() -> releases.cancelOwnOrder(reference));
+
+        doReturn(session(id, "complete", "paid")).when(gateway).retrieve(sessionId(id));
+        String paid = event(id, "evt_missing_capture" + id, "checkout.session.completed");
+        send(paid, sign(paid));
+        assertEquals(0L, refundCount(id));
+        assertEquals("RECONCILIATION_REQUIRED", db.sql("SELECT payment_status FROM payment WHERE payment_id=:id")
+                .param("id", id).query(String.class).single());
+
+        doReturn(captured(id)).when(gateway).retrieve(sessionId(id));
+        checkout.sweep();
+        String replay = event(id, "evt_verified_replay" + id, "checkout.session.completed");
+        send(replay, sign(replay));
+        send(replay, sign(replay));
+
+        verify(gateway, never()).expire(sessionId(id));
+        assertEquals("CANCELLED", orderStatus());
+        assertEquals(0, reservedStock());
+        assertEquals(1L, refundCount(id));
+        assertTrue(db.sql("""
+                SELECT refund_status='REQUESTED' AND amount=12.34 AND completed_at IS NULL
+                    AND provider_reference IS NULL
+                FROM refund WHERE payment_id=:id
+                """).param("id", id).query(Boolean.class).single());
+    }
+
+    @Test
     void staleUnmatchedClaimNeverCreatesAgainAndOrderExpiryStillReleases() throws Exception {
         doThrow(new ApiConnectionException("Fixture timeout")).when(gateway).create(anyLong(), any());
         var first = start();

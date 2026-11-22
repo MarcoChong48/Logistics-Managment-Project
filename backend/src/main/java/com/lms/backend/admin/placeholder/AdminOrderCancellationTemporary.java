@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.lms.backend.shared.database.CheckoutPaymentRepository;
 import com.lms.backend.shared.database.CustomerOrder;
 import com.lms.backend.shared.database.CustomerOrderRepository;
 import com.lms.backend.shared.database.InventoryRepository;
@@ -32,6 +33,7 @@ public class AdminOrderCancellationTemporary implements AdminOrderCancellationPl
 
     // ===== SECTION 1: OTHER CLASSES THIS CLASS USES =====
 
+    private final CheckoutPaymentRepository payments;
     private final CustomerOrderRepository adminCancelOrderOrderRepository;
     private final OrderItemRepository adminCancelOrderOrderItemRepository;
     private final StockReservationRepository adminCancelOrderReservationRepository;
@@ -51,7 +53,9 @@ public class AdminOrderCancellationTemporary implements AdminOrderCancellationPl
             InventoryRepository adminCancelOrderInventoryRepository,
             StockMovementRepository adminCancelOrderMovementRepository,
             PickingTaskRepository adminCancelOrderPickingTaskRepository,
-            PickingAssignmentHistoryRepository adminCancelOrderAssignmentRepository) {
+            PickingAssignmentHistoryRepository adminCancelOrderAssignmentRepository,
+            CheckoutPaymentRepository payments) {
+        this.payments = payments;
         this.adminCancelOrderOrderRepository = adminCancelOrderOrderRepository;
         this.adminCancelOrderOrderItemRepository = adminCancelOrderOrderItemRepository;
         this.adminCancelOrderReservationRepository = adminCancelOrderReservationRepository;
@@ -72,10 +76,18 @@ public class AdminOrderCancellationTemporary implements AdminOrderCancellationPl
     @Override
     @Transactional(propagation = Propagation.MANDATORY)
     public void adminCancelOrderPlaceholder(Long orderID, Long adminCancelOrderAdminUserID, String adminCancelOrderReason) {
-        // PLACEHOLDER OUTPUT PO-01.
-        // To: Client (orders) and Warehouse (stock).
-        // What: Permanent cancellation and release of the order's reservations.
-        // How to use: Replace this stand-in with the single cancellation function shared by all roles.
+        cancelOrder(orderID, adminCancelOrderAdminUserID, adminCancelOrderReason, false);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void cancelClientOrder(long orderId, Long actorUserId, String reason) {
+        cancelOrder(orderId, actorUserId, reason, true);
+        // Publish pending entity changes to JDBC readers in this transaction.
+        adminCancelOrderReservationRepository.flush();
+    }
+
+    private void cancelOrder(Long orderID, Long actorUserId, String reason, boolean requireExactBalance) {
         CustomerOrder adminCancelOrderOrder = adminCancelOrderOrderRepository.findByOrderIDForUpdate(orderID)
                 .orElseThrow(() -> new SharedRuleException(HttpStatus.CONFLICT, "ADMIN_ORDER_STATE_CONFLICT",
                         "The order cannot be cancelled in its current state."));
@@ -85,6 +97,8 @@ public class AdminOrderCancellationTemporary implements AdminOrderCancellationPl
                     "The order cannot be cancelled in its current state.");
         }
 
+        payments.closePendingEntry(orderID);
+        payments.markUnverifiedAcceptanceForReconciliation(orderID);
         Instant adminCancelOrderTime = Instant.now();
         adminCancelOrderOrder.orderStatus = SharedOrderStatus.CANCELLED.name();
 
@@ -93,21 +107,30 @@ public class AdminOrderCancellationTemporary implements AdminOrderCancellationPl
             for (StockReservation adminCancelOrderReservation : adminCancelOrderReservationRepository
                     .findByOrderItemIDAndStatusOrderByReservationIDAsc(
                             adminCancelOrderItem.orderItemID, SHARED_RESERVATION_STATUS_HELD)) {
+                if (requireExactBalance && (adminCancelOrderReservation.releasedAt != null
+                        || adminCancelOrderReservation.consumedAt != null)) {
+                    throw new IllegalStateException("HELD reservation has a terminal timestamp: "
+                            + adminCancelOrderReservation.reservationID);
+                }
+                int updated = requireExactBalance
+                        ? adminCancelOrderInventoryRepository.releaseExactReservation(adminCancelOrderItem.productID,
+                                adminCancelOrderReservation.quantity, adminCancelOrderTime)
+                        : adminCancelOrderInventoryRepository.adminCancelOrderReleaseReservation(adminCancelOrderItem.productID,
+                                adminCancelOrderReservation.quantity, adminCancelOrderTime);
+                if (updated != 1) {
+                    throw new IllegalStateException("Inconsistent inventory for product " + adminCancelOrderItem.productID);
+                }
                 adminCancelOrderReservation.status = SHARED_RESERVATION_STATUS_RELEASED;
                 adminCancelOrderReservation.releasedAt = adminCancelOrderTime;
-                if (adminCancelOrderInventoryRepository.adminCancelOrderReleaseReservation(
-                        adminCancelOrderItem.productID, adminCancelOrderReservation.quantity, adminCancelOrderTime) != 1) {
-                    throw new IllegalStateException("Inventory is missing for product " + adminCancelOrderItem.productID);
-                }
 
                 StockMovement adminCancelOrderStockMovement = new StockMovement();
                 adminCancelOrderStockMovement.productID = adminCancelOrderItem.productID;
-                adminCancelOrderStockMovement.actorUserID = adminCancelOrderAdminUserID;
+                adminCancelOrderStockMovement.actorUserID = actorUserId;
                 adminCancelOrderStockMovement.movementType = SHARED_MOVEMENT_TYPE_RESERVATION_RELEASED;
                 adminCancelOrderStockMovement.quantityDelta = 0;
                 adminCancelOrderStockMovement.reservedDelta = -adminCancelOrderReservation.quantity;
                 adminCancelOrderStockMovement.eventTime = adminCancelOrderTime;
-                adminCancelOrderStockMovement.reason = adminCancelOrderReason;
+                adminCancelOrderStockMovement.reason = reason;
                 adminCancelOrderMovementRepository.save(adminCancelOrderStockMovement);
             }
         }

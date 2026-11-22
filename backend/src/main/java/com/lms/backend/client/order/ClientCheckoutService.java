@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.lms.backend.admin.placeholder.AdminRefundPlaceholder;
 import com.lms.backend.client.order.CheckoutProviderVerification.VerifiedCheckout;
 import com.lms.backend.shared.database.CheckoutPaymentRepository;
 import com.lms.backend.shared.database.CheckoutPaymentRepository.Attempt;
@@ -37,6 +38,7 @@ public class ClientCheckoutService {
     private final CustomerOrderRepository orders;
     private final CustomerOrderReleaseRepository orderRows;
     private final CheckoutPaymentRepository payments;
+    private final AdminRefundPlaceholder refunds;
     private final ClientOrderReservations reservations;
     private final ClientNotificationWriter notifications;
     private final TransactionTemplate settlementTransaction;
@@ -44,11 +46,12 @@ public class ClientCheckoutService {
     public ClientCheckoutService(SharedCurrentUserReader currentUser, CustomerOrderRepository orders,
             CustomerOrderReleaseRepository orderRows, CheckoutPaymentRepository payments,
             ClientOrderReservations reservations, ClientNotificationWriter notifications,
-            PlatformTransactionManager transactions) {
+            AdminRefundPlaceholder refunds, PlatformTransactionManager transactions) {
         this.currentUser = currentUser;
         this.orders = orders;
         this.orderRows = orderRows;
         this.payments = payments;
+        this.refunds = refunds;
         this.reservations = reservations;
         this.notifications = notifications;
         this.settlementTransaction = new TransactionTemplate(transactions);
@@ -62,7 +65,7 @@ public class ClientCheckoutService {
                 .orElseThrow(() -> new SharedRuleException(HttpStatus.NOT_FOUND, "CLIENT_ORDER_NOT_FOUND",
                         "Order was not found."));
         requireEligible(order, orderRows.databaseTime());
-        if (orderRows.hasFulfillmentStarted(order.orderID) || !payments.findAccepted(order.orderID).isEmpty()) {
+        if (orderRows.hasFulfillmentStarted(order.orderID) || payments.hasAcceptedOrUnresolvedPayment(order.orderID)) {
             throw checkoutConflict("The order is no longer eligible for checkout.");
         }
         validateProviderAmount.accept(order.totalAmount);
@@ -111,6 +114,7 @@ public class ClientCheckoutService {
     private void applyVerifiedResult(long checkoutId, VerifiedCheckout verified) {
         long orderId = payments.findOrderId(checkoutId).orElseThrow();
         CustomerOrder order = orders.findOrderForPaymentChange(orderId).orElseThrow();
+        payments.markUnverifiedAcceptanceForReconciliation(orderId);
         var attempt = payments.findAttempt(orderId, checkoutId).orElseThrow();
         switch (verified.outcome()) {
             case UNRESOLVED, CARD_DECLINED -> {
@@ -129,6 +133,7 @@ public class ClientCheckoutService {
     private void applyCapture(CustomerOrder order, Attempt attempt, VerifiedCheckout verified) {
         String reference = verified.providerReference();
         if (reference == null || reference.isBlank() || reference.length() > 160 || !"HKD".equals(verified.currency())
+                || verified.capturedAmount() == null
                 || (attempt.providerReference() != null && !attempt.providerReference().equals(reference))) {
             throw new IllegalArgumentException("Inconsistent sandbox payment evidence.");
         }
@@ -136,13 +141,21 @@ public class ClientCheckoutService {
         if (captured.signum() <= 0 || captured.precision() > 12) {
             throw new IllegalArgumentException("Invalid captured amount.");
         }
-        if (attempt.isAccepted() || SHARED_PAYMENT_STATUS_REFUND_REQUIRED.equals(attempt.status())) {
+        if (attempt.hasAcceptanceTime()) {
+            if (captured.compareTo(attempt.amountHkd()) != 0) {
+                throw new IllegalArgumentException("Capture amount differs from the accepted payment.");
+            }
+            return;
+        }
+        if (attempt.needsAcceptanceReconciliation() && !SharedOrderStatus.CANCELLED.name().equals(order.orderStatus)) {
+            // A verified capture alone cannot establish whether fulfilment already started.
+            // Keep the review marker for the operator workflow in docs/integration/STEP_2_PAYMENT_RECONCILIATION.md.
             return;
         }
 
         boolean validAttempt = attempt.isPending() && captured.compareTo(attempt.amountHkd()) == 0
                 && captured.compareTo(order.totalAmount) == 0
-                && payments.findAccepted(order.orderID).isEmpty() && !orderRows.hasFulfillmentStarted(order.orderID)
+                && !payments.hasAcceptedOrUnresolvedPayment(order.orderID) && !orderRows.hasFulfillmentStarted(order.orderID)
                 && orderRows.checkoutHoldsAllItems(order.orderID, attempt.paymentId());
         Instant acceptedAt = orderRows.databaseTime();
         // Entry cutoff governs issuing checkout access. The locked order deadline governs payment acceptance.
@@ -155,8 +168,10 @@ public class ClientCheckoutService {
                 throw new IllegalStateException("Accepted payment notification evidence is missing.");
             }
         } else {
-            payments.markRefundRequired(attempt.paymentId(), reference);
-            payments.requestFullRefund(attempt.paymentId(), captured);
+            if (!SHARED_PAYMENT_STATUS_REFUND_REQUIRED.equals(attempt.status()) || attempt.providerReference() == null) {
+                payments.markRefundRequired(attempt.paymentId(), reference);
+            }
+            refunds.recordVerifiedCaptureRefund(attempt.paymentId(), reference, captured);
         }
     }
 

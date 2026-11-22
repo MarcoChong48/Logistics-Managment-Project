@@ -45,6 +45,14 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
             """)
     Optional<Payment> findPaidPaymentByOrderIDForUpdate(Long orderID);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT payment FROM Payment payment
+            WHERE payment.orderID = :orderID AND payment.acceptedTime IS NOT NULL AND payment.amount > 0
+            ORDER BY payment.paymentID
+            """)
+    List<Payment> findPaidPaymentsByOrderIDForUpdate(Long orderID);
+
     /**
      * What it does: Locks the payment that owns a refund before checking or retrying the attempt.
      * Input: The payment ID.

@@ -2,12 +2,15 @@ package com.lms.backend.admin.placeholder;
 
 import static com.lms.backend.admin.refund.AdminRefundRule.adminCheckRefundBlocksRequest;
 import static com.lms.backend.shared.log.SharedAuditAction.SHARED_AUDIT_ACTION_REFUND_STATUS_CHECKED;
+import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_PAYMENT_STATUS_REFUND_REQUIRED;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_REFUND_STATUS_FAILED;
 import static com.lms.backend.shared.value.SharedPlaceholderWord.SHARED_REFUND_STATUS_REQUESTED;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Component;
@@ -86,13 +89,48 @@ public class AdminRefundTemporary implements AdminRefundPlaceholder {
             }
         }
 
-        Refund adminRequestFullRefundNewRefund = new Refund();
-        adminRequestFullRefundNewRefund.paymentID = adminRequestFullRefundPayment.paymentID;
-        adminRequestFullRefundNewRefund.amount = adminRequestFullRefundPayment.amount;
-        adminRequestFullRefundNewRefund.refundStatus = SHARED_REFUND_STATUS_REQUESTED;
-        adminRequestFullRefundNewRefund.createdTime = Instant.now();
-        Long refundID = adminRequestFullRefundRefundRepository.save(adminRequestFullRefundNewRefund).refundID;
-        return new AdminRequestFullRefundAnswer(refundID, true);
+        return new AdminRequestFullRefundAnswer(
+                saveRequestedRefund(adminRequestFullRefundPayment.paymentID, adminRequestFullRefundPayment.amount), true);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void recordClientCancellationRefunds(long orderId) {
+        for (Payment payment : adminRequestFullRefundPaymentRepository.findPaidPaymentsByOrderIDForUpdate(orderId)) {
+            recordInitialRefund(payment.paymentID, payment.amount);
+        }
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void recordVerifiedCaptureRefund(long paymentId, String providerReference, BigDecimal capturedAmount) {
+        Payment payment = adminRequestFullRefundPaymentRepository.findPaymentByPaymentIDForUpdate(paymentId)
+                .orElseThrow();
+        if (!SHARED_PAYMENT_STATUS_REFUND_REQUIRED.equals(payment.paymentStatus) || payment.acceptedTime != null
+                || providerReference == null || providerReference.isBlank()
+                || !Objects.equals(providerReference, payment.providerReference) || capturedAmount.signum() <= 0) {
+            throw new IllegalStateException("Refund capture evidence is inconsistent for payment " + paymentId);
+        }
+        recordInitialRefund(paymentId, capturedAmount);
+    }
+
+    private void recordInitialRefund(long paymentId, BigDecimal amount) {
+        var history = adminRequestFullRefundRefundRepository.findByPaymentIDOrderByCreatedTimeDescRefundIDDesc(paymentId);
+        if (history.isEmpty()) {
+            saveRequestedRefund(paymentId, amount);
+        } else if (history.stream().anyMatch(attempt -> attempt.amount.compareTo(amount) != 0)) {
+            throw new IllegalStateException("Existing refund amounts require reconciliation for payment " + paymentId);
+        }
+        // Existing attempts remain under the Admin provider-status and retry rules.
+    }
+
+    private Long saveRequestedRefund(long paymentId, BigDecimal amount) {
+        Refund refund = new Refund();
+        refund.paymentID = paymentId;
+        refund.amount = amount;
+        refund.refundStatus = SHARED_REFUND_STATUS_REQUESTED;
+        refund.createdTime = Instant.now();
+        return adminRequestFullRefundRefundRepository.save(refund).refundID;
     }
 
     // ===== SECTION 3: adminCheckRefundProviderStatusPlaceholder =====

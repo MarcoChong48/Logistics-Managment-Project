@@ -94,7 +94,7 @@ public class StripeSandboxCheckout {
         for (var link : stripeRows.dueSessions()) {
             stripeRows.markSessionChecked(link.checkoutId());
             try {
-                reconcile(link.checkoutId(), link.sessionId(), true);
+                reconcile(link.checkoutId(), link.sessionId(), link.entryCanClose());
             } catch (StripeException | RuntimeException failure) {
                 LOG.warn("Will retry Stripe sandbox checkout {} ({})", link.checkoutId(),
                         failure.getClass().getSimpleName());

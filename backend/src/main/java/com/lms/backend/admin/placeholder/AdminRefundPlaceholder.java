@@ -1,5 +1,7 @@
 package com.lms.backend.admin.placeholder;
 
+import java.math.BigDecimal;
+
 public interface AdminRefundPlaceholder {
 
     // ===== SECTION 1: PAYMENT OUTPUT =====
@@ -12,6 +14,12 @@ public interface AdminRefundPlaceholder {
      */
     AdminRequestFullRefundAnswer adminRequestFullRefundPlaceholder(Long orderID, Long adminRequestFullRefundAdminUserID,
             String adminRequestFullRefundReason);
+
+    /** Records initial obligations for all timestamped accepted payments after a Client cancellation. */
+    void recordClientCancellationRefunds(long orderId);
+
+    /** Records an initial obligation for a capture already verified by a trusted provider adapter. */
+    void recordVerifiedCaptureRefund(long paymentId, String providerReference, BigDecimal capturedAmount);
 
     // ===== SECTION 2: PAYMENT INPUT =====
 

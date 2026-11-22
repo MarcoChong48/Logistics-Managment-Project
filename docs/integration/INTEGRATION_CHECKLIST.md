@@ -1,0 +1,40 @@
+# LMS integration checklist
+
+## Integration lead
+
+- [x] Verify local sources and both Warehouse ZIPs and relocate the clean integration worktree.
+- [x] Merge Delivery v4 at `b324b614c8082b512a83d9a0dde989bd42112a68` and validate the Stage 9 rule suite and disposable database.
+- [x] Resolve the Client merge's shared mapping, security and frontend conflicts. Run test compilation first, followed by regression tests.
+- [x] Review the Step 2 changes and [full regression results](INTEGRATION_REPORT.md#step-2-regression-evidence) and approve the local checkpoint.
+
+## Client and Admin
+
+- [x] Confirm that the merge preserves existing Client order ownership, idempotency, checkout, order tracking and notification tests.
+- [x] Preserve Admin Stage 9's role policies, shared mappings and cancellation and refund policy.
+- [x] Share Client and Admin cancellation mutation under the order lock. Verify duplicate cancellation, expiry, late payment and rollback.
+- [ ] Exercise Client cancellation racing the first Warehouse scan after Warehouse integration.
+- [x] Verify late and duplicate captures, separate paid attempts and Admin refund selection and retry behavior on disposable data.
+- [ ] Track the legacy Admin inventory clamp. A reserved balance below the reservation quantity can produce a ledger delta larger than the stock decremented. A change to this policy requires separate approval.
+- [ ] Follow the [manual reconciliation runbook](STEP_2_PAYMENT_RECONCILIATION.md) for active legacy claims. Step 2 provides a runbook, with no implemented Admin API for clearing the marker or advancing the order.
+- [ ] Define the authorized return-request path, address version and active instruction status. Test rejection and approval with a recorded physical receipt.
+
+## Database and Payment
+
+- [x] Verify default migrations 01, 03, 04, 06 and 07 in a disposable database with 32 public tables.
+- [x] Run optional migration 05 and module tests on disposable data with mocked provider responses. Keep Stripe disabled by default.
+- [ ] Rehearse the ordered migration plan and version checks on a disposable copy of any intended existing schema. Verify the FK, unique and CHECK constraints before rollout.
+- [ ] Confirm which provider record proves capture and settlement for each supported source. Reconcile timestamp-less `ACCEPTED` records before authorizing refund attempts.
+
+## Warehouse and Delivery
+
+- [ ] Import Warehouse Java and connect the supplied pages to authenticated `/api/warehouse` endpoints with CSRF.
+- [ ] Verify Product SKU scanning, exact order-item quantities and the first-scan lock. Keep Order Reference, Package QR and Pickup List QR distinct.
+- [ ] Check accepted payment and all required held quantities before picking and packing. Keep inventory consumption at Delivery collection and test that a repeated pickup never consumes twice.
+- [ ] Connect eligible packed packages to `DeliveryPickupService.createList` and verify assignment, claim and actual pickup under the `delivery-full` profile.
+- [ ] Implement physical return receipt and inventory condition handling after the team approves the rules for quantity discrepancies and damaged goods.
+
+## Integration testing
+
+- [x] Run and record the complete Maven/JUnit, Admin/Shared HTTP and Chromium fixture suites for Step 2. The report records six Admin/Shared skips and six live-backend Chromium skips.
+- [ ] Run a live Client to Warehouse to Delivery journey in PostgreSQL using authenticated sessions and a verified synthetic payment. Check pickup writes, stock movement, notifications, and protected tracking and proof access.
+- [ ] Run the eligible live browser tests and record fail and skip counts. Capture recovery, cancellation, and role-denial edge cases.

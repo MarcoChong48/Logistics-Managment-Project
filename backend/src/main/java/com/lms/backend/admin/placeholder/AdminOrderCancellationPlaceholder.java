@@ -11,4 +11,10 @@ public interface AdminOrderCancellationPlaceholder {
      * Placeholder: PO-01. The shared order cancellation function will provide this behavior.
      */
     void adminCancelOrderPlaceholder(Long orderID, Long adminCancelOrderAdminUserID, String adminCancelOrderReason);
+
+    /**
+     * Applies the shared cancellation after the Client lifecycle checks. A missing or inconsistent
+     * reserved balance aborts the transaction. The actor is null for automatic expiry.
+     */
+    void cancelClientOrder(long orderId, Long actorUserId, String reason);
 }
