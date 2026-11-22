@@ -3,6 +3,8 @@ package com.lms.backend.shared.database;
 import java.math.BigDecimal;
 import java.time.Instant;
 
+import com.lms.backend.shared.value.SharedOrderStatus;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -39,4 +41,13 @@ public class CustomerOrder {
 
     @Column(name = "total_amount", nullable = false, precision = 12, scale = 2)
     public BigDecimal totalAmount;
+
+    public boolean isAwaitingPayment() {
+        return SharedOrderStatus.AWAITING_PAYMENT.name().equals(orderStatus);
+    }
+
+    // Payment writers must check this while holding the order row lock.
+    public boolean canAcceptPaymentAt(Instant now) {
+        return isAwaitingPayment() && paymentDeadline.isAfter(now);
+    }
 }

@@ -5,6 +5,7 @@ const sharedShowWelcomeUsernameText = document.getElementById("sharedShowWelcome
 const sharedShowWelcomeRoleText = document.getElementById("sharedShowWelcomeRoleText");
 const sharedShowWelcomeNoticeMessage = document.getElementById("sharedShowWelcomeNoticeMessage");
 const sharedShowWelcomeStartPageLink = document.getElementById("sharedShowWelcomeStartPageLink");
+const sharedShowWelcomeClientPortalLink = document.getElementById("sharedShowWelcomeClientPortalLink");
 const sharedShowWelcomeLogoutButton = document.getElementById("sharedShowWelcomeLogoutButton");
 
 // ===== SECTION 2: PAGE STATE =====
@@ -51,6 +52,7 @@ async function sharedShowWelcome() {
       sharedShowWelcomeStartPageLink.href = sharedShowWelcomeStartPageWebAddress;
       sharedShowWelcomeStartPageLink.hidden = false;
     }
+    sharedShowWelcomeClientPortalLink.hidden = sharedViewSessionResponse.role !== "CLIENT";
     sharedShowWelcomeLogoutButton.parentElement.hidden = false;
     if (sharedReadPageParameter("sharedShowWelcomeNotice") === "ACCESS_DENIED") {
       sharedShowInlineMessage(sharedShowWelcomeNoticeMessage, "ERROR", "You are not allowed to open that page.");

@@ -1,14 +1,20 @@
 package com.lms.backend.shared.database;
 
+import java.math.BigDecimal;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.lms.backend.shared.value.SharedListingStatus;
+
+import jakarta.persistence.LockModeType;
 
 // Shared database placeholder. Use the team's repository when it becomes available.
 public interface ProductRepository extends JpaRepository<Product, Long> {
@@ -54,4 +60,27 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("adminSearchProductKeyword") String adminSearchProductKeyword,
             @Param("listingStatus") SharedListingStatus listingStatus,
             Pageable adminSearchProductPage);
+
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    List<Product> findByProductIDInOrderByProductIDAsc(Collection<Long> productIds);
+
+    @Query("""
+            select p.productID as productId, p.SKU as sku, p.name as name,
+                   p.currentPrice as currentPrice,
+                   coalesce(i.physicalStock - i.reservedStock, 0) as stockBalance
+            from Product p
+            left join Inventory i on i.productID = p.productID
+            where p.listingStatus = :listingStatus
+              and locate(lower(:name), lower(p.name)) > 0
+            order by p.productID
+            """)
+    List<ProductStock> findWithStock(@Param("listingStatus") SharedListingStatus listingStatus, @Param("name") String name);
+
+    interface ProductStock {
+        Long getProductId();
+        String getSku();
+        String getName();
+        BigDecimal getCurrentPrice();
+        int getStockBalance();
+    }
 }

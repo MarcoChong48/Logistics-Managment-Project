@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.lms.backend.admin.dashboard.AdminViewDashboardOrderStatusCount;
 import com.lms.backend.admin.order.AdminSearchOrderRow;
@@ -156,4 +157,15 @@ public interface CustomerOrderRepository extends JpaRepository<CustomerOrder, Lo
             """)
     List<Object[]> adminSearchFailedDeliveryCase(String orderStatus, String failedOutcome, String warehouseCustody,
             String returnEventType, String pendingStatus, String reminderType, Collection<String> caseStatusList);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<CustomerOrder> findByOrderReferenceAndClientUserID(String orderReference, Long clientUserID);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT o FROM CustomerOrder o WHERE o.orderID = :orderId")
+    Optional<CustomerOrder> findOrderForPaymentChange(@Param("orderId") long orderId);
+
+    @Query(value = "SELECT * FROM customer_order WHERE order_id = :orderId FOR UPDATE SKIP LOCKED",
+            nativeQuery = true)
+    Optional<CustomerOrder> findUnlockedOrderForExpiry(@Param("orderId") long orderId);
 }

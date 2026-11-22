@@ -1,10 +1,15 @@
 package com.lms.backend.shared.database;
 
 import java.time.Instant;
+import java.util.Collection;
+import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+
+import jakarta.persistence.LockModeType;
 
 // Shared database placeholder. Use the team's repository when it becomes available.
 public interface InventoryRepository extends JpaRepository<Inventory, Long> {
@@ -22,4 +27,7 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
             WHERE product_id = :productID
             """, nativeQuery = true)
     int adminCancelOrderReleaseReservation(Long productID, int quantity, Instant updatedTime);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    List<Inventory> findByProductIDInOrderByProductIDAsc(Collection<Long> productIds);
 }

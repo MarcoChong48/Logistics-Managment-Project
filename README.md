@@ -50,3 +50,8 @@ Use these references to build another role in the shared application. [Team inte
 5. Open `http://127.0.0.1:8081/`. Sign in as `admin_local` with the temporary password you set, change it when prompted, and sign in again with the new password. Use **Test tools** to create sample work, then use the Dashboard links to open the matching lists.
 
 For password requirements, database checks, and automated tests, see the [Admin setup guide](ADMIN_README.md).
+
+## Client and Delivery
+
+- [Client portal guide](CLIENT_README.md)
+- [Delivery v4 setup](DELIVERY_V4.md)

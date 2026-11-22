@@ -8,7 +8,10 @@ public final class SharedPlaceholderWord {
 
     // ===== SECTION 1: STAGE 2 WORDS =====
 
+    public static final String SHARED_PAYMENT_STATUS_PENDING = "PENDING";
     public static final String SHARED_PAYMENT_STATUS_ACCEPTED = "ACCEPTED";
+    public static final String SHARED_PAYMENT_STATUS_ENDED_UNPAID = "ENDED_UNPAID";
+    public static final String SHARED_PAYMENT_STATUS_REFUND_REQUIRED = "REFUND_REQUIRED";
     public static final String SHARED_PICKING_TASK_STATUS_PENDING = "PENDING";
     public static final String SHARED_PICKING_TASK_STATUS_IN_PROGRESS = "IN_PROGRESS";
     public static final String SHARED_PICKING_TASK_STATUS_PACKED = "PACKED";
@@ -20,6 +23,7 @@ public final class SharedPlaceholderWord {
     public static final String SHARED_CUSTODY_STATUS_DELIVERY = "DELIVERY";
     public static final String SHARED_CUSTODY_EVENT_PICKED_UP = "PICKED_UP";
     public static final String SHARED_RESERVATION_STATUS_HELD = "HELD";
+    public static final String SHARED_RESERVATION_STATUS_RELEASED = "RELEASED";
     public static final String SHARED_RESERVATION_STATUS_CONSUMED = "CONSUMED";
 
     // ===== SECTION 2: STAGE 5 WORDS =====
@@ -40,7 +44,6 @@ public final class SharedPlaceholderWord {
     public static final String SHARED_INSTRUCTION_STATUS_PENDING = "PENDING";
     public static final String SHARED_INSTRUCTION_STATUS_APPROVED = "APPROVED";
     public static final String SHARED_INSTRUCTION_STATUS_REJECTED = "REJECTED";
-    public static final String SHARED_RESERVATION_STATUS_RELEASED = "RELEASED";
 
     // ===== SECTION 3: STAGE 6 WORDS =====
 

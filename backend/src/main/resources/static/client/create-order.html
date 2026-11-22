@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create Order | LMS Client Portal</title>
+  <link rel="stylesheet" href="/shared/shared-common.css">
+  <link rel="stylesheet" href="/client/client.css">
+</head>
+<body class="client-body">
+  <section class="client-entry" id="clientEntry" aria-label="Portal access">
+    <p id="clientEntryStatus" role="status">Checking your session…</p>
+    <button class="client-button client-button--primary" id="clientRetrySession" type="button" hidden>Try again</button>
+    <p class="client-feedback client-feedback--error" role="alert" hidden><span id="clientLogoutError"></span></p>
+    <button class="client-button client-button--primary" id="clientRetryLogout" type="button" hidden>Retry logout</button>
+    <noscript><p>JavaScript is required to use the Client Portal.</p></noscript>
+  </section>
+
+  <main class="client-main" id="clientMain" tabindex="-1" hidden>
+    <header class="client-page-heading">
+      <h1>Create Order</h1>
+      <p>Select products and enter the delivery details for this order.</p>
+    </header>
+
+    <form id="orderForm" class="client-order-layout" autocomplete="off" novalidate>
+      <section class="client-card client-order-products" aria-labelledby="productsTitle">
+        <div class="client-order-heading">
+          <div>
+            <h2 id="productsTitle">Select products</h2>
+            <p class="client-card-intro">Availability may change before you submit.</p>
+          </div>
+          <button class="client-button" id="addOrderLine" type="button" disabled>Add product line</button>
+        </div>
+        <fieldset class="client-order-fields" id="productFields" disabled>
+          <legend class="client-visually-hidden">Product selection</legend>
+          <div class="client-order-search">
+            <div class="client-field">
+              <label for="catalogueSearch">Product name</label>
+              <input type="search" id="catalogueSearch" placeholder="Search products">
+            </div>
+            <button class="client-button" id="searchCatalogue" type="button">Search</button>
+            <button class="client-button" id="refreshCatalogue" type="button">Refresh catalogue</button>
+          </div>
+          <div id="orderLines" class="client-order-lines"></div>
+        </fieldset>
+        <p class="client-empty" id="catalogueStatus" role="status">Loading products…</p>
+        <p class="client-field-error" id="orderLinesError" role="alert" hidden></p>
+      </section>
+
+      <section class="client-card client-defaults client-order-delivery" aria-labelledby="orderDeliveryTitle">
+        <h2 id="orderDeliveryTitle">Delivery details</h2>
+        <p class="client-card-intro">Edits apply to this order only.</p>
+        <p class="client-empty" id="orderDeliveryStatus" role="status">Loading saved delivery details…</p>
+        <fieldset class="client-order-fields" id="orderDeliveryFields" disabled>
+          <legend class="client-visually-hidden">Delivery contact and address</legend>
+          <div class="client-fields-row">
+            <div class="client-field">
+              <label for="orderRecipient">Recipient name</label>
+              <input type="text" id="orderRecipient" required aria-describedby="orderRecipientError">
+              <p class="client-field-error" id="orderRecipientError" hidden></p>
+            </div>
+            <div class="client-field">
+              <label for="orderPhone">Contact phone</label>
+              <input type="tel" id="orderPhone" required aria-describedby="orderPhoneError">
+              <p class="client-field-error" id="orderPhoneError" hidden></p>
+            </div>
+          </div>
+          <div class="client-field">
+            <label for="orderAddress">Full Hong Kong address</label>
+            <textarea id="orderAddress" rows="4" required aria-describedby="orderAddressError"></textarea>
+            <p class="client-field-error" id="orderAddressError" hidden></p>
+          </div>
+        </fieldset>
+        <button class="client-button" id="retryOrderAccount" type="button" hidden>Retry loading delivery details</button>
+      </section>
+
+      <section class="client-card client-order-summary" aria-labelledby="orderSummaryTitle">
+        <h2 id="orderSummaryTitle">Order summary</h2>
+        <ul class="client-order-breakdown" id="orderBreakdown" hidden></ul>
+        <p class="client-card-intro" id="orderSummaryEmpty">Select products to see an estimate.</p>
+        <p class="client-order-total"><span>Estimated total</span><output id="estimatedTotal">HK$0.00</output></p>
+        <p class="client-order-payment">Online payment is currently unavailable.</p>
+        <button class="client-button client-button--primary" id="submitOrder" type="submit" disabled>Create order</button>
+        <p class="client-feedback" id="orderFeedback" role="status" aria-atomic="true" hidden></p>
+        <div class="client-order-retry" id="orderRetry" hidden>
+          <p>Retry sends the original details. Leaving or reloading this page loses the retry. If the result is still unknown, avoid submitting the same order as a new one.</p>
+          <button class="client-button client-button--primary" id="retryOrder" type="button">Retry original submission</button>
+          <button class="client-button" id="discardOrderRetry" type="button">Start a different order</button>
+        </div>
+      </section>
+    </form>
+
+    <section class="client-card client-order-result" id="createdOrder" aria-labelledby="createdOrderTitle" tabindex="-1" hidden>
+      <h2 id="createdOrderTitle">Order created</h2>
+      <dl class="client-order-result-facts">
+        <div><dt>Order reference</dt><dd id="createdOrderReference"></dd></div>
+        <div><dt>Order status</dt><dd id="createdOrderStatus"></dd></div>
+        <div><dt>Confirmed total</dt><dd id="createdOrderTotal"></dd></div>
+        <div><dt>Payment deadline (Hong Kong time)</dt><dd><time id="createdOrderDeadline"></time></dd></div>
+      </dl>
+      <p class="client-order-payment">Online payment is currently unavailable.</p>
+      <a class="client-button client-button--primary" id="viewCreatedOrder" hidden>View order details</a>
+      <button class="client-button" id="startAnotherOrder" type="button">Create another order</button>
+    </section>
+
+    <dialog class="shared-dialog" id="discardOrderDialog" aria-labelledby="discardOrderTitle">
+      <h2 class="shared-dialog-title" id="discardOrderTitle">Start a different order?</h2>
+      <div class="shared-dialog-body"><p>The previous submission may have created an order. Starting again discards your ability to retry that submission here.</p></div>
+      <div class="shared-dialog-footer">
+        <button class="client-button" id="keepOrderRetry" type="button">Keep original submission</button>
+        <button class="client-button client-button--primary" id="confirmNewOrder" type="button">Start a different order</button>
+      </div>
+    </dialog>
+    <dialog class="shared-dialog client-order-confirmation" id="leaveOrderDialog" aria-labelledby="leaveOrderTitle" aria-describedby="leaveOrderExplanation">
+      <h2 class="shared-dialog-title" id="leaveOrderTitle">Leave this order?</h2>
+      <div class="shared-dialog-body"><p id="leaveOrderExplanation">The order may already be saved. Leaving this page will discard the ability to retry the original submission.</p></div>
+      <div class="shared-dialog-footer">
+        <button class="client-button client-button--primary" id="stayOnOrder" type="button" autofocus>Stay on this page</button>
+        <button class="client-button" id="confirmLeaveOrder" type="button">Leave this page</button>
+      </div>
+    </dialog>
+  </main>
+
+  <template id="orderLineTemplate">
+    <fieldset class="client-order-line">
+      <legend class="client-visually-hidden"></legend>
+      <div class="client-field order-line-product">
+        <label>Product</label>
+        <select required></select>
+        <p class="client-order-stock" aria-live="polite"></p>
+        <p class="client-field-error" hidden></p>
+      </div>
+      <div class="client-field order-line-quantity">
+        <label>Quantity</label>
+        <input type="number" min="1" max="2147483647" step="1" value="1" inputmode="numeric" required>
+        <p class="client-field-error" hidden></p>
+      </div>
+      <button class="client-button order-line-remove" type="button">Remove</button>
+    </fieldset>
+  </template>
+  <script src="/shared/shared-common.js"></script>
+  <script type="module" src="/client/create-order.js"></script>
+</body>
+</html>

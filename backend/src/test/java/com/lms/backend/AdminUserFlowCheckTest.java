@@ -239,7 +239,7 @@ class AdminUserFlowCheckTest extends SharedFlowCheck {
         JsonNode sharedLoginUserReply = adminUserPickerBrowser.login("mei_picker", FLOW_PICKER_PASSWORD)
                 .expect(200).json();
         assertEquals("DELIVERY_WORKER", sharedLoginUserReply.path("role").asText());
-        assertEquals(WELCOME_PAGE, sharedLoginUserReply.path("sharedLoginUserNextPageWebAddress").asText());
+        assertEquals("/delivery/index.html", sharedLoginUserReply.path("sharedLoginUserNextPageWebAddress").asText());
     }
 
     // What it does: Checks refused changes.
