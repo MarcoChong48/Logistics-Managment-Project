@@ -32,7 +32,7 @@ public final class SharedStartPageRule {
             case ADMIN -> "/admin/admin-dashboard.html";
             case CLIENT -> "/shared/shared-welcome.html";
             case WAREHOUSE_WORKER -> "/shared/shared-welcome.html";
-            case DELIVERY_WORKER -> "/shared/shared-welcome.html";
+            case DELIVERY_WORKER -> "/delivery/index.html";
         };
     }
 }
