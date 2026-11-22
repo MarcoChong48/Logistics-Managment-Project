@@ -1,9 +1,8 @@
-# Delivery v4.0 — 小組合併版
+# Delivery v4.0 — 完整示範版
 
-今晚合併請採用 `feature/delivery-v4-integration`（`v4.0`）。完整示範版在 `feature/delivery-v4-demo`（`v4.0-demo`），使用獨立的啟動設定及測試資料。
+本分支為 `feature/delivery-v4-demo`（`v4.0-demo`）。今晚合併請選 `feature/delivery-v4-integration`（`v4.0`）。
 
-本分支以 Admin Stage 6 `01fba08` 為基準，保留共用登入、訂單及庫存，並啟用 Delivery 實際提貨、簽收、失敗及退件申報功能。Warehouse 實收、Client 指示、Admin 正式審批及付款退款由各自模組接駁。
+示範版採用獨立 Docker 專案，供演示自動分派、提貨、簽收、退件、模擬 Warehouse 收貨、Client 指示及 Admin 批准。示範操作只適用於已標記的測試訂單。
 
-- [小組合併及啟動步驟](docs/DELIVERY_INTEGRATION_ZH_HK.md)
-- [各角色交接事項及驗收](docs/DELIVERY_TEAM_HANDOFF_ZH_HK.md)
-- [Delivery 資料庫遷移](database/07_delivery_changes.sql)
+- [示範版啟動及演示步驟](docs/DELIVERY_DEMO_ZH_HK.md)
+- [各角色正式交接及驗收](docs/DELIVERY_TEAM_HANDOFF_ZH_HK.md)

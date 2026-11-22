@@ -12,7 +12,10 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -22,15 +25,23 @@ class DeliveryFullWorkspaceData {
     private final JdbcTemplate db;
     private final DeliveryPickupService pickup;
     private final DeliveryRetentionStatus retention;
+    private final boolean demo;
 
-    DeliveryFullWorkspaceData(JdbcTemplate db, DeliveryPickupService pickup, DeliveryRetentionStatus retention) {
+    DeliveryFullWorkspaceData(JdbcTemplate db, DeliveryPickupService pickup, DeliveryRetentionStatus retention,
+                              Environment env,
+                              @Value("${lms.delivery.demo-enabled:false}") boolean demoEnabled) {
         this.db = db;
         this.pickup = pickup;
         this.retention = retention;
+        this.demo = demoEnabled && env.acceptsProfiles(Profiles.of("admintest"));
     }
 
     void refreshAssignments() {
         pickup.refreshAssignments();
+    }
+
+    boolean demo() {
+        return demo;
     }
 
     List<Map<String,Object>> returns(long workerId) {
@@ -74,6 +85,29 @@ class DeliveryFullWorkspaceData {
         return fields("privateLocalStorage", true, "cloudConnector", "Place holder",
             "lastCleanupAt", check == null ? null : check.finishedAt().toString(),
             "lastError", check != null && !check.successful() ? "The last retention check did not finish." : null);
+    }
+
+    List<Map<String,Object>> demoPackages(long workerId) {
+        if (!demo) return List.of();
+        return db.query("""
+            SELECT p.package_id,p.custody_status,p.delivery_hold_reason,o.order_reference,o.order_status,
+                   r.status AS receipt_status,r.condition,r.failed_attempt,i.instruction_type,i.status AS instruction_status
+            FROM delivery_demo_order d
+            JOIN customer_order o USING (order_id)
+            JOIN delivery_package p USING (order_id)
+            JOIN LATERAL (SELECT status,condition,receipt_event_id,failed_attempt,reported_by_user_id
+                FROM delivery_return_receipt
+                WHERE package_id=p.package_id ORDER BY return_id DESC LIMIT 1) r ON r.reported_by_user_id=?
+            LEFT JOIN LATERAL (SELECT instruction_type,status FROM client_instruction
+                WHERE return_custody_event_id=r.receipt_event_id AND status IN ('PENDING','APPROVED')
+                ORDER BY submitted_at DESC,instruction_id DESC LIMIT 1) i ON true
+            ORDER BY o.order_reference
+            """, (row, index) -> fields("id", row.getString("package_id"),
+                "orderReference", row.getString("order_reference"), "status", row.getString("order_status"),
+                "custody", row.getString("custody_status"), "holdReason", row.getString("delivery_hold_reason"),
+                "returnStatus", row.getString("receipt_status"), "returnCondition", row.getString("condition"),
+                "failedAttempt", row.getBoolean("failed_attempt"),
+                "instruction", row.getString("instruction_type"), "instructionStatus", row.getString("instruction_status")), workerId);
     }
 
     List<Map<String,Object>> retained(long workerId) {

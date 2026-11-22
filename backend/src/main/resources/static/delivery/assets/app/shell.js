@@ -26,6 +26,7 @@ export function shell(ctx, screen) {
   const { state, workspace } = ctx;
   const user = esc(workspace.user.username || workspace.user.id);
   const current = ['delivery-detail', 'record-outcome'].includes(state.page) ? 'deliveries' : state.page;
+  const demo = workspace.mode === 'demo';
   const inert = state.menuOpen ? ' inert' : '';
   const unread = (workspace.notifications || []).filter(item => !item.read).length;
   return `<a class="shared-skip-link" href="#delivery-main" data-action="skip"${inert}>Skip to main content</a>
@@ -39,6 +40,7 @@ export function shell(ctx, screen) {
       ${work.slice(1).map(item => menuEntry(item, current, item[0] === 'returns' ? workspace.stats?.pendingReturns : 0)).join('')}
       <div class="shared-page-frame-menu-label">Look up</div>
       ${lookup.map(item => menuEntry(item, current, item[0] === 'notifications' ? unread : 0)).join('')}
+      ${demo ? `<div class="shared-page-frame-menu-label">Testing</div>${menuEntry(['test-tools', 'Test tools', 'test-tools'], current)}` : ''}
       <div class="shared-page-frame-menu-footer"><span class="shared-page-frame-user">${user}</span>
         <a href="/shared/shared-change-password.html">Change password</a>
       </div>
@@ -46,6 +48,7 @@ export function shell(ctx, screen) {
     ${state.menuOpen ? '<div class="delivery-menu-scrim" data-action="close-menu" aria-hidden="true"></div>' : ''}
     <header class="shared-page-frame-top-bar"${inert}>
       <button type="button" class="shared-button shared-button-small shared-page-frame-menu-button" data-action="open-menu" aria-controls="delivery-menu" aria-expanded="${state.menuOpen}">Menu</button>
+      ${demo ? '<span class="shared-flag shared-flag-waiting">Test mode</span>' : ''}
       <span class="shared-page-frame-spacer"></span>
       <span class="shared-page-frame-countdown">${icon('clock')}<span class="shared-page-frame-countdown-words">Session ends in</span> <span id="sharedStartSessionCountdownText" role="timer" aria-label="Time until session expires">-</span></span>
       <span class="shared-page-frame-user">${user}</span>

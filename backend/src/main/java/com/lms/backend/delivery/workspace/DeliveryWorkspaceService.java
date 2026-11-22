@@ -48,15 +48,17 @@ public class DeliveryWorkspaceService {
         var returns = full == null ? List.<Map<String,Object>>of() : full.returns(workerId);
         var reviews = full == null ? List.<Map<String,Object>>of() : full.reviews(workerId, pickupLists, returns);
         boolean enabled = full != null;
+        boolean demo = enabled && full.demo();
         return fields(
                 "user", fields("id", Long.toString(workerId), "username", user.username(),
                         "displayName", user.username(), "role", user.role().name()),
-                "mode", "integration",
+                "mode", demo ? "demo" : "integration",
                 "capabilities", fields("pickup", enabled, "attempts", enabled, "returns", enabled, "proofs", enabled),
                 "stats", stats(workerId, tasks, pickupLists),
                 "pickupLists", pickupLists, "tasks", tasks, "attempts", attempts,
                 "returns", returns, "notifications", notifications(workerId),
                 "reviews", reviews, "reviewQueue", reviews,
+                "demoPackages", demo ? full.demoPackages(workerId) : List.of(),
                 "retainedSummaries", enabled ? full.retained(workerId) : List.of(),
                 "decisions", DeliveryDecisions.items(enabled),
                 "settings", fields("photoLimitBytes", 5242880, "staleClaimMinutes", 30,
@@ -69,7 +71,7 @@ public class DeliveryWorkspaceService {
                                 "detail", enabled ? "Delivery saves its workflow in the shared tables."
                                         : "This workspace reads your records from the shared database."),
                         fields("id", "workflow", "name", "Warehouse, Client and Admin handoffs", "status", "PLACE_HOLDER",
-                                "detail", enabled ? "Place holder: connect the handoff through the responsible role."
+                                "detail", enabled ? "Place holder: use the other role's real handoff or a labelled local test fixture."
                                         : "Place holder: full Delivery actions use the local extension.")));
     }
 
@@ -98,9 +100,12 @@ public class DeliveryWorkspaceService {
     }
 
     private List<Map<String, Object>> listPackages(long listId) {
+        String demoOrder = full != null && full.demo()
+                ? "EXISTS (SELECT 1 FROM delivery_demo_order fixture WHERE fixture.order_id = orders.order_id)"
+                : "false";
         return database.query("""
                 SELECT p.package_id, p.package_qr_code, orders.order_reference, orders.order_status,
-                       list_item.collection_outcome, list_item.cannot_collect_reason, %s AS hold_reason,
+                       list_item.collection_outcome, list_item.cannot_collect_reason, %s AS hold_reason, %s AS demo,
                        (SELECT string_agg(item.quantity || ' × ' || product.name, ', ' ORDER BY item.order_item_id)
                         FROM public.order_item item JOIN public.product product USING (product_id)
                         WHERE item.order_id = orders.order_id) AS item_summary
@@ -109,11 +114,11 @@ public class DeliveryWorkspaceService {
                 JOIN public.customer_order orders ON orders.order_id = p.order_id
                 WHERE list_item.pickup_list_id = ?
                 ORDER BY p.package_id
-                """.formatted(full == null ? "NULL::text" : "p.delivery_hold_reason"), (row, index) -> fields(
+                """.formatted(full == null ? "NULL::text" : "p.delivery_hold_reason", demoOrder), (row, index) -> fields(
                 "id", row.getString("package_id"), "qrCode", row.getString("package_qr_code"),
                 "orderReference", row.getString("order_reference"), "status", row.getString("order_status"),
                 "itemSummary", row.getString("item_summary"),
-                "collectionOutcome", row.getString("collection_outcome"),
+                "collectionOutcome", row.getString("collection_outcome"), "demo", row.getBoolean("demo"),
                 "cannotCollectReason", row.getString("cannot_collect_reason"), "holdReason", row.getString("hold_reason")), listId);
     }
 

@@ -165,11 +165,24 @@ public class DeliveryPickupService {
 
     public Map<String, Object> close(long workerId, long listId, Map<String, Object> body) {
         return commands.run(workerId, "CLOSE", Long.toString(listId), body,
-                () -> closeList(workerId, listId));
+                () -> closeList(workerId, listId, false));
     }
 
-    private Map<String, Object> closeList(long workerId, long listId) {
+    Map<String, Object> releaseDemo(long workerId, long listId, Map<String, Object> body) {
+        return commands.run(workerId, "DEMO_RELEASE", Long.toString(listId), body,
+                () -> closeList(workerId, listId, true));
+    }
+
+    private Map<String, Object> closeList(long workerId, long listId, boolean demoRelease) {
         PickupList list = requireCollector(workerId, listId);
+        if (demoRelease && !Boolean.TRUE.equals(db.queryForObject("""
+                SELECT COUNT(*) > 0 AND COUNT(*) = COUNT(fixture.order_id)
+                FROM public.pickup_list_item item
+                JOIN public.delivery_package p USING (package_id)
+                LEFT JOIN public.delivery_demo_order fixture ON fixture.order_id = p.order_id
+                WHERE item.pickup_list_id = ?
+                """, Boolean.class, listId))) throw denied();
+
         var uncollected = db.queryForList("""
                 SELECT package_id FROM public.pickup_list_item
                 WHERE pickup_list_id = ? AND collection_outcome IN ('PENDING', 'CANNOT_COLLECT')
@@ -193,8 +206,9 @@ public class DeliveryPickupService {
                 WHERE pickup_list_id = ?
                 """, listId);
 
-        Long replacement = createList(list.createdBy(), eligible, null);
-        audit.sharedWriteAuditLog(workerId, "DELIVERY_CLOSE_PICKUP_LIST",
+        Long replacement = createList(list.createdBy(), eligible, demoRelease ? workerId : null);
+        audit.sharedWriteAuditLog(workerId,
+                demoRelease ? "DELIVERY_TEST_RELEASE_PICKUP_LIST" : "DELIVERY_CLOSE_PICKUP_LIST",
                 "PICKUP_LIST", Long.toString(listId), null, null);
         return fields("message", replacement == null ? "Pickup list closed."
                         : "Pickup list closed. A replacement list is ready for the remaining packages.",

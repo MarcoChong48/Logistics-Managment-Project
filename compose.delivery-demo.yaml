@@ -1,0 +1,18 @@
+# Local demo edition. Use this with the base and team integration overlays.
+services:
+  delivery-migrate:
+    command:
+      - psql
+      - -X
+      - --set=ON_ERROR_STOP=1
+      - --file=/migrations/07_delivery_changes.sql
+      - --file=/migrations/delivery_demo_fixtures.sql
+    volumes:
+      - ./database/demo/delivery_demo_fixtures.sql:/migrations/delivery_demo_fixtures.sql:ro
+
+  backend:
+    ports: !override
+      - "127.0.0.1:8082:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: admintest,delivery-full
+      LMS_DELIVERY_DEMO_ENABLED: "true"

@@ -10,12 +10,13 @@ import {
   handleDelivery, handleOutcomeField, attachSignature,
 } from '../features/deliveries/index.js';
 import renderReturns from '../features/returns/index.js';
+import { renderSandbox, handleSandbox } from '../features/sandbox/index.js';
 
 const screens = {
   overview: renderOverview, pickup: renderPickup, deliveries: renderDeliveries,
   'delivery-detail': renderDeliveryDetails, 'record-outcome': renderOutcome,
   returns: renderReturns, history: renderHistory, notifications: renderNotifications,
-  integrations: renderIntegrations,
+  integrations: renderIntegrations, 'test-tools': renderSandbox,
 };
 const itemPages = new Set(['delivery-detail', 'record-outcome']);
 const loginAddress = '/shared/shared-login.html';
@@ -90,6 +91,7 @@ export default function start(root) {
 
   function navigate(page, packageId, fromHistory = false) {
     if (!workspace || !Object.hasOwn(screens, page)) return;
+    if (page === 'test-tools' && workspace.mode !== 'demo') page = 'overview';
     if (itemPages.has(page) && !packageId) page = 'deliveries';
     currentDialog?.close();
     if (page !== 'deliveries') state.deliveredAttemptId = null;
@@ -347,6 +349,7 @@ export default function start(root) {
         if (!workspace) return;
         handlePickup(control, ctx);
         handleDelivery(control, ctx);
+        handleSandbox(control, ctx);
     }
   });
 
