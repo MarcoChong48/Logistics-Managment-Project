@@ -27,3 +27,8 @@ Java locations start at `backend/src/main/java/com/lms/backend/`. Interface decl
 
 The Database owner reviews the seven Admin schema changes with the team. The other development owners share the login guards, logging functions, notification writer and provisional status words. [Admin migration](database/03_admin_changes.sql) · [Database setup](database/README.md) · [Team guide](TEAM_GUIDE.md)
 
+
+## Warehouse consumer references
+
+- PO-08 is read by warehouse/WarehouseOrderService.java in the signed-in worker notification inbox.
+- PO-09 is consumed by warehouse/WarehousePickingService.java when it matches an order item to its saved Product SKU.

@@ -13,6 +13,7 @@ services:
       - ./database/03_admin_changes.sql:/docker-entrypoint-initdb.d/03_admin_changes.sql:ro
       - ./database/04_client_order_idempotency.sql:/docker-entrypoint-initdb.d/04_client_order_idempotency.sql:ro
       - ./database/06_client_notification_event_key.sql:/docker-entrypoint-initdb.d/06_client_notification_event_key.sql:ro
+      - ./database/08_warehouse_picking_commands.sql:/docker-entrypoint-initdb.d/08_warehouse_picking_commands.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U lms -d lms"]
       interval: 5s

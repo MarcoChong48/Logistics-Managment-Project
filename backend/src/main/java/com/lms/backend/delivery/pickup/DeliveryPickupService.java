@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.lms.backend.delivery.support.DeliveryCommands;
+import com.lms.backend.shared.database.FulfillmentEligibility;
 import com.lms.backend.shared.log.SharedAuditLogWriter;
 import com.lms.backend.shared.value.SharedOrderStatus;
 
@@ -51,7 +52,11 @@ public class DeliveryPickupService {
     private final DeliveryCommands commands;
     private final SharedAuditLogWriter audit;
 
-    DeliveryPickupService(JdbcTemplate db, DeliveryCommands commands, SharedAuditLogWriter audit) {
+    private final FulfillmentEligibility eligibility;
+
+    DeliveryPickupService(JdbcTemplate db, DeliveryCommands commands, SharedAuditLogWriter audit,
+            FulfillmentEligibility eligibility) {
+        this.eligibility = eligibility;
         this.db = db;
         this.commands = commands;
         this.audit = audit;
@@ -100,8 +105,8 @@ public class DeliveryPickupService {
             if (!selected.ready() || awaitingReturn(selected.id())) {
                 throw conflict("This package is not ready for pickup.");
             }
-            Long paymentId = acceptedPayment(selected.orderId());
-            if (paymentId == null) throw conflict("This order has no accepted payment.");
+            long paymentId = eligibility.heldPayment(selected.orderId())
+                    .orElseThrow(() -> conflict("Warehouse must reconcile the payment and held reservations before pickup."));
             Long detailId = pickupDetail(selected);
             if (detailId == null) throw conflict("The delivery address or redelivery approval is missing.");
 
@@ -338,7 +343,7 @@ public class DeliveryPickupService {
     private Long acceptedPayment(long orderId) {
         var result = db.queryForList("""
                 SELECT payment_id FROM public.payment
-                WHERE order_id = ? AND payment_status = 'ACCEPTED' AND accepted_at IS NOT NULL
+                WHERE order_id = ? AND payment_status = 'ACCEPTED' AND accepted_at IS NOT NULL AND amount > 0
                 ORDER BY accepted_at DESC, payment_id DESC LIMIT 1 FOR UPDATE
                 """, Long.class, orderId);
         return result.isEmpty() ? null : result.getFirst();
