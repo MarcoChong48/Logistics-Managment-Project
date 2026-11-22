@@ -1,5 +1,7 @@
 # Logistics Management System · Admin
 
+For the combined Client, Warehouse, Delivery, and Admin stack, see the [integration handoff](docs/integration/README.md).
+
 `feature/admin-system` contains the Admin module and shared sign-in for the team's Logistics Management System. It builds on `feature/database-setup` using Java 21, Spring Boot 4.1.2, PostgreSQL 17, and Docker Compose.
 
 **Stage 9 passed on 22 November 2026.** All ten Admin implementation stages are complete. The final stage passed all 13 hand tests. The combined suite passed 175 rule checks and 199 flow checks with zero failures and six documented skips.

@@ -7,7 +7,7 @@
 - `01_create_tables.sql`: 25 related PostgreSQL tables, PKs, FKs, constraints, indexes. All 25 tables are in the `public` schema. Meant for a **new/empty** PostgreSQL database.
 - `02_sample_data.sql`: optional fictional product/stock data for local testing; **never auto-applied**.
 - `03_admin_changes.sql`, `04_client_order_idempotency.sql`, and `06_client_notification_event_key.sql` extend the baseline. `05_client_stripe_sandbox.sql` is optional for the isolated Stripe sandbox.
-- `../compose.yaml` mounts scripts `01`, `03`, `04`, and `06` for automatic initialization of a **new Docker PostgreSQL volume**.
+- `../compose.yaml` mounts `01`, `03`, `04`, `06`, and `08` for new volumes. The Delivery overlay applies `07` before backend startup. See the [integration handoff](../docs/integration/README.md#databases) for clean and existing databases.
 
 ## Table mapping from the original ERD
 
@@ -117,7 +117,7 @@ The initialization scripts run only when PostgreSQL creates a fresh volume. On a
 
 ## Client Order Idempotency
 
-`04_client_order_idempotency.sql` adds one table for persistent Create Order responses. Fresh Compose volumes run scripts `01`, `03`, `04`, and `06` in order and have **28 tables**. For a fresh integration test database with Stripe disabled, apply the same scripts in order with `psql -v ON_ERROR_STOP=1`.
+`04_client_order_idempotency.sql` adds one table for persistent Create Order responses. The Admin and Client sequence `01`, `03`, `04`, and `06` yields **28 tables** before Delivery and Warehouse. Use the [integration sequence](../docs/integration/README.md#databases) for the full stack.
 
 On an existing database with `01` and `03` already applied, verify the intended database and check whether `04` is present. For an existing local Compose volume, run from the repository root.
 

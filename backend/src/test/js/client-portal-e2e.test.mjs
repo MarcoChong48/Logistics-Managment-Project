@@ -285,11 +285,17 @@ test("all five live routes fit desktop and mobile, and guest, wrong-role and for
     await open(route);
     await at(loginPage);
   }
-  for (const [fixture, destination, rejection] of [["ROLE", welcomePage, 403], ["FORCED", passwordPage, 403]]) {
-    await signIn(fixture, destination);
+  for (const [fixture, startPage, deniedPage, rejection] of [
+    ["ROLE", "/delivery/index.html", welcomePage, 403],
+    ["FORCED", passwordPage, passwordPage, 403]
+  ]) {
+    await signIn(fixture, startPage);
     for (const [route] of pages) {
       await open(route);
-      await at(destination);
+      await at(deniedPage);
+      if (fixture === "ROLE") {
+        assert.equal(await evaluate('new URLSearchParams(location.search).get("sharedShowWelcomeNotice")'), "ACCESS_DENIED");
+      }
     }
     assert.equal(await statusOf("/api/client/account"), rejection);
     assert.equal(await statusOf(ordersApi), rejection);

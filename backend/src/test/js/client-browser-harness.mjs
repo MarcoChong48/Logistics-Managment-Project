@@ -85,10 +85,20 @@ export async function startBrowser(fixture, onEvent = () => {}) {
     "--window-size=1440,900", "--remote-debugging-port=0", "--user-data-dir=" + profile, "about:blank"],
     { windowsHide: true, stdio: "ignore" });
   const endpoint = await until(async () => {
-    const [port] = (await readFile(resolve(profile, "DevToolsActivePort"), "utf8")).split("\n");
+    const connection = await readFile(resolve(profile, "DevToolsActivePort"), "utf8").catch((error) => {
+      // Windows can briefly lock Chromium's port file while the browser writes it.
+      if (error.code !== "EBUSY") throw error;
+      return "";
+    });
+    const [port] = connection.split("\n");
+    if (!port) return undefined;
     const pages = await (await fetch("http://127.0.0.1:" + port + "/json/list")).json();
     return pages.find((page) => page.type === "page")?.webSocketDebuggerUrl;
-  }, "headless Chromium");
+  }, "headless Chromium").catch((error) => {
+    chrome.kill();
+    server.close();
+    throw error;
+  });
   socket = new WebSocket(endpoint);
   await new Promise((ready, fail) => {
     socket.addEventListener("open", ready, { once: true });

@@ -219,3 +219,26 @@ The new `FullFulfillmentFlowCheckTest` uses the real Client checkout, webhook si
 The initial failure was the new test’s expectation that an unpaid scan would return 409. The Warehouse lookup deliberately omits awaiting-payment orders. The final test asserts 404 with `WAREHOUSE_ORDER_NOT_FOUND`, no picking task, and the unchanged order and inventory. No production implementation change was needed.
 
 To replay the authenticated suite, provision a fresh loopback-only PostgreSQL database named `lms_step6_<eight hex characters>`, apply the six default migrations and sandbox migration 05, and set Spring’s datasource variables for that database. From `backend`, run `mvnw.cmd -B -ntp test-compile`, then `mvnw.cmd -B -ntp "-Dtest=FullFulfillmentFlowCheckTest" test`. Use a separate fresh database for the other regression suites.
+
+## Step 7 final validation and handoff
+
+Step 6 was committed locally as `cdbe0a44cfc6bbb263d1bfe8eff41f3b39ae36ad`. Final runs used disposable PostgreSQL 17.11 and loopback HTTP listeners. The signed fulfillment suite used a mocked Stripe transport. Browser journeys used synthetic paid fixtures.
+
+| Final suite | Passed | Failed | Skipped | Log under `backend/target` |
+| --- | ---: | ---: | ---: | --- |
+| Maven/JUnit | 383 | 0 | 0 | `step7-final-junit.log` |
+| Admin/Shared HTTP | 199 | 0 | 6 | `step7-final-admin-http.log` |
+| Chromium fixture mode | 70 | 0 | 6 | `step7-final-fixture-mode.log` |
+| Chromium with all Client live cases enabled | 76 | 0 | 0 | `step7-client-live-final.log` |
+| Signed mock-payment fulfillment E2E | 2 | 0 | 0 | `step7-final-fulfillment-junit.log` |
+| Live Warehouse browser E2E with both Delivery profiles | 2 | 0 | 0 | `step7-warehouse-live-final.log` and `step7-warehouse-default.log` |
+
+Maven test compilation passed first. Admin/Shared HTTP also reran the same 175 rules included in Maven/JUnit, with zero failures or skips. The six planned HTTP skips were S0-T01, S0-T06, S0-T08, S0-T09, S3-T13, and S9-T07. All six live Client cases skipped in Chromium fixture mode passed in the live-enabled run. The live Client database verifier passed 16 persisted-data checks.
+
+Clean migration counts after 01, 03, 04, 06, 07, and 08 were 25, 27, 28, 28, 32, and 33. Migration 06 added its event column and unique index. Optional 05 brought the count to 35. A populated synthetic pre-08 database used the unchanged Step 2 migrations. A PostgreSQL custom-format backup restored with its rows and sequence values intact. Applying migration 08 twice preserved all existing rows and sequence values. The upgraded catalog matched the clean reference after both schemas were restored to normalize PostgreSQL’s implicit cast formatting. Inserts verified the replay primary key and both foreign keys. Evidence is in `backend/target/step7-migration-rehearsal.log`.
+
+The startup check verified `delivery-full`, the migration dependency, disabled demo mode and Stripe, loopback binding, and a dedicated proof volume. The full-profile browser journey completed delivery, retrieved proof as the assigned driver during the attempt, and found the proof file on the private Compose volume after delivery. The default-profile journey packed and opened its Package QR with stock held and Pickup List creation unavailable.
+
+Two test-only adjustments were made. The live Client role test now checks that a Delivery account starts in its workspace and that refused Client pages lead to Shared Welcome with the access-denied notice. The Chromium harness retries a transient Windows lock on its DevTools startup file within its existing deadline. The final tests passed with their business assertions intact.
+
+[Local startup and demonstration README](README.md) · [Final handoff checklist](INTEGRATION_CHECKLIST.md#final-validation-and-handoff)
