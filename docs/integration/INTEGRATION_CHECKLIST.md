@@ -37,5 +37,15 @@
 
 - [x] Run and record the complete Maven/JUnit, Admin/Shared HTTP and Chromium fixture suites for Step 2. The report records six Admin/Shared skips and six live-backend Chromium skips.
 - [x] Run a live Client checkout to Warehouse to Delivery journey in PostgreSQL with authenticated sessions and a synthetic accepted payment. Verify marking a Warehouse notification read, package and pickup labels, collection and stock movement, Client tracking, and the Admin order read.
-- [ ] Verify end-to-end delivery proof access after an actual delivery attempt.
+- [x] Verify assignment-scoped delivery proof access during an attempt and denial after delivery completes.
 - [ ] Run the eligible live browser tests and record fail and skip counts. Capture recovery, cancellation, and role-denial edge cases.
+
+## Final validation and handoff
+
+- [x] Verify the accepted integration baseline and run the signed mock-payment journey through Delivered on a disposable database. [Step 6 evidence](INTEGRATION_REPORT.md#step-6-full-end-to-end-verification)
+- [x] Verify the Client and Admin views against stored statuses, payment evidence, stock and reservation movements, custody, notification recipients, and the completed delivery attempt.
+- [x] Verify one winner in the cancellation-versus-first-scan race, replay safety for pickup and delivery outcome, and role and proof-access restrictions.
+- [ ] Before rollout, rehearse the migration sequence on a disposable copy of the intended existing schema. Apply migration 08 to every existing database that will run this integration. Check the schema and plan recovery from a verified backup.
+- [ ] Verify the intended deployment’s `delivery-full` setting and private proof storage. Configure payment verification for the intended environment separately from the mocked Step 6 fixture.
+- [ ] Review the legacy Admin inventory-clamping risk and the manual payment reconciliation runbook with the handoff team.
+- [ ] Keep physical return receipt and redelivery as separately approved workflows.

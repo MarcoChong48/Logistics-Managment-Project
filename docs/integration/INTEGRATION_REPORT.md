@@ -193,3 +193,29 @@ Warehouse queue, summary, notification, order detail, and scan activity views re
 | Live Warehouse Chromium journeys | 2 | 0 | 0 | `backend/target/warehouse-frontend-live.log` and `backend/target/warehouse-frontend-live-default.log` |
 
 Maven test compilation passed. The live loopback Compose test used the actual Client order and checkout APIs, then recorded a synthetic acceptance in the disposable database with Stripe disabled. Authenticated Warehouse and Delivery browser sessions exercised the six views and the post-packing handoff. The PostgreSQL stock balance stayed 10 physical and 2 reserved through packing and list creation, then reached 8 physical and 0 reserved after collection with one pickup movement and custody event. The Client tracking and Admin order reads passed. The second live run used the default profile and verified the saved package label and unavailable Pickup List action after packing, with stock still held. The Admin inventory clamp and manual reconciliation runbook limitations remain in the checklist.
+
+## Step 6 full end-to-end verification
+
+The accepted frontend baseline was `0230d5f9de35ca5abec7fcb588b7f0ad4676740e`. The test started a real loopback Spring Boot HTTP server under `delivery-full` with a disposable proof directory and PostgreSQL 17.11. The default schema had 33 public tables after migrations 01, 03, 04, 06, 07, and 08. Optional sandbox migration 05 brought the count to 35.
+
+The new `FullFulfillmentFlowCheckTest` uses the real Client checkout, webhook signature verification, binding checks, and settlement. The Stripe SDK transport is replaced with a mock. A signed event without a succeeded PaymentIntent left the order awaiting payment and created no refund. A verified synthetic HKD capture accepted one positive timestamped payment. Replaying the capture webhook retained one processed event and one Client payment notification.
+
+| Check | Verified result |
+| --- | --- |
+| Lifecycle and tracking | PostgreSQL, Client tracking, and Admin order details agreed on `AWAITING_PAYMENT → READY_FOR_PICKING → PICKING → READY_FOR_PICKUP → SHIPPED → OUT_FOR_DELIVERY → DELIVERED`. Client progression and Admin attempt and proof counts reflected the completed delivery. |
+| Picking and handoff | An unpaid order was hidden from Warehouse and had no picking task. A wrong SKU left the order ready for picking. Partial packing was rejected. Complete packing closed the assignment and left the package in Warehouse custody. A separate Pickup List replay returned the same list. A fresh request was refused while that list was active. |
+| Inventory and duplicate pickup | The Client checkout held two units against its payment. Physical and reserved stock were 10 and 2 through packing, list creation, and claim. The two concurrent collect requests with the same ID returned the same result. A fresh request was rejected. One `PICKUP` ledger entry at −2 physical and −2 reserved took the balance to 8 and 0 and consumed the reservation once. Delivery completion left those balances intact. |
+| Custody and proof | One `PICKED_UP` event placed the package with the assigned driver. The real upload accepted a synthetic PNG. The assigned driver could retrieve its exact bytes privately during the attempt. Other drivers, Clients, and Admin were refused. Completion required saved proof, emitted one `DELIVERED` custody event, and cleared the handler. The proof became inaccessible through the Delivery API once the attempt closed. |
+| Notifications | The owning Client received one payment confirmation, one shipped notification, and one delivered notification. The assigned driver received one delivered notification. Replayed outcomes left the counts intact. |
+| Authorization | Anonymous access, cross-role calls, missing CSRF, another Client’s tracking request, and an unassigned driver’s pickup and attempt actions were refused. |
+| Cancellation versus first scan | The HTTP race returned one 200 and one 409 in each run. Cancellation won on the initial run and released once with one `REQUESTED` refund record. The scan won on the final run and retained the held reservation with zero refunds. |
+
+| Run | Passed | Failed | Skipped | Evidence |
+| --- | ---: | ---: | ---: | --- |
+| Initial Step 6 | 1 | 1 | 0 | `backend/target/step6-fulfillment-junit.log` |
+| Final Step 6 | 2 | 0 | 0 | `backend/target/step6-fulfillment-final-junit.log` |
+| Focused Warehouse, Delivery, and mocked Stripe regressions | 55 | 0 | 0 | `backend/target/step6-eligibility-junit.log` |
+
+The initial failure was the new test’s expectation that an unpaid scan would return 409. The Warehouse lookup deliberately omits awaiting-payment orders. The final test asserts 404 with `WAREHOUSE_ORDER_NOT_FOUND`, no picking task, and the unchanged order and inventory. No production implementation change was needed.
+
+To replay the authenticated suite, provision a fresh loopback-only PostgreSQL database named `lms_step6_<eight hex characters>`, apply the six default migrations and sandbox migration 05, and set Spring’s datasource variables for that database. From `backend`, run `mvnw.cmd -B -ntp test-compile`, then `mvnw.cmd -B -ntp "-Dtest=FullFulfillmentFlowCheckTest" test`. Use a separate fresh database for the other regression suites.
