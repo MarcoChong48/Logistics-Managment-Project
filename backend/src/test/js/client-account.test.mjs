@@ -142,7 +142,8 @@ test("Client bootstrap verifies session and renders only API data", { skip: !bro
   assert.equal(await evaluate('document.querySelectorAll("#clientUsername img,#accountUsername img").length'), 0);
   assert.equal(await evaluate('!document.getElementById("deliveryEmpty").hidden && !window.injected'), true);
   assert.match(await evaluate('document.getElementById("sharedStartSessionCountdownText").textContent'), /^\d+:\d{2}$/);
-  assert.equal(await evaluate('document.querySelectorAll(".client-nav-item[aria-disabled=true]:not([href])").length'), 1);
+  assert.deepEqual(await evaluate('Array.from(document.querySelectorAll(".client-nav-item[href]"), (link) => link.dataset.clientPage)'),
+    ["create-order", "my-orders", "notifications", "account-settings"]);
   assert.equal(await evaluate('getComputedStyle(clientNavigation).display !== "none" && getComputedStyle(clientMenuToggle).display === "none"'), true);
   const fonts = await evaluate("document.fonts.ready.then(() => Array.from(document.fonts, ({family, status}) => [family, status]))");
   assert.deepEqual(fonts.map(([family, status]) => [family.replaceAll('"', ""), status]).sort(), [

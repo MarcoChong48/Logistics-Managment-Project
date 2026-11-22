@@ -25,7 +25,7 @@ export function startClientShell({ activePage, onReady, onClear, preservePending
           <ul class="client-navigation-list">
             <li><a class="client-nav-item" href="/client/create-order.html" data-client-page="create-order"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Create Order</a></li>
             <li><a class="client-nav-item" href="/client/my-orders-tracking.html" data-client-page="my-orders"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M8 9h8m-8 4h8m-8 4h5"/></svg>My Orders &amp; Tracking</a></li>
-            <li><span class="client-nav-item" aria-disabled="true"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M9 19a3 3 0 0 0 6 0M6 9a6 6 0 0 1 12 0c0 4 1 5 2 7H4c1-2 2-3 2-7Z"/></svg>Notifications <small>Planned</small></span></li>
+            <li><a class="client-nav-item" href="/client/notifications.html" data-client-page="notifications"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M9 19a3 3 0 0 0 6 0M6 9a6 6 0 0 1 12 0c0 4 1 5 2 7H4c1-2 2-3 2-7Z"/></svg>Notifications</a></li>
             <li><a class="client-nav-item" href="/client/account-settings.html" data-client-page="account-settings"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="2.5"/><circle cx="15" cy="17" r="2.5"/></svg>Account Settings</a></li>
           </ul>
         </nav>

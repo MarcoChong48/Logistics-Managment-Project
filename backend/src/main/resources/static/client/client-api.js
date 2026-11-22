@@ -178,6 +178,41 @@ export async function cancelClientOrder(reference) {
   if (result?.orderReference !== reference || result.orderStatus !== "CANCELLED") throw invalidResponse();
 }
 
+const notificationsUrl = "/api/client/notifications";
+
+function isNotificationId(value) {
+  return isText(value) && /^[1-9]\d{0,18}$/.test(value) && BigInt(value) <= 9223372036854775807n;
+}
+
+export async function readClientNotifications(cursor = null) {
+  const query = new URLSearchParams({ limit: "20" });
+  if (cursor !== null) query.set("cursor", cursor);
+  const page = await window.sharedSendRequest("GET", notificationsUrl + "?" + query);
+  if (!page || !nullable(page.nextCursor, isNotificationId)
+      || !arrayOf(page.notifications, (item) => item && isNotificationId(item.notificationId)
+        && isText(item.type) && isText(item.message) && nullable(item.orderReference, isText)
+        && isTime(item.createdAt) && typeof item.isRead === "boolean")) throw invalidResponse();
+  return page;
+}
+
+export async function readClientUnreadCount() {
+  const result = await window.sharedSendRequest("GET", notificationsUrl + "/unread-count");
+  if (!result || !isCount(result.unreadCount)) throw invalidResponse();
+  return result.unreadCount;
+}
+
+export async function markClientNotificationRead(id) {
+  if (!isNotificationId(id)) throw { status: 404 };
+  const result = await window.sharedSendRequest("POST", notificationsUrl + "/" + encodeURIComponent(id) + "/read");
+  if (result?.notificationId !== id || result.isRead !== true) throw invalidResponse();
+}
+
+export async function markAllClientNotificationsRead() {
+  const result = await window.sharedSendRequest("POST", notificationsUrl + "/read-all");
+  if (!result || !isCount(result.markedRead)) throw invalidResponse();
+  return result.markedRead;
+}
+
 export function clientErrorMessage(error) {
   switch (error?.status) {
     case 400:

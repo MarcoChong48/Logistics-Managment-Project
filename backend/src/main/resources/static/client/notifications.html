@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Notifications | LMS Client Portal</title>
+  <link rel="stylesheet" href="/shared/shared-common.css">
+  <link rel="stylesheet" href="/client/client.css">
+</head>
+<body class="client-body">
+  <section class="client-entry" id="clientEntry" aria-label="Portal access">
+    <p id="clientEntryStatus" role="status">Checking your session…</p>
+    <button class="client-button client-button--primary" id="clientRetrySession" type="button" hidden>Try again</button>
+    <p class="client-feedback client-feedback--error" role="alert" hidden><span id="clientLogoutError"></span></p>
+    <button class="client-button client-button--primary" id="clientRetryLogout" type="button" hidden>Retry logout</button>
+    <noscript><p>JavaScript is required to use the Client Portal.</p></noscript>
+  </section>
+  <main class="client-main" id="clientMain" tabindex="-1" hidden>
+    <header class="client-page-heading">
+      <h1>Notifications</h1>
+    </header>
+    <section class="client-card" aria-labelledby="notificationInboxTitle">
+      <div class="client-notification-toolbar">
+        <div class="client-notification-heading">
+          <h2 id="notificationInboxTitle" tabindex="-1">Inbox</h2>
+          <p class="client-notification-count" id="notificationUnreadCount" role="status" aria-atomic="true" hidden></p>
+        </div>
+        <div class="client-notification-actions">
+          <button class="client-button" id="refreshNotifications" type="button">Refresh</button>
+          <button class="client-button client-button--primary" id="markAllNotificationsRead" type="button" disabled>Mark all as read</button>
+        </div>
+      </div>
+      <p class="client-feedback" id="notificationNotice" role="status" aria-atomic="true">Loading notifications…</p>
+      <p class="client-feedback" id="notificationActionNotice" role="status" aria-atomic="true" tabindex="-1" hidden></p>
+      <ul class="client-notification-list" id="notificationList" role="list" hidden></ul>
+      <div class="client-form-actions" id="moreNotificationAction" hidden>
+        <button class="client-button" id="loadMoreNotifications" type="button">Load more notifications</button>
+      </div>
+    </section>
+  </main>
+  <script src="/shared/shared-common.js"></script>
+  <script type="module" src="/client/notifications.js"></script>
+</body>
+</html>

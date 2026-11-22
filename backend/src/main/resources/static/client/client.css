@@ -419,6 +419,46 @@
 .client-order-confirmation { max-inline-size: min(27rem, calc(100vw - 2rem)); }
 .client-order-confirmation .shared-dialog-footer { flex-wrap: wrap; }
 
+.client-notification-toolbar, .client-notification-heading, .client-notification-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .625rem;
+}
+.client-notification-toolbar { justify-content: space-between; gap: .875rem; }
+.client-notification-count, .client-notification-state {
+  border-radius: .375rem;
+  padding: .125rem .5rem;
+  background: #efefeb;
+  color: var(--client-muted);
+  font-size: .875rem;
+  font-weight: 700;
+}
+.client-notification-count, .client-notification-row[data-read="false"] .client-notification-state {
+  background: #fff0e5;
+  color: #7a3209;
+}
+.client-notification-list { list-style: none; margin: 0; padding: 0; }
+.client-notification-list:not(:empty) { margin-top: 1rem; }
+.client-notification-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .75rem 1rem;
+  padding: .875rem;
+  border: 1px solid var(--client-border);
+  border-inline-start: .2rem solid var(--client-border);
+  border-radius: .5rem;
+}
+.client-notification-row + .client-notification-row { margin-top: .625rem; }
+.client-notification-row[data-read="false"] {
+  background: #fff9f4;
+  border-inline-start-color: var(--client-orange);
+}
+.client-notification-body { min-width: 0; overflow-wrap: anywhere; }
+.client-notification-body > p { margin-block: .2rem !important; }
+.client-notification-body time { color: var(--client-muted); font-size: .875rem; }
+
 @media (max-width: 72rem) {
   .client-account-layout { grid-template: "info" auto "defaults" auto "password" auto / minmax(0, 1fr); }
   .client-order-layout { grid-template: "products" auto "delivery" auto "summary" auto / minmax(0, 1fr); }
@@ -461,4 +501,5 @@
   .client-order-history-row .client-order-record { grid-column: 1 / -1; }
   .client-order-history-row > div:nth-child(2) { grid-column: 1 / -1; }
   .client-order-history-row .client-button { justify-self: start; }
+  .client-notification-row { grid-template-columns: minmax(0, 1fr); }
 }
