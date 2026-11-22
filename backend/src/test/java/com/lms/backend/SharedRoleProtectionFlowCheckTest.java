@@ -94,7 +94,8 @@ class SharedRoleProtectionFlowCheckTest extends SharedFlowCheck {
         reportPartial("Rendered welcome notice and visibility of its Back link.");
         sharedCheckRoleBrowser.post("/api/shared/logout", null).expect(200);
         finishFirstLogin(sharedCheckRoleWarehouseWorker, "WAREHOUSE_WORKER");
-        checkWelcomeRedirect(sharedCheckRoleBrowser, DELIVERY_PATH, WELCOME_PAGE);
+        checkWelcomeRedirect(sharedCheckRoleBrowser, DELIVERY_PATH, WAREHOUSE_HOME);
+        sharedCheckRoleBrowser.get(WAREHOUSE_HOME).expect(200);
         sharedCheckRoleBrowser.get(CLIENT_API).expect(403).code("SHARED_ACCESS_DENIED");
         sharedCheckRoleBrowser.get(WAREHOUSE_API).expect(404).code("SHARED_NOT_FOUND");
         sharedCheckRoleBrowser.get("/api/warehouse").expect(404).code("SHARED_NOT_FOUND");
@@ -149,7 +150,11 @@ class SharedRoleProtectionFlowCheckTest extends SharedFlowCheck {
                 .expect(200).json();
         assertEquals(role, sharedLoginUserPermanent.path("role").asText());
         assertFalse(sharedLoginUserPermanent.path("mustChangePassword").asBoolean());
-        String expectedHome = "DELIVERY_WORKER".equals(role) ? DELIVERY_HOME : WELCOME_PAGE;
+        String expectedHome = switch (role) {
+            case "WAREHOUSE_WORKER" -> WAREHOUSE_HOME;
+            case "DELIVERY_WORKER" -> DELIVERY_HOME;
+            default -> WELCOME_PAGE;
+        };
         assertEquals(expectedHome, sharedLoginUserPermanent.path("sharedLoginUserNextPageWebAddress").asText());
     }
 

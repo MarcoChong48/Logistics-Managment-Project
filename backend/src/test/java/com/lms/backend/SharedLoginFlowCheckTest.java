@@ -114,7 +114,8 @@ class SharedLoginFlowCheckTest extends SharedFlowCheck {
                 .expect(200).json();
         assertEquals(workerUsername, sharedCheckWorkerLogin.path("username").asText());
         assertEquals("WAREHOUSE_WORKER", sharedCheckWorkerLogin.path("role").asText());
-        assertEquals(WELCOME_PAGE, sharedCheckWorkerLogin.path("sharedLoginUserNextPageWebAddress").asText());
+        assertEquals(WAREHOUSE_HOME, sharedCheckWorkerLogin.path("sharedLoginUserNextPageWebAddress").asText());
+        assertTrue(sharedCheckWorkerSession.get(WAREHOUSE_HOME).expect(200).body().contains("Available orders"));
         assertTrue(sharedCheckWorkerSession.get(ADMIN_DASHBOARD).expect(302).header("Location")
                 .contains(WELCOME_PAGE));
         sharedCheckWorkerSession.get("/api/admin/temporary-test/mode").expect(403).code("SHARED_ACCESS_DENIED");

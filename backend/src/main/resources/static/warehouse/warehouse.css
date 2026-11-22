@@ -1,0 +1,79 @@
+/* Extends the canonical shared frame and table styles for Warehouse controls. */
+.warehouse-entry {
+  max-width: 36rem;
+  margin: 4rem auto;
+  padding: 0 1rem;
+}
+
+.warehouse-main .shared-page-header,
+.warehouse-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.warehouse-main .shared-page-header {
+  justify-content: space-between;
+}
+
+.warehouse-main #warehouse-page-status:empty {
+  display: none;
+}
+
+.warehouse-main .shared-card + .shared-card,
+.warehouse-label {
+  margin-top: 1rem;
+}
+
+.warehouse-actions .shared-input {
+  width: min(100%, 20rem);
+}
+
+.warehouse-filters {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 23rem);
+  align-items: center;
+  gap: 0.75rem 1rem;
+}
+
+.warehouse-facts {
+  display: flex;
+  gap: 1rem 2rem;
+  flex-wrap: wrap;
+  margin: 0 0 0.75rem;
+}
+
+.warehouse-facts dt {
+  font-weight: 600;
+}
+
+.warehouse-facts dd {
+  margin: 0.25rem 0 0;
+}
+
+.warehouse-main [data-title],
+.warehouse-label > p {
+  overflow-wrap: anywhere;
+}
+
+.warehouse-main .warehouse-empty {
+  display: table-cell;
+  padding: 1rem;
+  text-align: left;
+}
+
+.warehouse-main .warehouse-empty::before {
+  content: none;
+}
+
+.warehouse-main #reverse-form label {
+  display: block;
+  margin: 0.75rem 0 0.25rem;
+}
+
+@media (max-width: 560px) {
+  .warehouse-filters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

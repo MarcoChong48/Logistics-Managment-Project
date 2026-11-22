@@ -31,7 +31,7 @@ public final class SharedStartPageRule {
         return switch (role) {
             case ADMIN -> "/admin/admin-dashboard.html";
             case CLIENT -> "/shared/shared-welcome.html";
-            case WAREHOUSE_WORKER -> "/shared/shared-welcome.html";
+            case WAREHOUSE_WORKER -> "/warehouse/warehouse-available-orders.html";
             case DELIVERY_WORKER -> "/delivery/index.html";
         };
     }

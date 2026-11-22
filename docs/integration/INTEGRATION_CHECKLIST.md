@@ -20,14 +20,14 @@
 
 ## Database and Payment
 
-- [x] Verify default migrations 01, 03, 04, 06, 07 and 08 in a disposable database with 33 public tables.
+- [x] Verify default migrations 01, 03, 04, 06, 07 and 08 in a disposable database with 33 public tables. Existing databases must apply migration 08 before Warehouse picking.
 - [x] Run optional migration 05 and module tests on disposable data with mocked provider responses. Keep Stripe disabled by default.
 - [ ] Rehearse the ordered migration plan and version checks on a disposable copy of any intended existing schema. Verify the FK, unique and CHECK constraints before rollout.
 - [ ] Confirm which provider record proves capture and settlement for each supported source. Reconcile timestamp-less `ACCEPTED` records before authorizing refund attempts.
 
 ## Warehouse and Delivery
 
-- [ ] Import Warehouse Java and connect the supplied pages to authenticated `/api/warehouse` endpoints with CSRF.
+- [x] Import Warehouse Java and wire the six operational pages to authenticated `/api/warehouse` endpoints with shared CSRF.
 - [x] Verify Product SKU scanning, exact order-item quantities and the first-scan lock. Keep Order Reference, Package QR and Pickup List QR distinct.
 - [x] Check accepted payment and all required held quantities before picking and packing. Verify one stock consumption at Delivery collection when a pickup is replayed.
 - [x] Connect eligible packed packages to `DeliveryPickupService.createList` through an authenticated post-packing action. Verify assignment, claim and collection under `delivery-full`.
@@ -36,5 +36,6 @@
 ## Integration testing
 
 - [x] Run and record the complete Maven/JUnit, Admin/Shared HTTP and Chromium fixture suites for Step 2. The report records six Admin/Shared skips and six live-backend Chromium skips.
-- [ ] Run a live Client to Warehouse to Delivery journey in PostgreSQL using authenticated sessions and a verified synthetic payment. Check pickup writes, stock movement, notifications, and protected tracking and proof access.
+- [x] Run a live Client checkout to Warehouse to Delivery journey in PostgreSQL with authenticated sessions and a synthetic accepted payment. Verify marking a Warehouse notification read, package and pickup labels, collection and stock movement, Client tracking, and the Admin order read.
+- [ ] Verify end-to-end delivery proof access after an actual delivery attempt.
 - [ ] Run the eligible live browser tests and record fail and skip counts. Capture recovery, cancellation, and role-denial edge cases.

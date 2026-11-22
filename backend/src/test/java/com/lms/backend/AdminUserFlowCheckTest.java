@@ -224,7 +224,7 @@ class AdminUserFlowCheckTest extends SharedFlowCheck {
         reportPartial("password and welcome pages as rendered in a browser");
         adminUserPickerBrowser = browser();
         checkFirstLogin(adminUserPickerBrowser, "mei_picker", adminUserPickerTemporaryPassword, FLOW_PICKER_PASSWORD,
-                "WAREHOUSE_WORKER", WELCOME_PAGE);
+                "WAREHOUSE_WORKER", WAREHOUSE_HOME);
     }
 
     // What it does: Changes the picker into a driver.

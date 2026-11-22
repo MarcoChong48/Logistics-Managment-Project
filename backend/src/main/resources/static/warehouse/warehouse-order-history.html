@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>All orders history - LMS Warehouse</title>
+  <link rel="stylesheet" href="/shared/shared-common.css">
+  <link rel="stylesheet" href="/warehouse/warehouse.css">
+  <script src="/shared/shared-common.js" defer></script>
+  <script src="/warehouse/warehouse.js" type="module"></script>
+</head>
+<body data-warehouse-page="order-history">
+  <div id="warehouse-entry" class="warehouse-entry">
+    <p id="warehouse-entry-status" role="status">Checking your session…</p>
+    <button class="shared-button" id="warehouse-entry-retry" type="button" hidden>Retry</button>
+  </div>
+  <main id="warehousePageFrameMain" class="shared-page-frame-main warehouse-main" tabindex="-1" hidden>
+    <div class="shared-page-header">
+      <h1 class="shared-page-title" id="warehouse-title">All orders history</h1>
+      <button class="shared-button" id="warehouse-refresh" type="button">Refresh</button>
+    </div>
+    <p id="warehouse-page-status" class="shared-note" role="status" tabindex="-1"></p>
+    <div id="warehouse-page-content" hidden>
+      <section class="shared-card" aria-labelledby="status-title">
+        <div class="shared-card-header"><h2 class="shared-card-title" id="status-title">Orders by status</h2></div>
+        <div class="shared-card-body warehouse-filters">
+          <label for="order-query">Order reference</label>
+          <input class="shared-input" type="search" id="order-query" placeholder="Search or scan an order reference" maxlength="60">
+          <label for="order-status-filter">Status</label>
+          <select class="shared-input" id="order-status-filter"><option value="">All statuses</option></select>
+        </div>
+        <div class="shared-table-scroll" tabindex="0" role="region" aria-label="Order history">
+        <table class="shared-table shared-table-work">
+          <thead><tr><th scope="col">Order</th><th scope="col">Created</th><th scope="col" class="shared-table-number">Units ordered</th><th scope="col" class="shared-table-number">Units picked</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead>
+          <tbody id="order-rows"></tbody>
+        </table>
+      </div>
+        <div id="orders-pager" class="shared-pager" hidden></div>
+      <p id="orders-limit" class="shared-note" hidden>Showing the orders returned by the server. Search and filters apply to these results.</p>
+      </section>
+      <dialog class="shared-dialog shared-dialog-wide" id="order-details" aria-labelledby="order-details-title">
+        <h2 class="shared-dialog-title" id="order-details-title">Order details</h2>
+        <div class="shared-dialog-body" id="order-details-body"></div>
+        <div class="shared-dialog-footer"><button class="shared-button" type="button" data-close="order-details">Close</button></div>
+      </dialog>
+    </div>
+  </main>
+  <div class="shared-message-area" id="sharedShowMessagePanel" aria-live="polite"></div>
+</body>
+</html>

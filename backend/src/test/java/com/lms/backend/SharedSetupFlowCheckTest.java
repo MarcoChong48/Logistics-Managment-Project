@@ -220,6 +220,7 @@ abstract class SharedFlowCheck {
     static final String CHANGE_PASSWORD = "/shared/shared-change-password.html";
     static final String LOGIN_PAGE = "/shared/shared-login.html";
     static final String WELCOME_PAGE = "/shared/shared-welcome.html";
+    static final String WAREHOUSE_HOME = "/warehouse/warehouse-available-orders.html";
     static final String SESSION = "/api/shared/session";
     static final String FLOW_ADMIN_PASSWORD = "FlowAdmin42Own";
     static final String FLOW_PICKER_PASSWORD = "FlowPicker42Own";

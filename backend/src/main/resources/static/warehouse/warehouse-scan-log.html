@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Scan log - LMS Warehouse</title>
+  <link rel="stylesheet" href="/shared/shared-common.css">
+  <link rel="stylesheet" href="/warehouse/warehouse.css">
+  <script src="/shared/shared-common.js" defer></script>
+  <script src="/warehouse/warehouse.js" type="module"></script>
+</head>
+<body data-warehouse-page="scan-log">
+  <div id="warehouse-entry" class="warehouse-entry">
+    <p id="warehouse-entry-status" role="status">Checking your session…</p>
+    <button class="shared-button" id="warehouse-entry-retry" type="button" hidden>Retry</button>
+  </div>
+  <main id="warehousePageFrameMain" class="shared-page-frame-main warehouse-main" tabindex="-1" hidden>
+    <div class="shared-page-header">
+      <h1 class="shared-page-title" id="warehouse-title">Scan log</h1>
+      <button class="shared-button" id="warehouse-refresh" type="button">Refresh</button>
+    </div>
+    <p id="warehouse-page-status" class="shared-note" role="status" tabindex="-1"></p>
+    <div id="warehouse-page-content" hidden>
+      <section class="shared-card" aria-labelledby="current-task-title">
+        <div class="shared-card-header"><h2 class="shared-card-title" id="current-task-title">Current picking task</h2></div>
+        <div class="shared-card-body" id="current-task"></div>
+      </section>
+      <section class="shared-card" aria-labelledby="activity-title">
+        <div class="shared-card-header"><h2 class="shared-card-title" id="activity-title">Warehouse activity today</h2></div>
+        <div class="shared-table-scroll" tabindex="0" role="region" aria-label="Warehouse activity today">
+        <table class="shared-table shared-table-work">
+          <thead><tr><th scope="col">Time</th><th scope="col">Order</th><th scope="col">Event</th><th scope="col">Details</th></tr></thead>
+          <tbody id="activity-rows"></tbody>
+        </table>
+      </div>
+      </section>
+      <section class="shared-card" aria-labelledby="errors-title">
+        <div class="shared-card-header"><h2 class="shared-card-title" id="errors-title">Scan errors</h2></div>
+        <div class="shared-table-scroll" tabindex="0" role="region" aria-label="Scan errors">
+        <table class="shared-table shared-table-work">
+          <thead><tr><th scope="col">Time</th><th scope="col">Order</th><th scope="col">Event</th><th scope="col">Details</th></tr></thead>
+          <tbody id="scan-errors"></tbody>
+        </table>
+      </div>
+      </section>
+    </div>
+  </main>
+  <div class="shared-message-area" id="sharedShowMessagePanel" aria-live="polite"></div>
+</body>
+</html>

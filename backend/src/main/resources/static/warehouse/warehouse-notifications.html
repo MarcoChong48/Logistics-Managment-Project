@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Notifications - LMS Warehouse</title>
+  <link rel="stylesheet" href="/shared/shared-common.css">
+  <link rel="stylesheet" href="/warehouse/warehouse.css">
+  <script src="/shared/shared-common.js" defer></script>
+  <script src="/warehouse/warehouse.js" type="module"></script>
+</head>
+<body data-warehouse-page="notifications">
+  <div id="warehouse-entry" class="warehouse-entry">
+    <p id="warehouse-entry-status" role="status">Checking your session…</p>
+    <button class="shared-button" id="warehouse-entry-retry" type="button" hidden>Retry</button>
+  </div>
+  <main id="warehousePageFrameMain" class="shared-page-frame-main warehouse-main" tabindex="-1" hidden>
+    <div class="shared-page-header">
+      <h1 class="shared-page-title" id="warehouse-title">Notifications</h1>
+      <button class="shared-button" id="warehouse-refresh" type="button">Refresh</button>
+    </div>
+    <p id="warehouse-page-status" class="shared-note" role="status" tabindex="-1"></p>
+    <div id="warehouse-page-content" hidden>
+      <section class="shared-card" aria-labelledby="notifications-title">
+        <div class="shared-card-header"><h2 class="shared-card-title" id="notifications-title">New orders</h2></div>
+        <div class="shared-table-scroll" tabindex="0" role="region" aria-label="New orders">
+        <table class="shared-table shared-table-work">
+          <thead><tr><th scope="col">Received</th><th scope="col">Order</th><th scope="col" class="shared-table-number">Units</th><th scope="col">Order status</th><th scope="col">Actions</th></tr></thead>
+          <tbody id="new-orders"></tbody>
+        </table>
+      </div>
+      </section>
+      <section class="shared-card" aria-labelledby="worker-notices">
+        <div class="shared-card-header"><h2 class="shared-card-title" id="worker-notices">Admin notifications</h2></div>
+        <div class="shared-card-body"><button type="button" id="mark-all" class="shared-button shared-button-small" disabled>Mark all as read</button></div>
+      <div class="shared-table-scroll" tabindex="0" role="region" aria-label="Admin notifications">
+        <table class="shared-table shared-table-work">
+          <thead><tr><th scope="col">Received</th><th scope="col">Notification</th><th scope="col">Order</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead>
+          <tbody id="admin-notifications"></tbody>
+        </table>
+      </div>
+      </section>
+    </div>
+  </main>
+  <div class="shared-message-area" id="sharedShowMessagePanel" aria-live="polite"></div>
+</body>
+</html>

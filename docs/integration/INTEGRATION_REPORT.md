@@ -175,3 +175,21 @@ Warehouse browser pages, physical return receipt and redelivery remain open. The
 Maven test compilation passed first. The 36 Warehouse JUnit executions include both Delivery profile configurations. Chromium fixture testing completed in Edge after Chrome's temporary DevTools startup file was locked. Six Chromium cases require a live Client backend. The six Admin/Shared skips are the existing flow-suite skips.
 
 The isolated loopback-only Delivery Compose overlay passed the live handoff using a synthetic accepted payment with demo mode disabled. The real Warehouse session packed the order and created the list in separate HTTP requests. Delivery claimed and collected the package, and a replay returned the saved response across HTTP transactions. Client tracking reached SHIPPED and the authenticated Admin order read succeeded. PostgreSQL recorded physical stock 8, reserved stock 0, one consumed reservation, one list item, one PICKUP movement and one custody event. The log is `backend/target/warehouse-handoff-live.log`.
+
+## Warehouse frontend milestone
+
+The frontend builds on Pickup List checkpoint `5183d8a14cd4af4f5f8605bb6303cb29b1162bd6`. It ports Available orders, My orders, Notifications, All orders history, Picking task, and Scan log. The six pages use the integrated shared CSS, login, session, logout, and CSRF helpers. Available orders is the Warehouse Worker start page for login, session, and forced-password completion. The supplied offline pages, sample script, and replacement shared styles stay outside the deployed Portal.
+
+Warehouse queue, summary, notification, order detail, and scan activity views render API data. Picking submits the exact product SKU. A scan, reversal, or list creation with an uncertain response can be retried with its original request ID after a same-tab refresh. Intentional new scans get their own IDs. The browser requires a reversal reason and displays the server's task state after writes. Confirm Packing and Create Pickup List are separate operations. Saved order, package, and Pickup List labels link to their distinct authenticated PNG routes. The package label is available even when `delivery-full` is disabled.
+
+**Existing databases must apply migration 08 before deploying this integration.** The default disposable schema used migrations 01, 03, 04, 06, 07, and 08 and contained 33 public tables. Adding optional mock Stripe migration 05 produced 35. Warehouse frontend changes preserve the approved payment and refund rules, and Delivery collection continues to own stock consumption. Physical return receipt and redelivery remain separate work.
+
+| Regression suite | Passed | Failed | Skipped | Evidence |
+| --- | ---: | ---: | ---: | --- |
+| Focused Warehouse and start page JUnit | 40 | 0 | 0 | `backend/target/warehouse-frontend-focused-junit.log` |
+| Full Maven/JUnit in disposable PostgreSQL | 383 | 0 | 0 | `backend/target/warehouse-frontend-junit.log` |
+| Full Admin/Shared HTTP flows | 199 | 0 | 6 | `backend/target/warehouse-frontend-admin-http.log`. Also reran 175 rule checks with no failures or skips. |
+| Chromium browser fixtures | 70 | 0 | 6 | `backend/target/warehouse-frontend-chromium.log`. Six new Warehouse cases passed. The six existing Client live-backend cases were skipped in fixture mode. |
+| Live Warehouse Chromium journeys | 2 | 0 | 0 | `backend/target/warehouse-frontend-live.log` and `backend/target/warehouse-frontend-live-default.log` |
+
+Maven test compilation passed. The live loopback Compose test used the actual Client order and checkout APIs, then recorded a synthetic acceptance in the disposable database with Stripe disabled. Authenticated Warehouse and Delivery browser sessions exercised the six views and the post-packing handoff. The PostgreSQL stock balance stayed 10 physical and 2 reserved through packing and list creation, then reached 8 physical and 0 reserved after collection with one pickup movement and custody event. The Client tracking and Admin order reads passed. The second live run used the default profile and verified the saved package label and unavailable Pickup List action after packing, with stock still held. The Admin inventory clamp and manual reconciliation runbook limitations remain in the checklist.

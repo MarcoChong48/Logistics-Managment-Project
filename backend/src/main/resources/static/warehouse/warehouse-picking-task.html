@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Picking task - LMS Warehouse</title>
+  <link rel="stylesheet" href="/shared/shared-common.css">
+  <link rel="stylesheet" href="/warehouse/warehouse.css">
+  <script src="/shared/shared-common.js" defer></script>
+  <script src="/warehouse/warehouse.js" type="module"></script>
+</head>
+<body data-warehouse-page="picking-task">
+  <div id="warehouse-entry" class="warehouse-entry">
+    <p id="warehouse-entry-status" role="status">Checking your session…</p>
+    <button class="shared-button" id="warehouse-entry-retry" type="button" hidden>Retry</button>
+  </div>
+  <main id="warehousePageFrameMain" class="shared-page-frame-main warehouse-main" tabindex="-1" hidden>
+    <div class="shared-page-header">
+      <h1 class="shared-page-title" id="warehouse-title">Picking task</h1>
+      <button class="shared-button" id="warehouse-refresh" type="button">Refresh</button>
+    </div>
+    <p id="warehouse-page-status" class="shared-note" role="status" tabindex="-1"></p>
+    <div id="warehouse-page-content" hidden>
+      <section class="shared-card" aria-labelledby="task-heading">
+        <div class="shared-card-header"><h2 class="shared-card-title" id="task-heading">Picking progress</h2></div>
+        <div class="shared-card-body">
+        <dl class="warehouse-facts">
+          <div><dt>Order status</dt><dd id="task-order-status"></dd></div>
+          <div><dt>Assigned to</dt><dd id="task-assignee"></dd></div>
+          <div><dt>Units remaining</dt><dd id="task-remaining"></dd></div>
+        </dl>
+        <progress class="shared-progress-bar" id="task-progress-bar" max="1" value="0" aria-labelledby="task-progress"></progress>
+        <p class="shared-progress-text" id="task-progress"></p>
+        <p id="task-notice" class="shared-note"></p>
+      </div>
+      </section>
+      <section class="shared-card" aria-labelledby="scan-heading">
+        <div class="shared-card-header"><h2 class="shared-card-title" id="scan-heading">Scan an item</h2></div>
+        <div class="shared-card-body">
+        <form id="item-scan-form" autocomplete="off">
+          <label for="scan-item-id">Product SKU</label>
+          <div class="warehouse-actions">
+            <input class="shared-input" id="scan-item-id" type="text" placeholder="Scan or enter the SKU" aria-describedby="scan-help" spellcheck="false" required disabled>
+            <button class="shared-button shared-button-primary" id="record-scan" type="submit" disabled>Record pick</button>
+          </div>
+          <p class="shared-note" id="scan-help">Scan one unit at a time. The first accepted scan assigns the order to you.</p>
+        </form>
+        <div id="scan-feedback" class="shared-message-place" aria-live="polite" aria-atomic="true"></div>
+        <button class="shared-button" id="retry-action" type="button" hidden>Retry pending action</button>
+      </div>
+      </section>
+      <section class="shared-card" aria-labelledby="items-heading">
+        <div class="shared-card-header"><h2 class="shared-card-title" id="items-heading">Items to pick</h2></div>
+        <div class="shared-table-scroll" tabindex="0" role="region" aria-label="Items to pick">
+        <table class="shared-table shared-table-work">
+          <thead><tr><th scope="col">SKU</th><th scope="col">Product</th><th scope="col" class="shared-table-number">Ordered</th><th scope="col" class="shared-table-number">Picked</th><th scope="col">Actions</th></tr></thead>
+          <tbody id="task-items"></tbody>
+        </table>
+      </div>
+      </section>
+      <section class="shared-card" aria-labelledby="packing-heading">
+        <div class="shared-card-header"><h2 class="shared-card-title" id="packing-heading">Packing and pickup</h2></div>
+        <div class="shared-card-body">
+        <div class="warehouse-actions">
+          <button class="shared-button shared-button-primary" type="button" id="pack-task" disabled>Confirm packing</button>
+          <a class="shared-button" id="order-qr" target="_blank" rel="noopener">Open order QR</a>
+        </div>
+        <p id="pack-reason" class="shared-note">Pick all ordered units before confirming packing.</p>
+        <div id="package-label" class="warehouse-label" hidden>
+          <h3 class="shared-card-part-title">Package label</h3>
+          <p id="package-code"></p>
+          <a class="shared-button" id="package-qr" target="_blank" rel="noopener">Open package QR</a>
+        </div>
+        <div id="pickup-list" class="warehouse-label" hidden>
+          <h3 class="shared-card-part-title">Pickup List</h3>
+          <p id="pickup-list-status" class="shared-note" role="status"></p>
+          <button class="shared-button" type="button" id="create-pickup-list" hidden disabled>Create Pickup List</button>
+          <a class="shared-button" id="pickup-list-qr" target="_blank" rel="noopener" hidden>Open Pickup List QR</a>
+        </div>
+      </div>
+      </section>
+      <dialog class="shared-dialog" id="pack-dialog" aria-labelledby="pack-title">
+        <h2 class="shared-dialog-title" id="pack-title">Confirm packing</h2>
+        <div class="shared-dialog-body"><p>Confirm that the picked units are packed and the package is ready for pickup.</p></div>
+        <div class="shared-dialog-footer">
+          <button class="shared-button" type="button" data-close="pack-dialog">Cancel</button>
+          <button class="shared-button shared-button-primary" type="button" id="confirm-pack">Confirm packing</button>
+        </div>
+      </dialog>
+      <dialog class="shared-dialog" id="reverse-dialog" aria-labelledby="reverse-title">
+        <h2 class="shared-dialog-title" id="reverse-title">Reverse a pick</h2>
+        <form id="reverse-form">
+          <div class="shared-dialog-body">
+            <p id="reverse-item"></p>
+            <label for="reverse-quantity">Corrected picked quantity</label>
+            <input class="shared-input" id="reverse-quantity" type="number" min="0" step="1" required>
+            <label for="reverse-reason">Reason</label>
+            <textarea class="shared-input" id="reverse-reason" maxlength="300" rows="3" required></textarea>
+          </div>
+          <div class="shared-dialog-footer">
+            <button class="shared-button" type="button" data-close="reverse-dialog">Cancel</button>
+            <button class="shared-button shared-button-primary" type="submit">Reverse pick</button>
+          </div>
+        </form>
+      </dialog>
+    </div>
+  </main>
+  <div class="shared-message-area" id="sharedShowMessagePanel" aria-live="polite"></div>
+</body>
+</html>

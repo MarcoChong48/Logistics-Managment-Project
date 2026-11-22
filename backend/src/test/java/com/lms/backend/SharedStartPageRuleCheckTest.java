@@ -34,11 +34,11 @@ class SharedStartPageRuleCheckTest {
     /**
      * What it does: Checks the Warehouse Worker's start page.
      * Input: The Warehouse Worker role.
-     * Output: Pass when the start page is the shared welcome page.
+     * Output: Pass when the worker opens Available orders.
      */
     @Test
     void sharedFindStartPageForWarehouseWorker() {
-        assertEquals("/shared/shared-welcome.html", sharedFindStartPage(SharedUserRole.WAREHOUSE_WORKER));
+        assertEquals("/warehouse/warehouse-available-orders.html", sharedFindStartPage(SharedUserRole.WAREHOUSE_WORKER));
     }
 
     /**
